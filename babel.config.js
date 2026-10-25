@@ -5,4 +5,7 @@ module.exports = {
     // so it must not be added again below.
     'nativewind/babel',
   ],
+  plugins: [
+    '@babel/plugin-transform-export-namespace-from',
+  ],
 };

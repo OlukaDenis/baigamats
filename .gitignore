@@ -78,3 +78,9 @@ yarn-error.log
 .agents/
 .agent/
 .bundle/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example

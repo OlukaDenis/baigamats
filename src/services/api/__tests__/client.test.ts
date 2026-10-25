@@ -1,94 +1,194 @@
-import { z } from 'zod';
-
+import { AxiosError, type AxiosAdapter, type InternalAxiosRequestConfig } from 'axios';
 import { ApiError, createApiClient } from '../client';
 
-const userSchema = z.object({ id: z.number(), name: z.string() });
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    json: async () => body,
-  } as Response;
+interface User {
+  id: number;
+  name: string;
 }
 
-describe('createApiClient', () => {
-  it('returns validated data and sends auth + JSON headers', async () => {
-    const fetchImpl = jest.fn().mockResolvedValue(jsonResponse({ id: 1, name: 'Ana' }));
+describe('createApiClient standard Axios setup', () => {
+  it('performs get, post, put, delete and injects auth header via request interceptor', async () => {
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      return {
+        data: { id: 1, name: 'Ana' },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
+    });
+
     const client = createApiClient({
       baseUrl: 'https://api.example.test/',
-      fetchImpl,
+      adapter,
       getAuthToken: () => 'token-123',
     });
 
-    const user = await client.request('/users/1', {
-      method: 'POST',
-      body: { a: 1 },
-      schema: userSchema,
-    });
+    const response = await client.post<User>('/users', { name: 'Ana' });
 
-    expect(user).toEqual({ id: 1, name: 'Ana' });
-    const [url, init] = fetchImpl.mock.calls[0];
-    expect(url).toBe('https://api.example.test/users/1');
-    expect(init.headers).toMatchObject({
-      Authorization: 'Bearer token-123',
-      'Content-Type': 'application/json',
-    });
-    expect(init.body).toBe('{"a":1}');
+    expect(response.data).toEqual({ id: 1, name: 'Ana' });
+    expect(adapter).toHaveBeenCalledTimes(1);
+
+    const callConfig = (adapter as jest.Mock).mock.calls[0][0];
+    expect(callConfig.url).toBe('/users');
+    expect(callConfig.method).toBe('post');
+    expect(callConfig.data).toEqual(JSON.stringify({ name: 'Ana' }));
+    expect(callConfig.headers.Authorization).toBe('Bearer token-123');
   });
 
-  it('omits the Authorization header when there is no token', async () => {
-    const fetchImpl = jest.fn().mockResolvedValue(jsonResponse({ id: 1, name: 'Ana' }));
-    const client = createApiClient({ baseUrl: 'https://x.test', fetchImpl });
-
-    await client.request('/me', { schema: userSchema });
-
-    expect(fetchImpl.mock.calls[0][1].headers.Authorization).toBeUndefined();
-  });
-
-  it('throws a validation ApiError for unexpected payloads', async () => {
-    const fetchImpl = jest.fn().mockResolvedValue(jsonResponse({ id: 'nope' }));
-    const client = createApiClient({ baseUrl: 'https://x.test', fetchImpl });
-
-    await expect(client.request('/me', { schema: userSchema })).rejects.toMatchObject({
-      kind: 'validation',
+  it('omits the Authorization header when skipAuth is true', async () => {
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      return {
+        data: { ok: true },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
     });
+
+    const client = createApiClient({
+      baseUrl: 'https://x.test',
+      adapter,
+      getAuthToken: () => 'token-123',
+    });
+
+    await client.post('/auth/login', { user: 'test' }, { skipAuth: true });
+
+    const callConfig = (adapter as jest.Mock).mock.calls[0][0];
+    expect(callConfig.headers.Authorization).toBeUndefined();
   });
 
-  it('throws an http ApiError with the status code for non-2xx responses', async () => {
-    const fetchImpl = jest.fn().mockResolvedValue(jsonResponse({}, 404));
-    const client = createApiClient({ baseUrl: 'https://x.test', fetchImpl });
+  it('passes query parameters and custom headers correctly', async () => {
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      return {
+        data: [{ id: 1, name: 'Ana' }],
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
+    });
 
-    const error = await client.request('/me', { schema: userSchema }).catch(e => e);
+    const client = createApiClient({
+      baseUrl: 'https://x.test',
+      adapter,
+    });
+
+    await client.get('/users', {
+      params: { search: 'Ana', limit: 10 },
+      headers: { 'X-Custom-Header': 'custom-val' },
+    });
+
+    const callConfig = (adapter as jest.Mock).mock.calls[0][0];
+    expect(callConfig.params).toEqual({ search: 'Ana', limit: 10 });
+    expect(callConfig.headers['X-Custom-Header']).toBe('custom-val');
+  });
+
+  it('throws an http ApiError with server error message and code when present', async () => {
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      throw new AxiosError(
+        'Request failed with status code 401',
+        'ERR_BAD_REQUEST',
+        config,
+        undefined,
+        {
+          status: 401,
+          statusText: 'Unauthorized',
+          headers: {},
+          config,
+          data: { error: { code: 'invalid_credentials', message: 'Wrong password' } },
+        },
+      );
+    });
+
+    const client = createApiClient({ baseUrl: 'https://x.test', adapter });
+
+    const error = await client.get('/auth/login').catch(e => e);
 
     expect(error).toBeInstanceOf(ApiError);
-    expect(error).toMatchObject({ kind: 'http', status: 404 });
+    expect(error).toMatchObject({
+      kind: 'http',
+      status: 401,
+      message: 'Wrong password',
+      errorCode: 'invalid_credentials',
+    });
   });
 
-  it('throws a network ApiError when fetch rejects', async () => {
-    const fetchImpl = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
-    const client = createApiClient({ baseUrl: 'https://x.test', fetchImpl });
+  it('performs token refresh on 401 via response interceptor and retries concurrent requests', async () => {
+    let callCount = 0;
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      callCount += 1;
+      const authHeader = config?.headers?.Authorization;
+      if (authHeader === 'Bearer fresh-token') {
+        return {
+          data: { id: callCount, name: 'Ana' },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        };
+      }
 
-    await expect(client.request('/me', { schema: userSchema })).rejects.toMatchObject({
+      throw new AxiosError(
+        'Request failed with status code 401',
+        'ERR_BAD_REQUEST',
+        config,
+        undefined,
+        {
+          status: 401,
+          statusText: 'Unauthorized',
+          headers: {},
+          config,
+          data: { error: { code: 'token_expired', message: 'Expired' } },
+        },
+      );
+    });
+
+    const refreshAuthToken = jest.fn().mockResolvedValue('fresh-token');
+
+    const client = createApiClient({
+      baseUrl: 'https://x.test',
+      adapter,
+      getAuthToken: () => 'expired-token',
+      refreshAuthToken,
+    });
+
+    const [first, second] = await Promise.all([
+      client.get<User>('/me'),
+      client.get<User>('/me'),
+    ]);
+
+    expect(refreshAuthToken).toHaveBeenCalledTimes(1);
+    expect(first.data.name).toBe('Ana');
+    expect(second.data.name).toBe('Ana');
+  });
+
+  it('throws a network ApiError when axios network request rejects without response', async () => {
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      throw new AxiosError('Network Error', 'ERR_NETWORK', config);
+    });
+
+    const client = createApiClient({ baseUrl: 'https://x.test', adapter });
+
+    await expect(client.get('/me')).rejects.toMatchObject({
       kind: 'network',
     });
   });
 
   it('throws a timeout ApiError when the request exceeds timeoutMs', async () => {
-    jest.useFakeTimers();
-    const fetchImpl: typeof fetch = jest.fn(
-      (_input, init) =>
-        new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
-        }),
-    );
-    const client = createApiClient({ baseUrl: 'https://x.test', fetchImpl, timeoutMs: 1000 });
+    const adapter: AxiosAdapter = jest.fn().mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      throw new AxiosError('timeout of 1000ms exceeded', 'ECONNABORTED', config);
+    });
 
-    const pending = client.request('/slow', { schema: userSchema });
-    await Promise.resolve();
-    jest.advanceTimersByTime(1000);
+    const client = createApiClient({
+      baseUrl: 'https://x.test',
+      adapter,
+      timeoutMs: 1000,
+    });
 
-    await expect(pending).rejects.toMatchObject({ kind: 'timeout' });
-    jest.useRealTimers();
+    await expect(client.get('/slow')).rejects.toMatchObject({
+      kind: 'timeout',
+    });
   });
 });

@@ -1,20 +1,52 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
-import { App } from '../App';
+import { useAuthStore } from '../../features/auth/store/authStore';
 import { usePreferencesStore } from '../../features/preferences/store/preferencesStore';
+import { App } from '../App';
 
 describe('App', () => {
-  afterEach(async () => {
-    await act(() => {
-      usePreferencesStore.setState({ themePreference: 'system' });
+  beforeEach(async () => {
+    await act(async () => {
+      await useAuthStore.getState().setAuthenticated({
+        session: {
+          access_token: 'test-access-token',
+          refresh_token: 'test-refresh-token',
+          token_type: 'bearer',
+          expires_in: 3600,
+          expires_at: 1999999999,
+        },
+        user: {
+          id: 'usr-1',
+          email: 'owner@baigamats.com',
+        },
+        profile: {
+          organization_id: 'org-1',
+          role: 'admin',
+        },
+        needsOrganizationSetup: true,
+      });
     });
   });
 
-  it('renders the home screen', async () => {
+  afterEach(async () => {
+    await act(async () => {
+      usePreferencesStore.setState({ themePreference: 'system' });
+      await useAuthStore.getState().clearAuth();
+    });
+  });
+
+  it('renders the authenticated home screen and organization setup notice when needsOrganizationSetup is true', async () => {
     await render(<App />);
 
-    expect(await screen.findByRole('header', { name: 'Baigamats' })).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Primary action' })).toBeOnTheScreen();
+    expect(
+      await screen.findByRole('header', { name: 'Baigamats' }),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByRole('header', { name: 'Complete Organization Setup' }),
+    ).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Primary action' }),
+    ).toBeOnTheScreen();
   });
 
   it('lets the user change the theme preference', async () => {

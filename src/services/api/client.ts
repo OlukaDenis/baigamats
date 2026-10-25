@@ -1,108 +1,231 @@
-import { z } from 'zod';
+import axios, {
+  type AxiosAdapter,
+  AxiosError,
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 
-/** Normalised error shape for every failed API call. */
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly kind: 'network' | 'timeout' | 'http' | 'validation',
-    readonly status?: number,
-    readonly cause?: unknown,
-  ) {
-    super(message);
-    this.name = 'ApiError';
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    skipAuth?: boolean;
+    _retry?: boolean;
   }
 }
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+/** Normalised error shape for failed API calls. */
+export class ApiError extends Error {
+  readonly isAxiosError = true;
+  readonly response?: unknown;
+
+  constructor(
+    message: string,
+    readonly kind: 'network' | 'timeout' | 'http' | 'validation' = 'http',
+    readonly status?: number,
+    readonly cause?: unknown,
+    readonly errorCode?: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+    if (axios.isAxiosError(cause)) {
+      this.response = cause.response;
+    }
+  }
+}
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 export type ApiClientConfig = {
   /** Supplied from environment configuration. Never hardcode endpoints. */
   baseUrl: string;
   timeoutMs?: number;
-  /** Returns the current auth token, if any. Tokens must never be logged. */
+  /** Returns the current auth token, if any. */
   getAuthToken?: () => string | null | Promise<string | null>;
-  fetchImpl?: typeof fetch;
+  /**
+   * Optional callback invoked on a 401 response for authenticated requests.
+   * Concurrent 401s share a single in-flight refresh promise.
+   */
+  refreshAuthToken?: () => Promise<string | null>;
+  /** Custom Axios instance if provided. */
+  axiosInstance?: AxiosInstance;
+  /** Optional custom adapter (e.g. for testing). */
+  adapter?: AxiosAdapter;
+  /** Optional default headers to send with every request */
+  defaultHeaders?: Record<string, string>;
 };
 
-export type RequestOptions<TSchema extends z.ZodType> = {
-  method?: HttpMethod;
-  body?: unknown;
-  /** Response schema: every response is validated before it reaches the app. */
-  schema: TSchema;
-  signal?: AbortSignal;
-};
+export function normalizeError(err: unknown): Error {
+  if (err instanceof ApiError) {
+    return err;
+  }
+
+  if (axios.isAxiosError(err)) {
+    // Timeout check
+    if (
+      err.code === 'ECONNABORTED' ||
+      err.code === 'ETIMEDOUT' ||
+      err.message?.toLowerCase().includes('timeout')
+    ) {
+      return new ApiError('Request timed out', 'timeout', undefined, err);
+    }
+
+    // Network failure (no response received from server)
+    if (!err.response) {
+      return new ApiError('Network request failed', 'network', undefined, err);
+    }
+
+    // Server responded with an error status (4xx, 5xx)
+    const status = err.response.status;
+    let message: string | undefined;
+    let errorCode: string | undefined;
+
+    const data = err.response.data as
+      | { error?: { message?: string; code?: string }; message?: string; code?: string }
+      | undefined;
+
+    if (data && typeof data === 'object') {
+      if (data.error && typeof data.error === 'object') {
+        message = data.error.message;
+        errorCode = data.error.code;
+      } else if (data.message) {
+        message = data.message;
+        errorCode = data.code;
+      }
+    }
+
+    return new ApiError(
+      message || `Request failed with status ${status}`,
+      'http',
+      status,
+      err,
+      errorCode,
+    );
+  }
+
+  return new ApiError(
+    err instanceof Error ? err.message : 'Network request failed',
+    'network',
+    undefined,
+    err,
+  );
+}
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
-export function createApiClient(config: ApiClientConfig) {
-  const fetchImpl = config.fetchImpl ?? fetch;
+export function createApiClient(config: ApiClientConfig): AxiosInstance {
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const baseUrl = config.baseUrl.replace(/\/+$/, '');
 
-  async function request<TSchema extends z.ZodType>(
-    path: string,
-    { method = 'GET', body, schema, signal }: RequestOptions<TSchema>,
-  ): Promise<z.infer<TSchema>> {
-    const controller = new AbortController();
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, timeoutMs);
-    const onExternalAbort = () => controller.abort();
-    signal?.addEventListener('abort', onExternalAbort);
+  const instance: AxiosInstance =
+    config.axiosInstance ??
+    axios.create({
+      baseURL: baseUrl,
+      timeout: timeoutMs,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...config.defaultHeaders,
+      },
+      ...(config.adapter ? { adapter: config.adapter } : {}),
+    });
 
-    try {
-      const headers: Record<string, string> = { Accept: 'application/json' };
-      if (body !== undefined) {
-        headers['Content-Type'] = 'application/json';
-      }
-      const token = await config.getAuthToken?.();
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      let response: Response;
-      try {
-        response = await fetchImpl(`${baseUrl}${path}`, {
-          method,
-          headers,
-          body: body === undefined ? undefined : JSON.stringify(body),
-          signal: controller.signal,
-        });
-      } catch (error) {
-        if (timedOut) {
-          throw new ApiError('Request timed out', 'timeout', undefined, error);
+  // Request interceptor: inject Bearer token
+  instance.interceptors.request.use(
+    async (requestConfig: InternalAxiosRequestConfig) => {
+      if (!requestConfig.skipAuth && config.getAuthToken) {
+        const token = await config.getAuthToken();
+        if (token) {
+          requestConfig.headers = requestConfig.headers || {};
+          if (!requestConfig.headers.Authorization) {
+            requestConfig.headers.Authorization = `Bearer ${token}`;
+          }
         }
-        throw new ApiError('Network request failed', 'network', undefined, error);
+      }
+      return requestConfig;
+    },
+    (error) => Promise.reject(normalizeError(error)),
+  );
+
+  // Response interceptor: 401 token refresh retry & error normalization
+  let isRefreshing = false;
+  let failedQueue: Array<{
+    resolve: (token: string) => void;
+    reject: (error: unknown) => void;
+  }> = [];
+
+  const processQueue = (error: unknown, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+      if (error) {
+        prom.reject(error);
+      } else if (token) {
+        prom.resolve(token);
+      }
+    });
+    failedQueue = [];
+  };
+
+  instance.interceptors.response.use(
+    (response: AxiosResponse) => response,
+    async (error: unknown) => {
+      if (!axios.isAxiosError(error)) {
+        return Promise.reject(normalizeError(error));
       }
 
-      if (!response.ok) {
-        throw new ApiError(
-          `Request failed with status ${response.status}`,
-          'http',
-          response.status,
-        );
+      const originalRequest = error.config as
+        | (InternalAxiosRequestConfig & { _retry?: boolean; skipAuth?: boolean })
+        | undefined;
+
+      // Reactive 401 token refresh retry
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        !originalRequest._retry &&
+        !originalRequest.skipAuth &&
+        config.refreshAuthToken
+      ) {
+        if (isRefreshing) {
+          return new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              originalRequest.headers = originalRequest.headers || {};
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return instance(originalRequest);
+            })
+            .catch((err) => Promise.reject(normalizeError(err)));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const newToken = await config.refreshAuthToken();
+          if (newToken) {
+            processQueue(null, newToken);
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return instance(originalRequest);
+          } else {
+            const apiError = normalizeError(error);
+            processQueue(apiError, null);
+            return Promise.reject(apiError);
+          }
+        } catch (refreshErr) {
+          const apiError = normalizeError(refreshErr);
+          processQueue(apiError, null);
+          return Promise.reject(apiError);
+        } finally {
+          isRefreshing = false;
+        }
       }
 
-      const json: unknown = response.status === 204 ? null : await response.json();
-      const parsed = schema.safeParse(json);
-      if (!parsed.success) {
-        throw new ApiError(
-          'Unexpected response format',
-          'validation',
-          response.status,
-          parsed.error,
-        );
-      }
-      return parsed.data;
-    } finally {
-      clearTimeout(timer);
-      signal?.removeEventListener('abort', onExternalAbort);
-    }
-  }
+      return Promise.reject(normalizeError(error));
+    },
+  );
 
-  return { request };
+  return instance;
 }
 
-export type ApiClient = ReturnType<typeof createApiClient>;
+export type ApiClient = AxiosInstance;
+export type { AxiosInstance, AxiosResponse, AxiosRequestConfig };

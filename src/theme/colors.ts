@@ -26,25 +26,25 @@ export type ThemeColors = {
 };
 
 const lightColors: ThemeColors = {
-  primary: '#3A104D',
+  primary: '#1B1340',
   secondary: '#FF9F43',
   tertiary: '#F3E8FF',
   background: '#FFFFFF',
   surface: '#F9F6FC',
   onPrimary: '#FFFFFF',
-  onSecondary: '#3A104D',
-  text: '#3A104D',
+  onSecondary: '#111111',
+  text: '#111111',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#C084FC',
+  primary: '#1B1340',
   secondary: '#FFAE57',
-  tertiary: '#2A1B3D',
-  background: '#120E16',
-  surface: '#1D1726',
-  onPrimary: '#120E16',
-  onSecondary: '#120E16',
-  text: '#C084FC',
+  tertiary: '#1b1326',
+  background: '#0f0f10',
+  surface: '#252327',
+  onPrimary: '#ffffff',
+  onSecondary: '#ffffff',
+  text: '#ffffff',
 };
 
 export const palettes: Record<ColorScheme, ThemeColors> = {

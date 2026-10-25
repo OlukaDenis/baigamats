@@ -19,11 +19,11 @@ function contrast(a: string, b: string): number {
 
 describe('hexToRgbChannels', () => {
   it('converts #RRGGBB to space-separated channels', () => {
-    expect(hexToRgbChannels('#3A104D')).toBe('58 16 77');
+    expect(hexToRgbChannels('#1B1340')).toBe('27 19 64');
     expect(hexToRgbChannels('#ffffff')).toBe('255 255 255');
   });
 
-  it.each(['#FFF', '3A104D', '#GGGGGG', ''])('rejects invalid input %p', value => {
+  it.each(['#FFF', '1B1340', '#GGGGGG', ''])('rejects invalid input %p', value => {
     expect(() => hexToRgbChannels(value)).toThrow('Invalid hex colour');
   });
 });

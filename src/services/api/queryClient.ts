@@ -1,5 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import { onlineManager, QueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 
 import { ApiError } from './client';
 
@@ -10,6 +11,12 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
       return false;
     }
     if (error.kind === 'http' && error.status !== undefined && error.status < 500) {
+      return false;
+    }
+  }
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status !== undefined && status < 500) {
       return false;
     }
   }
