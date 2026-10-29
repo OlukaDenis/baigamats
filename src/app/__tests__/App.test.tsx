@@ -45,7 +45,7 @@ describe('App', () => {
       screen.getByRole('header', { name: 'Complete Organization Setup' }),
     ).toBeOnTheScreen();
     expect(
-      screen.getByRole('button', { name: 'Primary action' }),
+      screen.getByRole('button', { name: 'Manage account & profile' }),
     ).toBeOnTheScreen();
   });
 

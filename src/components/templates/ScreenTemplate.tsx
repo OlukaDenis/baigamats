@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type ScreenTemplateProps = {
@@ -8,12 +8,12 @@ export type ScreenTemplateProps = {
   scrollable?: boolean;
 };
 
-/** Base screen layout: brand background, safe-area padding and consistent gutters. */
+/** Base screen layout: brand background, safe-area padding, keyboard avoidance, and consistent gutters. */
 export function ScreenTemplate({ children, scrollable = true }: ScreenTemplateProps) {
   const insets = useSafeAreaInsets();
   const padding = {
     paddingTop: insets.top + 16,
-    paddingBottom: insets.bottom + 16,
+    paddingBottom: insets.bottom + 24,
     paddingLeft: insets.left + 20,
     paddingRight: insets.right + 20,
   };
@@ -21,18 +21,24 @@ export function ScreenTemplate({ children, scrollable = true }: ScreenTemplatePr
   if (!scrollable) {
     return (
       <View className="flex-1 bg-background" style={padding}>
-        {children}
+        <View className="w-full max-w-lg flex-1 self-center">{children}</View>
       </View>
     );
   }
 
   return (
-    <ScrollView
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-background"
-      contentContainerStyle={padding}
-      keyboardShouldPersistTaps="handled"
     >
-      {children}
-    </ScrollView>
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerStyle={padding}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="w-full max-w-lg self-center">{children}</View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

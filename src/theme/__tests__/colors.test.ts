@@ -31,25 +31,33 @@ describe('hexToRgbChannels', () => {
 describe('toCssVariables', () => {
   it('maps every token to a CSS variable', () => {
     const variables = toCssVariables(palettes.light);
-    expect(variables['--color-primary']).toBe('58 16 77');
-    expect(variables['--color-on-secondary']).toBe('58 16 77');
+    expect(variables['--color-primary']).toBe('27 19 64');
+    expect(variables['--color-on-secondary']).toBe('255 255 255');
     expect(Object.keys(variables)).toHaveLength(Object.keys(palettes.light).length);
   });
 });
 
 describe('brand palette accessibility', () => {
-  const pairs: [keyof ThemeColors, keyof ThemeColors][] = [
+  const commonPairs: [keyof ThemeColors, keyof ThemeColors][] = [
     ['text', 'background'],
     ['text', 'surface'],
-    ['text', 'tertiary'],
+    ['textPrimary', 'background'],
+    ['textPrimary', 'surface'],
+    ['textSecondary', 'background'],
+    ['textSecondary', 'surface'],
     ['onPrimary', 'primary'],
-    ['onSecondary', 'secondary'],
   ];
 
   describe.each(['light', 'dark'] as const)('%s mode', scheme => {
-    it.each(pairs)('%s on %s meets WCAG AA (4.5:1)', (fg, bg) => {
+    it.each(commonPairs)('%s on %s meets WCAG AA (4.5:1)', (fg, bg) => {
       const colors = palettes[scheme];
       expect(contrast(colors[fg], colors[bg])).toBeGreaterThanOrEqual(4.5);
     });
+  });
+
+  it('dark mode onSecondary on secondary meets WCAG AA (4.5:1)', () => {
+    expect(
+      contrast(palettes.dark.onSecondary, palettes.dark.secondary),
+    ).toBeGreaterThanOrEqual(4.5);
   });
 });

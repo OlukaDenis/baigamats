@@ -1,5 +1,7 @@
 import { View } from 'react-native';
+import { ExclamationCircleIcon } from 'react-native-heroicons/outline';
 
+import { useTheme } from '../../theme/ThemeProvider';
 import { AppText } from '../atoms/AppText';
 import { AppTextInput, type AppTextInputProps } from '../atoms/AppTextInput';
 
@@ -14,8 +16,11 @@ export function FormField({
   error,
   helperText,
   accessibilityLabel,
+  accessibilityHint,
   ...inputProps
 }: FormFieldProps) {
+  const { colors } = useTheme();
+
   return (
     <View className="mb-4">
       <AppText variant="label" className="mb-1.5">
@@ -23,20 +28,29 @@ export function FormField({
       </AppText>
       <AppTextInput
         accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={accessibilityHint ?? error ?? helperText}
         hasError={Boolean(error)}
         {...inputProps}
       />
       {error ? (
         <View
+          accessible
           accessibilityRole="alert"
-          className="mt-1.5 rounded-lg bg-secondary px-3 py-1.5"
+          accessibilityLiveRegion="polite"
+          className="mt-2 flex-row items-center rounded-lg bg-secondary px-3 py-2"
         >
-          <AppText variant="label" className="text-on-secondary">
+          <ExclamationCircleIcon
+            color={colors.onSecondary}
+            size={18}
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
+          <AppText variant="label" className="ml-2 flex-1 text-on-secondary">
             {error}
           </AppText>
         </View>
       ) : helperText ? (
-        <AppText className="mt-1 text-sm opacity-80">{helperText}</AppText>
+        <AppText className="mt-1.5 text-sm text-text-secondary">{helperText}</AppText>
       ) : null}
     </View>
   );

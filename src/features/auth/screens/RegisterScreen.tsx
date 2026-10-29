@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
 import {
+  ArrowLeftIcon,
   EnvelopeIcon,
+  LockClosedIcon,
+  ShieldCheckIcon,
   UserPlusIcon,
 } from 'react-native-heroicons/outline';
 
 import type { AuthStackScreenProps } from '../../../app/navigation/types';
 import { AppText } from '../../../components/atoms/AppText';
+import type { AppTextInputInstance } from '../../../components/atoms/AppTextInput';
 import { Button } from '../../../components/atoms/Button';
+import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -22,6 +27,8 @@ export function RegisterScreen({
 }: AuthStackScreenProps<'Register'>) {
   const { colors } = useTheme();
   const registerMutation = useRegisterMutation();
+  const passwordInputRef = useRef<AppTextInputInstance>(null);
+  const confirmPasswordInputRef = useRef<AppTextInputInstance>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,8 +94,8 @@ export function RegisterScreen({
   if (confirmationMessage) {
     return (
       <ScreenTemplate>
-        <View className="mb-8 items-center rounded-2xl bg-tertiary px-6 py-8">
-          <View className="mb-4 rounded-full bg-secondary p-4">
+        <View className="mb-6 items-center rounded-3xl border border-border bg-surface px-6 py-8 shadow-sm">
+          <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
             <EnvelopeIcon
               color={colors.onSecondary}
               size={32}
@@ -96,15 +103,25 @@ export function RegisterScreen({
               importantForAccessibility="no"
             />
           </View>
-          <AppText variant="display" className="text-center">
+          <AppText variant="display" className="text-center font-bold text-text-primary">
             Check your email
           </AppText>
-          <AppText className="mt-3 text-center">{confirmationMessage}</AppText>
+          <AppText className="mt-3 text-center text-sm text-text-secondary leading-5">
+            {confirmationMessage}
+          </AppText>
         </View>
 
         <Button
           label="Return to sign in"
           onPress={() => navigation.navigate('Login')}
+          leftIcon={
+            <ArrowLeftIcon
+              color={colors.onPrimary}
+              size={18}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
         />
       </ScreenTemplate>
     );
@@ -112,36 +129,27 @@ export function RegisterScreen({
 
   return (
     <ScreenTemplate>
-      <View className="mb-8 items-center rounded-2xl bg-tertiary px-6 py-8">
-        <View className="mb-3 rounded-full bg-secondary p-4">
+      <View className="mb-6 items-center rounded-3xl border border-border bg-surface px-6 py-8 shadow-sm">
+        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
           <UserPlusIcon
             color={colors.onSecondary}
-            size={28}
+            size={30}
             accessibilityElementsHidden
             importantForAccessibility="no"
           />
         </View>
-        <AppText variant="display" className="text-center">
+        <AppText variant="display" className="text-center font-bold text-text-primary">
           Create an account
         </AppText>
-        <AppText className="mt-2 text-center">
+        <AppText className="mt-2 text-center text-sm text-text-secondary leading-5">
           Register with your email address to start accepting mobile money payments
           and managing your shop.
         </AppText>
       </View>
 
-      {submitError ? (
-        <View
-          accessibilityRole="alert"
-          className="mb-5 rounded-xl bg-secondary p-4"
-        >
-          <AppText variant="label" className="text-on-secondary">
-            {submitError}
-          </AppText>
-        </View>
-      ) : null}
+      {submitError ? <AlertBanner message={submitError} /> : null}
 
-      <View className="mb-6 rounded-2xl bg-surface p-5">
+      <View className="mb-6 rounded-3xl border border-border bg-surface p-6 shadow-sm">
         <FormField
           label="Email address"
           placeholder="you@business.com"
@@ -149,6 +157,17 @@ export function RegisterScreen({
           autoCorrect={false}
           keyboardType="email-address"
           textContentType="emailAddress"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordInputRef.current?.focus()}
+          leftIcon={
+            <EnvelopeIcon
+              color={colors.textSecondary}
+              size={20}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
           value={email}
           onChangeText={value => {
             setEmail(value);
@@ -160,12 +179,24 @@ export function RegisterScreen({
         />
 
         <FormField
+          ref={passwordInputRef}
           label="Password"
           placeholder="At least 8 characters"
           isPassword
           autoCapitalize="none"
           autoCorrect={false}
           textContentType="newPassword"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
+          leftIcon={
+            <LockClosedIcon
+              color={colors.textSecondary}
+              size={20}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
           value={password}
           onChangeText={value => {
             setPassword(value);
@@ -178,12 +209,22 @@ export function RegisterScreen({
         />
 
         <FormField
+          ref={confirmPasswordInputRef}
           label="Confirm password"
           placeholder="Re-enter your password"
           isPassword
           autoCapitalize="none"
           autoCorrect={false}
           textContentType="newPassword"
+          returnKeyType="go"
+          leftIcon={
+            <ShieldCheckIcon
+              color={colors.textSecondary}
+              size={20}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
           value={confirmPassword}
           onChangeText={value => {
             setConfirmPassword(value);
@@ -203,14 +244,24 @@ export function RegisterScreen({
         />
       </View>
 
-      <View className="items-center rounded-2xl bg-surface p-5">
-        <AppText className="mb-3 text-center">Already have an account?</AppText>
+      <View className="items-center rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <AppText className="mb-3 text-center text-sm text-text-secondary">
+          Already have an account?
+        </AppText>
         <Button
           label="Back to sign in"
           variant="outline"
           disabled={registerMutation.isPending}
           onPress={() => navigation.navigate('Login')}
           className="w-full"
+          leftIcon={
+            <ArrowLeftIcon
+              color={colors.primary}
+              size={18}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
         />
       </View>
     </ScreenTemplate>

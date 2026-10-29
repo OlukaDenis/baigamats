@@ -6,11 +6,13 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';
+import { getAppVersionHeader } from '../../utils/appVersion';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
     skipAuth?: boolean;
     _retry?: boolean;
+    idempotencyKey?: string;
   }
 }
 
@@ -130,13 +132,24 @@ export function createApiClient(config: ApiClientConfig): AxiosInstance {
       ...(config.adapter ? { adapter: config.adapter } : {}),
     });
 
-  // Request interceptor: inject Bearer token
+  // Request interceptor: inject Bearer token, X-App-Version, and optional Idempotency-Key
   instance.interceptors.request.use(
-    async (requestConfig: InternalAxiosRequestConfig) => {
+    async (requestConfig: InternalAxiosRequestConfig & { idempotencyKey?: string }) => {
+      requestConfig.headers = requestConfig.headers || {};
+
+      // Send X-App-Version on every call per Baigamats API v1 rule 2
+      if (!requestConfig.headers['X-App-Version']) {
+        requestConfig.headers['X-App-Version'] = getAppVersionHeader();
+      }
+
+      // Attach Idempotency-Key if specified in request config
+      if (requestConfig.idempotencyKey && !requestConfig.headers['Idempotency-Key']) {
+        requestConfig.headers['Idempotency-Key'] = requestConfig.idempotencyKey;
+      }
+
       if (!requestConfig.skipAuth && config.getAuthToken) {
         const token = await config.getAuthToken();
         if (token) {
-          requestConfig.headers = requestConfig.headers || {};
           if (!requestConfig.headers.Authorization) {
             requestConfig.headers.Authorization = `Bearer ${token}`;
           }

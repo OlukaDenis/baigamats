@@ -109,10 +109,30 @@ export const registerResponseSchema = z.object({
 });
 
 export const persistedAuthSessionSchema = z.object({
+  authType: z.enum(['staff', 'member']).default('staff'),
   session: sessionSchema,
   user: authUserSchema.nullable().default(null),
   profile: authProfileSchema.default(null),
   needsOrganizationSetup: z.boolean().default(false),
+  member: z
+    .object({
+      id: z.string().optional(),
+      name: z.string(),
+      member_no: z.string(),
+      phone: z.string(),
+      email: z.string().nullable().optional(),
+    })
+    .loose()
+    .optional(),
+  organization: z
+    .object({
+      id: z.string().optional(),
+      name: z.string(),
+      slug: z.string().optional(),
+    })
+    .loose()
+    .optional(),
+  mustChangePassword: z.boolean().default(false),
 });
 
 export const businessSchema = z

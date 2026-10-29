@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View } from 'react-native';
-import { LockClosedIcon } from 'react-native-heroicons/outline';
+import {
+  ArrowRightIcon,
+  LockClosedIcon,
+  UserIcon,
+  UserPlusIcon,
+} from 'react-native-heroicons/outline';
 
 import type { AuthStackScreenProps } from '../../../app/navigation/types';
 import { AppText } from '../../../components/atoms/AppText';
+import type { AppTextInputInstance } from '../../../components/atoms/AppTextInput';
 import { Button } from '../../../components/atoms/Button';
+import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -17,6 +24,7 @@ import { loginRequestSchema } from '../schemas/authSchemas';
 export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
   const { colors } = useTheme();
   const loginMutation = useLoginMutation();
+  const passwordInputRef = useRef<AppTextInputInstance>(null);
 
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
@@ -63,35 +71,26 @@ export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
 
   return (
     <ScreenTemplate>
-      <View className="mb-8 items-center rounded-2xl bg-tertiary px-6 py-8">
-        <View className="mb-3 rounded-full bg-secondary p-4">
+      <View className="mb-6 items-center rounded-3xl border border-border bg-surface px-6 py-8 shadow-sm">
+        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
           <LockClosedIcon
             color={colors.onSecondary}
-            size={28}
+            size={30}
             accessibilityElementsHidden
             importantForAccessibility="no"
           />
         </View>
-        <AppText variant="display" className="text-center">
+        <AppText variant="display" className="text-center font-bold text-text-primary">
           Sign in
         </AppText>
-        <AppText className="mt-2 text-center">
+        <AppText className="mt-2 text-center text-sm text-text-secondary leading-5">
           Use your email address or staff username to access your Baigamats business.
         </AppText>
       </View>
 
-      {submitError ? (
-        <View
-          accessibilityRole="alert"
-          className="mb-5 rounded-xl bg-secondary p-4"
-        >
-          <AppText variant="label" className="text-on-secondary">
-            {submitError}
-          </AppText>
-        </View>
-      ) : null}
+      {submitError ? <AlertBanner message={submitError} /> : null}
 
-      <View className="mb-6 rounded-2xl bg-surface p-5">
+      <View className="mb-6 rounded-3xl border border-border bg-surface p-6 shadow-sm">
         <FormField
           label="Email or staff username"
           placeholder="jane@company.com"
@@ -99,6 +98,17 @@ export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
           autoCorrect={false}
           keyboardType="email-address"
           textContentType="username"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordInputRef.current?.focus()}
+          leftIcon={
+            <UserIcon
+              color={colors.textSecondary}
+              size={20}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
           value={loginId}
           onChangeText={value => {
             setLoginId(value);
@@ -110,12 +120,22 @@ export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
         />
 
         <FormField
+          ref={passwordInputRef}
           label="Password"
           placeholder="Enter your password"
           isPassword
           autoCapitalize="none"
           autoCorrect={false}
           textContentType="password"
+          returnKeyType="go"
+          leftIcon={
+            <LockClosedIcon
+              color={colors.textSecondary}
+              size={20}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
           value={password}
           onChangeText={value => {
             setPassword(value);
@@ -132,11 +152,32 @@ export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
           loading={loginMutation.isPending}
           onPress={handleSignIn}
           className="mt-2"
+          rightIcon={
+            <ArrowRightIcon
+              color={colors.onPrimary}
+              size={18}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
         />
       </View>
 
-      <View className="items-center rounded-2xl bg-surface p-5">
-        <AppText className="mb-3 text-center">
+      <View className="mb-4 items-center rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <AppText className="mb-3 text-center text-sm text-text-secondary">
+          Are you a SACCO or Cooperative Member?
+        </AppText>
+        <Button
+          label="Member Sign In (PIN)"
+          variant="outline"
+          disabled={loginMutation.isPending}
+          onPress={() => navigation.navigate('MemberLogin')}
+          className="w-full"
+        />
+      </View>
+
+      <View className="items-center rounded-2xl border border-border bg-surface p-5 shadow-sm">
+        <AppText className="mb-3 text-center text-sm text-text-secondary">
           New to Baigamats? Create a business account.
         </AppText>
         <Button
@@ -145,6 +186,14 @@ export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
           disabled={loginMutation.isPending}
           onPress={() => navigation.navigate('Register')}
           className="w-full"
+          leftIcon={
+            <UserPlusIcon
+              color={colors.primary}
+              size={18}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          }
         />
       </View>
     </ScreenTemplate>

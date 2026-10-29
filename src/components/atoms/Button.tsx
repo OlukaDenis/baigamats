@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, type PressableProps } from 'react-native';
+import type { ReactNode } from 'react';
+import { ActivityIndicator, Pressable, View, type PressableProps } from 'react-native';
 
 import { useTheme } from '../../theme/ThemeProvider';
 import { AppText } from './AppText';
@@ -8,7 +9,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'outline';
 const containerClasses: Record<ButtonVariant, string> = {
   primary: 'bg-primary',
   secondary: 'bg-secondary',
-  outline: 'border-2 border-primary bg-transparent',
+  outline: 'border border-border bg-surface',
 };
 
 // Secondary (orange) always pairs with on-secondary: never white/light text on orange.
@@ -22,6 +23,8 @@ export type ButtonProps = Omit<PressableProps, 'children'> & {
   label: string;
   variant?: ButtonVariant;
   loading?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
   className?: string;
 };
 
@@ -30,6 +33,8 @@ export function Button({
   variant = 'primary',
   loading = false,
   disabled,
+  leftIcon,
+  rightIcon,
   className = '',
   ...rest
 }: ButtonProps) {
@@ -49,15 +54,38 @@ export function Button({
       disabled={isDisabled}
       className={`min-h-12 flex-row items-center justify-center rounded-xl px-5 active:opacity-80 ${
         containerClasses[variant]
-      } ${isDisabled ? 'opacity-50' : ''} ${className}`}
+      } ${isDisabled ? 'opacity-50' : ''} ${className}`.trim()}
       {...rest}
     >
       {loading ? (
         <ActivityIndicator color={indicatorColor} />
       ) : (
-        <AppText variant="label" className={`text-base ${labelClasses[variant]}`}>
-          {label}
-        </AppText>
+        <View className="flex-row items-center justify-center">
+          {leftIcon ? (
+            <View
+              className="mr-2 items-center justify-center"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {leftIcon}
+            </View>
+          ) : null}
+          <AppText
+            variant="label"
+            className={`text-base font-semibold ${labelClasses[variant]}`}
+          >
+            {label}
+          </AppText>
+          {rightIcon ? (
+            <View
+              className="ml-2 items-center justify-center"
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              {rightIcon}
+            </View>
+          ) : null}
+        </View>
       )}
     </Pressable>
   );

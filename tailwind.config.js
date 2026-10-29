@@ -13,14 +13,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        content: token('text'),
+        text: token('text'),
+        'text-primary': token('text-primary'),
+        'text-secondary': token('text-secondary'),
         primary: token('primary'),
         secondary: token('secondary'),
         tertiary: token('tertiary'),
         background: token('background'),
         surface: token('surface'),
+        border: token('border'),
         'on-primary': token('on-primary'),
         'on-secondary': token('on-secondary'),
-        content: token('text'),
       },
     },
   },

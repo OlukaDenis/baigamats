@@ -15,36 +15,45 @@ export type ColorScheme = 'light' | 'dark';
 export type ThemeColors = {
   primary: string;
   secondary: string;
-  tertiary: string;
   background: string;
   surface: string;
+  textPrimary: string;
+  textSecondary: string;
   onPrimary: string;
-  /** Text/icon colour on the secondary (orange) token. Never white or light gray. */
   onSecondary: string;
-  /** Default body text colour on background/surface/tertiary. */
+  border: string;
+  /** Primary body and heading text token. */
   text: string;
+  /** Fallback mapping for tertiary containers (mapped to surface). */
+  tertiary: string;
 };
 
 const lightColors: ThemeColors = {
   primary: '#1B1340',
-  secondary: '#FF9F43',
-  tertiary: '#F3E8FF',
+  secondary: '#FF8A00',
   background: '#FFFFFF',
-  surface: '#F9F6FC',
+  surface: '#F7F7F9',
+  textPrimary: '#111111',
+  textSecondary: '#66666E',
   onPrimary: '#FFFFFF',
-  onSecondary: '#111111',
+  onSecondary: '#FFFFFF',
+  border: '#E5E5EB',
   text: '#111111',
+  tertiary: '#F7F7F9',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#1B1340',
-  secondary: '#FFAE57',
-  tertiary: '#1b1326',
-  background: '#0f0f10',
-  surface: '#252327',
-  onPrimary: '#ffffff',
-  onSecondary: '#ffffff',
-  text: '#ffffff',
+  primary: '#FFFFFF',
+  secondary: '#FFA040',
+  background: '#000000',
+  surface: '#141416',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#9E9EA6',
+  onPrimary: '#000000',
+  onSecondary: '#000000',
+  border: '#26262B',
+  text: '#FFFFFF',
+  tertiary: '#141416',
 };
 
 export const palettes: Record<ColorScheme, ThemeColors> = {
@@ -65,12 +74,15 @@ export function hexToRgbChannels(hex: string): string {
 const tokenToCssVar: Record<keyof ThemeColors, string> = {
   primary: '--color-primary',
   secondary: '--color-secondary',
-  tertiary: '--color-tertiary',
   background: '--color-background',
   surface: '--color-surface',
+  textPrimary: '--color-text-primary',
+  textSecondary: '--color-text-secondary',
   onPrimary: '--color-on-primary',
   onSecondary: '--color-on-secondary',
+  border: '--color-border',
   text: '--color-text',
+  tertiary: '--color-tertiary',
 };
 
 /** Builds the CSS-variable map consumed by NativeWind's `vars()`. */
