@@ -3,6 +3,8 @@ import axios from 'axios';
 import { env } from '../../app/config/env';
 import { isSessionExpired, useAuthStore } from '../../features/auth/store/authStore';
 import type { RefreshResponse } from '../../features/auth/types/authTypes';
+import { mockAxiosAdapter } from '../../mock/mockAdapter';
+import { IS_MOCK_ENABLED } from '../../mock/mockConfig';
 import { getAppVersionHeader } from '../../utils/appVersion';
 import { createApiClient, type ApiClient } from './client';
 
@@ -55,6 +57,7 @@ export function createConfiguredApiClient(axiosInstance?: AxiosInstance): ApiCli
     baseUrl,
     timeoutMs: env.API_TIMEOUT_MS,
     axiosInstance,
+    adapter: IS_MOCK_ENABLED ? mockAxiosAdapter : undefined,
     getAuthToken: async () => {
       const session = useAuthStore.getState().session;
       if (!session) {

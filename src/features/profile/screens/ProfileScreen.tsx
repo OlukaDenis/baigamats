@@ -22,6 +22,9 @@ import { useLogoutMutation } from '../../auth/hooks/useAuthMutations';
 import { useAuthStore } from '../../auth/store/authStore';
 import { ThemePreferenceSelector } from '../../preferences/components/ThemePreferenceSelector';
 import { useBusinessQuery } from '../hooks/useBusinessQuery';
+import { IS_MOCK_ENABLED } from '../../../mock/mockConfig';
+import { mockStore } from '../../../mock/mockDataStore';
+import { useQueryClient } from '@tanstack/react-query';
 
 type DetailRowProps = {
   icon: ReactNode;
@@ -63,6 +66,7 @@ export function ProfileScreen() {
   );
   const logoutMutation = useLogoutMutation();
   const businessQuery = useBusinessQuery();
+  const queryClient = useQueryClient();
 
   const handleSignOutLocal = () => {
     logoutMutation.mutate({ scope: 'local' });
@@ -213,6 +217,26 @@ export function ProfileScreen() {
           ) : (
             <AppText className="pt-2">No business details available.</AppText>
           )}
+        </View>
+      ) : null}
+
+      {IS_MOCK_ENABLED ? (
+        <View className="mb-6 rounded-3xl border border-secondary/30 bg-surface p-6 shadow-sm">
+          <AppText variant="title" className="mb-1 font-bold text-text-primary">
+            🧪 Mock Test Controls
+          </AppText>
+          <AppText className="mb-4 text-sm text-text-secondary">
+            Reset balances, transactions, and loans to clean default values.
+          </AppText>
+          <Button
+            label="Reset Mock Data"
+            variant="outline"
+            onPress={() => {
+              mockStore.reset();
+              queryClient.invalidateQueries();
+              Alert.alert('Reset Complete', 'Mock member data has been reset to defaults.');
+            }}
+          />
         </View>
       ) : null}
 

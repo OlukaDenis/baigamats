@@ -17,6 +17,7 @@ import { FormField } from '../../../components/molecules/FormField';
 import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
+import { IS_MOCK_ENABLED } from '../../../mock/mockConfig';
 import { ApiError } from '../../../services/api/client';
 import { memberAuthApi } from '../api/memberAuthApi';
 import { memberLoginRequestSchema } from '../schemas/memberAuthSchemas';
@@ -132,6 +133,31 @@ export function MemberLoginScreen() {
 
       {errorMessage ? <AlertBanner message={errorMessage} /> : null}
 
+      {IS_MOCK_ENABLED ? (
+        <View className="mb-4 rounded-2xl border border-secondary/30 bg-secondary/10 p-4">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 pr-2">
+              <AppText className="text-xs font-bold text-secondary">
+                🧪 Mock Testing Mode Active
+              </AppText>
+              <AppText className="mt-0.5 text-[11px] text-text-secondary">
+                Testing SACCO member flow without backend credentials.
+              </AppText>
+            </View>
+            <Button
+              label="Quick Demo Fill"
+              variant="outline"
+              className="px-3 py-1.5"
+              onPress={() => {
+                setOrg('kagera-sacco');
+                setMemberNo('M-1049');
+                setPin('1234');
+              }}
+            />
+          </View>
+        </View>
+      ) : null}
+
       <View className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
         <FormField
           label="Cooperative Address / Slug"
@@ -187,6 +213,34 @@ export function MemberLoginScreen() {
           disabled={loading}
           className="mt-4"
         />
+
+        {IS_MOCK_ENABLED ? (
+          <Button
+            label="⚡ One-Tap Demo Sign In"
+            variant="outline"
+            loading={loading}
+            disabled={loading}
+            className="mt-3"
+            onPress={async () => {
+              setOrg('kagera-sacco');
+              setMemberNo('M-1049');
+              setPin('1234');
+              setLoading(true);
+              try {
+                const res = await memberAuthApi.login({
+                  org: 'kagera-sacco',
+                  member_no: 'M-1049',
+                  password: '1234',
+                });
+                await setMemberAuthenticated(res);
+              } catch (e: any) {
+                setErrorMessage(e.message || 'Demo login failed');
+              } finally {
+                setLoading(false);
+              }
+            }}
+          />
+        ) : null}
 
         <View className="mt-6 flex-row items-center justify-center border-t border-border pt-4">
           <AppText className="text-sm text-text-secondary">
