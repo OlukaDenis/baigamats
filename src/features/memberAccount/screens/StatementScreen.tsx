@@ -17,6 +17,7 @@ import {
 import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
 import { FormField } from '../../../components/molecules/FormField';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { TransactionItem } from '../components/TransactionItem';
@@ -70,42 +71,41 @@ export function StatementScreen() {
   const hasActiveFilter = Boolean(activeFrom || activeTo);
 
   return (
-    <ScreenTemplate scrollable={false}>
-      {/* Header */}
-      <View className="mb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow-sm">
-            <DocumentTextIcon color={colors.onPrimary} size={24} />
-          </View>
-          <View>
-            <AppText variant="title" accessibilityRole="header" className="font-bold text-text-primary">
-              Account Statement
-            </AppText>
-            <AppText className="text-xs text-text-secondary mt-0.5">
-              {totalCount} {totalCount === 1 ? 'transaction' : 'transactions'}
-            </AppText>
-          </View>
-        </View>
-
-        {/* Filter Button */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Filter statement transactions"
-          onPress={() => setFilterModalVisible(true)}
-          className={`flex-row items-center rounded-xl border p-2.5 shadow-sm ${
-            hasActiveFilter ? 'border-primary bg-primary/10' : 'border-border bg-surface'
-          }`}
-        >
-          <AdjustmentsHorizontalIcon
-            color={hasActiveFilter ? colors.primary : colors.textSecondary}
-            size={20}
-          />
-          {hasActiveFilter ? (
-            <View className="ml-1.5 h-2 w-2 rounded-full bg-primary" />
-          ) : null}
-        </Pressable>
-      </View>
-
+    <ScreenTemplate
+      scrollable={false}
+      header={
+        <AppBar
+          title="Account Statement"
+          subtitle={`${totalCount} ${totalCount === 1 ? 'transaction' : 'transactions'}`}
+          showBackButton={false}
+          leadingIcon={
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <DocumentTextIcon color={colors.primary} size={20} />
+            </View>
+          }
+          rightAction={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Filter statement transactions"
+              onPress={() => setFilterModalVisible(true)}
+              className={`flex-row items-center rounded-xl border p-2.5 shadow-xs ${
+                hasActiveFilter
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-background'
+              }`}
+            >
+              <AdjustmentsHorizontalIcon
+                color={hasActiveFilter ? colors.primary : colors.textSecondary}
+                size={18}
+              />
+              {hasActiveFilter ? (
+                <View className="ml-1 h-2 w-2 rounded-full bg-primary" />
+              ) : null}
+            </Pressable>
+          }
+        />
+      }
+    >
       {/* Active Filter Chips */}
       {hasActiveFilter ? (
         <View className="mb-4 flex-row flex-wrap items-center gap-2">

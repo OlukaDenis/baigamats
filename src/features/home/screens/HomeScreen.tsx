@@ -15,6 +15,7 @@ import {
 import type { MainTabParamList } from '../../../app/navigation/types';
 import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
+import { HomeAppBar } from '../../../components/organisms/HomeAppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { formatUGX } from '../../../utils/currency';
@@ -68,48 +69,26 @@ export function HomeScreen() {
   };
 
   return (
-    <ScreenTemplate>
-      {/* Top Welcome / Identity Card */}
-      <View className="mb-6 items-center rounded-3xl border border-border bg-surface px-6 py-8 shadow-sm">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
-          <SparklesIcon
-            color={colors.onSecondary}
-            size={32}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
+    <ScreenTemplate header={<HomeAppBar />}>
+      {/* Streamlined Greeting Banner */}
+      <View className="mb-6 flex-row items-center justify-between rounded-2xl border border-border bg-surface px-5 py-3.5 shadow-xs">
+        <View className="flex-1">
+          <AppText className="text-xs text-text-secondary font-medium">
+            {member?.name ? 'Welcome back,' : 'Workspace'}
+          </AppText>
+          <AppText className="text-base font-bold text-text-primary" numberOfLines={1}>
+            {member?.name || user?.email || 'Valued Member'}
+          </AppText>
         </View>
-        <AppText variant="display" className="text-center font-bold text-text-primary">
-          Baigamats
-        </AppText>
-        <AppText className="mt-2 text-center text-sm text-text-secondary">
-          {member?.name
-            ? `Welcome back, ${member.name}`
-            : user?.email
-              ? `Welcome back, ${user.email}`
-              : 'Your business workspace is ready.'}
-        </AppText>
-        {member?.member_no ? (
-          <View className="mt-3 flex-row flex-wrap justify-center gap-2">
-            <View className="rounded-full bg-secondary px-3.5 py-1">
-              <AppText variant="label" className="font-semibold uppercase text-on-secondary">
-                Member: {member.member_no}
-              </AppText>
-            </View>
-            {organization?.name ? (
-              <View className="rounded-full bg-primary px-3.5 py-1">
-                <AppText variant="label" className="font-semibold text-on-primary">
-                  {organization.name}
-                </AppText>
-              </View>
-            ) : null}
+        {organization?.name ? (
+          <View className="rounded-full bg-primary/10 px-3 py-1">
+            <AppText variant="caption" className="font-semibold text-primary">
+              {organization.name}
+            </AppText>
           </View>
         ) : profile?.role ? (
-          <View className="mt-3 rounded-full bg-secondary px-3.5 py-1">
-            <AppText
-              variant="label"
-              className="font-semibold uppercase text-on-secondary"
-            >
+          <View className="rounded-full bg-secondary/15 px-3 py-1">
+            <AppText variant="caption" className="font-semibold uppercase text-secondary">
               {profile.role}
             </AppText>
           </View>

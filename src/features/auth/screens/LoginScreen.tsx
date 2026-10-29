@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import {
   ArrowRightIcon,
   LockClosedIcon,
+  SparklesIcon,
   UserIcon,
   UserPlusIcon,
 } from 'react-native-heroicons/outline';
@@ -13,6 +14,7 @@ import type { AppTextInputInstance } from '../../../components/atoms/AppTextInpu
 import { Button } from '../../../components/atoms/Button';
 import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import {
@@ -70,20 +72,22 @@ export function LoginScreen({ navigation }: AuthStackScreenProps<'Login'>) {
   };
 
   return (
-    <ScreenTemplate>
-      <View className="mb-6 items-center rounded-3xl border border-border bg-surface px-6 py-8 shadow-sm">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
-          <LockClosedIcon
-            color={colors.onSecondary}
-            size={30}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
-        <AppText variant="display" className="text-center font-bold text-text-primary">
-          Sign in
-        </AppText>
-        <AppText className="mt-2 text-center text-sm text-text-secondary leading-5">
+    <ScreenTemplate
+      header={
+        <AppBar
+          title="Sign In"
+          subtitle="Business & Field Staff Portal"
+          showBackButton={false}
+          leadingIcon={
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-secondary/15">
+              <SparklesIcon color={colors.secondary} size={20} />
+            </View>
+          }
+        />
+      }
+    >
+      <View className="mb-6 items-center">
+        <AppText className="text-center text-sm text-text-secondary leading-5">
           Use your email address or staff username to access your Baigamats business.
         </AppText>
       </View>

@@ -14,6 +14,7 @@ import {
 
 import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { OrganizationSetupBanner } from '../../auth/components/OrganizationSetupBanner';
@@ -32,9 +33,8 @@ type DetailRowProps = {
 function DetailRow({ icon, label, value, isLast = false }: DetailRowProps) {
   return (
     <View
-      className={`flex-row items-center py-3 ${
-        isLast ? '' : 'border-b border-border'
-      }`}
+      className={`flex-row items-center py-3 ${isLast ? '' : 'border-b border-border'
+        }`}
     >
       <View
         className="mr-3 rounded-lg border border-border bg-background p-2"
@@ -57,6 +57,7 @@ export function ProfileScreen() {
   const { colors } = useTheme();
   const user = useAuthStore(state => state.user);
   const profile = useAuthStore(state => state.profile);
+  const member = useAuthStore(state => state.member);
   const needsOrganizationSetup = useAuthStore(
     state => state.needsOrganizationSetup,
   );
@@ -83,36 +84,47 @@ export function ProfileScreen() {
   };
 
   return (
-    <ScreenTemplate>
-      <View className="mb-6 items-center rounded-3xl border border-border bg-surface px-6 py-8 shadow-sm">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
-          <UserCircleIcon
-            color={colors.onSecondary}
-            size={32}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
+    <ScreenTemplate
+      header={
+        <AppBar
+          title="My Profile"
+          subtitle={member?.name || user?.email || 'Account settings'}
+          showBackButton={false}
+          leadingIcon={
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <UserCircleIcon color={colors.primary} size={20} />
+            </View>
+          }
+        />
+      }
+    >
+      <View className="mb-6 rounded-3xl border border-border bg-surface p-5 shadow-xs">
+        <View className="flex-row items-center gap-3">
+          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-secondary/15">
+            <UserCircleIcon color={colors.secondary} size={28} />
+          </View>
+          <View className="flex-1">
+            <AppText variant="title" className="font-bold text-text-primary" numberOfLines={1}>
+              {member?.name || user?.email || 'Signed-in Account'}
+            </AppText>
+            <View className="flex-row items-center gap-2 mt-1">
+              {profile?.role ? (
+                <View className="rounded-full bg-secondary/15 px-2.5 py-0.5">
+                  <AppText variant="caption" className="font-semibold uppercase text-secondary text-[10px]">
+                    {profile.role}
+                  </AppText>
+                </View>
+              ) : null}
+              {member?.member_no ? (
+                <View className="rounded-full bg-primary/15 px-2.5 py-0.5">
+                  <AppText variant="caption" className="font-semibold text-primary text-[10px]">
+                    {member.member_no}
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
+          </View>
         </View>
-        <AppText variant="title" className="text-center font-bold text-text-primary">
-          {user?.email ?? 'Signed-in Account'}
-        </AppText>
-        {profile?.role ? (
-          <View className="mt-2.5 rounded-full bg-secondary px-3.5 py-1">
-            <AppText
-              variant="label"
-              className="font-semibold uppercase text-on-secondary"
-            >
-              {profile.role}
-            </AppText>
-          </View>
-        ) : null}
-        {profile?.organization_id ? (
-          <View className="mt-3 rounded-lg border border-border bg-background px-3 py-1.5">
-            <AppText className="text-center text-xs text-text-secondary">
-              Organization ID: {profile.organization_id}
-            </AppText>
-          </View>
-        ) : null}
       </View>
 
       {needsOrganizationSetup ? <OrganizationSetupBanner /> : null}

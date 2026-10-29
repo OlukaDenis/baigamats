@@ -20,6 +20,7 @@ import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
 import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import {
@@ -117,29 +118,20 @@ export function DepositScreen() {
   };
 
   return (
-    <ScreenTemplate>
-      {/* Header */}
-      <View className="mb-6 items-center">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
-          <ArrowDownLeftIcon
-            color={colors.onSecondary}
-            size={32}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-          />
-        </View>
-        <AppText
-          variant="display"
-          accessibilityRole="header"
-          className="text-center font-bold text-text-primary"
-        >
-          Deposit to Savings
-        </AppText>
-        <AppText className="mt-1 text-center text-sm text-text-secondary">
-          Transfer money instantly from MTN or Airtel Money.
-        </AppText>
-      </View>
-
+    <ScreenTemplate
+      header={
+        <AppBar
+          title="Deposit Funds"
+          subtitle="Mobile Money (MTN & Airtel Uganda)"
+          showBackButton={false}
+          leadingIcon={
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <ArrowDownLeftIcon color={colors.primary} size={20} />
+            </View>
+          }
+        />
+      }
+    >
       {submissionError ? <AlertBanner message={submissionError} /> : null}
 
       {/* Main Form */}

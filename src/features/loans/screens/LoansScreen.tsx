@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import {
+  ArrowPathIcon,
   BanknotesIcon,
   CalendarDaysIcon,
   ExclamationTriangleIcon,
@@ -16,6 +17,7 @@ import {
 
 import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { formatUGX } from '../../../utils/currency';
@@ -61,24 +63,33 @@ export function LoansScreen() {
   }, [allLoans, selectedTab]);
 
   return (
-    <ScreenTemplate scrollable={false}>
-      {/* Header */}
-      <View className="mb-4 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow-sm">
-            <ScaleIcon color={colors.onPrimary} size={24} />
-          </View>
-          <View>
-            <AppText variant="title" accessibilityRole="header" className="font-bold text-text-primary">
-              Loan Portfolio
-            </AppText>
-            <AppText className="text-xs text-text-secondary mt-0.5">
-              {summary.activeCount} active • Total due: {formatUGX(summary.totalDue)}
-            </AppText>
-          </View>
-        </View>
-      </View>
-
+    <ScreenTemplate
+      scrollable={false}
+      header={
+        <AppBar
+          title="Loan Portfolio"
+          subtitle={`${summary.activeCount} active • Total due: ${formatUGX(summary.totalDue)}`}
+          showBackButton={false}
+          leadingIcon={
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <ScaleIcon color={colors.primary} size={20} />
+            </View>
+          }
+          rightAction={
+            <Pressable
+              onPress={() => {
+                refetch();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh loans"
+              className="h-9 w-9 items-center justify-center rounded-xl bg-border/40 active:opacity-70"
+            >
+              <ArrowPathIcon color={colors.textPrimary} size={18} />
+            </Pressable>
+          }
+        />
+      }
+    >
       {/* Overdue Warning Alert Banner if overdue loans exist */}
       {summary.overdueCount > 0 ? (
         <View

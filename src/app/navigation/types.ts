@@ -18,7 +18,11 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
-export type RootStackParamList = AuthStackParamList & MainTabParamList;
+export type AppStackParamList = {
+  Notifications: undefined;
+};
+
+export type RootStackParamList = AuthStackParamList & MainTabParamList & AppStackParamList;
 
 export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
   NativeStackScreenProps<AuthStackParamList, T>;
@@ -28,6 +32,6 @@ export type MainTabScreenProps<T extends keyof MainTabParamList> =
 
 declare global {
   namespace ReactNavigation {
-    interface RootParamList extends RootStackParamList {}
+    interface RootParamList extends RootStackParamList { }
   }
 }

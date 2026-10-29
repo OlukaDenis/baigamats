@@ -16,6 +16,7 @@ import { MfaVerifyScreen } from '../../features/auth/screens/MfaVerifyScreen';
 import { RegisterScreen } from '../../features/auth/screens/RegisterScreen';
 import { SplashScreen } from '../../features/auth/screens/SplashScreen';
 import { useAuthStore } from '../../features/auth/store/authStore';
+import { NotificationsScreen } from '../../features/notifications/screens/NotificationsScreen';
 import { useTheme } from '../../theme/ThemeProvider';
 import { MainTabNavigator } from './MainTabNavigator';
 import type { AuthStackParamList } from './types';
@@ -24,6 +25,7 @@ type RootSwitchParamList = {
   Splash: undefined;
   MainTabs: undefined;
   ChangePin: { isMandatory?: boolean } | undefined;
+  Notifications: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -88,6 +90,7 @@ export function RootNavigator() {
         ) : (
           <RootSwitchStack.Navigator screenOptions={{ headerShown: false }}>
             <RootSwitchStack.Screen name="MainTabs" component={MainTabNavigator} />
+            <RootSwitchStack.Screen name="Notifications" component={NotificationsScreen} />
           </RootSwitchStack.Navigator>
         )
       ) : (

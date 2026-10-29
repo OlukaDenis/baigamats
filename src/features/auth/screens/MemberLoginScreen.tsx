@@ -14,6 +14,7 @@ import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
 import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { ApiError } from '../../../services/api/client';
@@ -106,24 +107,25 @@ export function MemberLoginScreen() {
   };
 
   return (
-    <ScreenTemplate>
+    <ScreenTemplate
+      header={
+        <AppBar
+          title="Member Sign In"
+          subtitle="Cooperative SACCO Portal"
+          showBackButton={true}
+        />
+      }
+    >
       <View className="mb-6 items-center">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-sm">
+        <View className="mb-3 h-14 w-14 items-center justify-center rounded-2xl bg-primary shadow-sm">
           <BuildingOffice2Icon
             color={colors.onPrimary}
-            size={32}
+            size={28}
             accessibilityElementsHidden
             importantForAccessibility="no"
           />
         </View>
-        <AppText
-          variant="display"
-          accessibilityRole="header"
-          className="text-center font-bold text-text-primary"
-        >
-          Cooperative Member Sign In
-        </AppText>
-        <AppText className="mt-2 text-center text-sm text-text-secondary">
+        <AppText className="text-center text-sm text-text-secondary">
           Access your savings, shares, and welfare balances.
         </AppText>
       </View>

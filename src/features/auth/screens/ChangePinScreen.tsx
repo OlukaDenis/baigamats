@@ -9,6 +9,7 @@ import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
 import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { ApiError } from '../../../services/api/client';
@@ -103,24 +104,29 @@ export function ChangePinScreen() {
   };
 
   return (
-    <ScreenTemplate>
+    <ScreenTemplate
+      header={
+        <AppBar
+          title={isMandatory ? 'Set Permanent PIN' : 'Change Security PIN'}
+          subtitle={
+            isMandatory
+              ? 'First-time login setup'
+              : 'Keep your account secure'
+          }
+          showBackButton={!isMandatory}
+        />
+      }
+    >
       <View className="mb-6 items-center">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-secondary shadow-sm">
+        <View className="mb-3 h-14 w-14 items-center justify-center rounded-2xl bg-secondary shadow-sm">
           <KeyIcon
             color={colors.onSecondary}
-            size={32}
+            size={28}
             accessibilityElementsHidden
             importantForAccessibility="no"
           />
         </View>
-        <AppText
-          variant="display"
-          accessibilityRole="header"
-          className="text-center font-bold text-text-primary"
-        >
-          {isMandatory ? 'Set Permanent PIN' : 'Change Security PIN'}
-        </AppText>
-        <AppText className="mt-2 text-center text-sm text-text-secondary">
+        <AppText className="text-center text-sm text-text-secondary">
           {isMandatory
             ? 'You were issued a temporary password. Choose a secure 4 or 5 digit PIN to continue.'
             : 'Enter your current PIN and choose a new 4 or 5 digit PIN.'}

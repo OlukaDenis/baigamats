@@ -26,6 +26,7 @@ import { AppText } from '../../../components/atoms/AppText';
 import { Button } from '../../../components/atoms/Button';
 import { AlertBanner } from '../../../components/molecules/AlertBanner';
 import { FormField } from '../../../components/molecules/FormField';
+import { AppBar } from '../../../components/organisms/AppBar';
 import { ScreenTemplate } from '../../../components/templates/ScreenTemplate';
 import { useTheme } from '../../../theme/ThemeProvider';
 import {
@@ -186,24 +187,20 @@ export function TransferScreen() {
   };
 
   return (
-    <ScreenTemplate>
-      {/* Header */}
-      <View className="mb-6 items-center">
-        <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-sm">
-          <ArrowUpRightIcon color={colors.onPrimary} size={32} />
-        </View>
-        <AppText
-          variant="display"
-          accessibilityRole="header"
-          className="text-center font-bold text-text-primary"
-        >
-          Withdraw & Transfer
-        </AppText>
-        <AppText className="mt-1 text-center text-sm text-text-secondary">
-          Available Savings: {formatUGX(savingsBalance)}
-        </AppText>
-      </View>
-
+    <ScreenTemplate
+      header={
+        <AppBar
+          title="Withdraw & Transfer"
+          subtitle={`Available Savings: ${formatUGX(savingsBalance)}`}
+          showBackButton={false}
+          leadingIcon={
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <ArrowUpRightIcon color={colors.primary} size={20} />
+            </View>
+          }
+        />
+      }
+    >
       {errorMessage ? <AlertBanner message={errorMessage} /> : null}
 
       {/* 4-way Kind Segmented Selector */}
@@ -212,15 +209,13 @@ export function TransferScreen() {
           accessibilityRole="button"
           accessibilityLabel="Withdraw to mobile money"
           onPress={() => setKind('withdraw')}
-          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${
-            kind === 'withdraw' ? 'bg-primary shadow-sm' : ''
-          }`}
+          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${kind === 'withdraw' ? 'bg-primary shadow-sm' : ''
+            }`}
         >
           <AppText
             variant="label"
-            className={`text-xs font-bold ${
-              kind === 'withdraw' ? 'text-on-primary' : 'text-text-secondary'
-            }`}
+            className={`text-xs font-bold ${kind === 'withdraw' ? 'text-on-primary' : 'text-text-secondary'
+              }`}
           >
             Withdraw
           </AppText>
@@ -230,15 +225,13 @@ export function TransferScreen() {
           accessibilityRole="button"
           accessibilityLabel="Transfer to another member"
           onPress={() => setKind('to_member')}
-          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${
-            kind === 'to_member' ? 'bg-primary shadow-sm' : ''
-          }`}
+          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${kind === 'to_member' ? 'bg-primary shadow-sm' : ''
+            }`}
         >
           <AppText
             variant="label"
-            className={`text-xs font-bold ${
-              kind === 'to_member' ? 'text-on-primary' : 'text-text-secondary'
-            }`}
+            className={`text-xs font-bold ${kind === 'to_member' ? 'text-on-primary' : 'text-text-secondary'
+              }`}
           >
             To Member
           </AppText>
@@ -248,15 +241,13 @@ export function TransferScreen() {
           accessibilityRole="button"
           accessibilityLabel="Buy shares"
           onPress={() => setKind('to_shares')}
-          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${
-            kind === 'to_shares' ? 'bg-primary shadow-sm' : ''
-          }`}
+          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${kind === 'to_shares' ? 'bg-primary shadow-sm' : ''
+            }`}
         >
           <AppText
             variant="label"
-            className={`text-xs font-bold ${
-              kind === 'to_shares' ? 'text-on-primary' : 'text-text-secondary'
-            }`}
+            className={`text-xs font-bold ${kind === 'to_shares' ? 'text-on-primary' : 'text-text-secondary'
+              }`}
           >
             Buy Shares
           </AppText>
@@ -266,15 +257,13 @@ export function TransferScreen() {
           accessibilityRole="button"
           accessibilityLabel="Pay welfare contribution"
           onPress={() => setKind('to_welfare')}
-          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${
-            kind === 'to_welfare' ? 'bg-primary shadow-sm' : ''
-          }`}
+          className={`flex-1 items-center justify-center rounded-xl py-2.5 ${kind === 'to_welfare' ? 'bg-primary shadow-sm' : ''
+            }`}
         >
           <AppText
             variant="label"
-            className={`text-xs font-bold ${
-              kind === 'to_welfare' ? 'text-on-primary' : 'text-text-secondary'
-            }`}
+            className={`text-xs font-bold ${kind === 'to_welfare' ? 'text-on-primary' : 'text-text-secondary'
+              }`}
           >
             Welfare
           </AppText>
