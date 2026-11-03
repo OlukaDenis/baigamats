@@ -29,9 +29,13 @@ class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate
     reactNativeFactory?.devMenuConfiguration = devMenuConfiguration
     #endif
     
+    let isHoreca = Bundle.main.bundleIdentifier?.contains("horeca") ?? false
+    let initialProps: [AnyHashable: Any] = ["appVariant": isHoreca ? "horeca" : "sacco"]
+
     reactNativeFactory?.startReactNative(
       withModuleName: "Baigamats",
       in: window,
+      initialProperties: initialProps,
       connectionOptions: connectionOptions
     )
 

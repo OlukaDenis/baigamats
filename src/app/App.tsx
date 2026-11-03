@@ -1,14 +1,28 @@
-import { RootNavigator } from './navigation/RootNavigator';
-import { AppProviders } from './providers/AppProviders';
-
-import { LogBox } from 'react-native';
+import React, { useState } from 'react';
+import { LogBox, StyleSheet, View } from 'react-native';
+import { HorecaApp } from '@horeca/HorecaApp';
+import { SaccoApp } from '@sacco/SaccoApp';
+import { env } from '@shared/config/env';
 
 LogBox.ignoreAllLogs();
 
-export function App() {
+interface AppProps {
+  appVariant?: 'sacco' | 'horeca';
+}
+
+export function App(props?: AppProps) {
+  const initialVariant = props?.appVariant ?? env.APP_VARIANT;
+  const [activeVariant, setActiveVariant] = useState<'sacco' | 'horeca'>(initialVariant);
+
   return (
-    <AppProviders>
-      <RootNavigator />
-    </AppProviders>
+    <View style={styles.container}>
+      {activeVariant === 'horeca' ? <HorecaApp /> : <SaccoApp />}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

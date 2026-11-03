@@ -1,0 +1,2948 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/v1/health": {
+            "get": {
+                "operationId": "HealthController_check",
+                "parameters": [
+                    {
+                        "name": "deep",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "service": "horeca-api",
+                                        "status": "up",
+                                        "database": "up"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Is the API up? Add ?deep=1 to check the database too",
+                "description": "**Permission:** `public`",
+                "x-permission": "public",
+                "security": []
+            }
+        },
+        "/v1/me": {
+            "get": {
+                "operationId": "MeController_me",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "userId": "5f1c...",
+                                        "name": "Magave Arnold",
+                                        "organizationId": "9a3b...",
+                                        "role": "manager",
+                                        "permissions": [
+                                            "tables:read",
+                                            "orders:read",
+                                            "orders:write",
+                                            "billing:write",
+                                            "payments:read",
+                                            "reports:read"
+                                        ]
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Who am I, my role and what I may do",
+                "description": "**Permission:** `signed in`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "signed in"
+            }
+        },
+        "/v1/tables": {
+            "get": {
+                "operationId": "HorecaController_tables",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": [
+                                        {
+                                            "id": "0b1e0000-0000-0000-0000-000000000001",
+                                            "table_number": "T1",
+                                            "capacity": 4,
+                                            "status": "occupied",
+                                            "section": "Main dining"
+                                        }
+                                    ],
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Tables"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List tables (floor plan)",
+                "description": "**Permission:** `tables:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "tables:read"
+            },
+            "post": {
+                "operationId": "CashierController_createTable",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateTableDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "0b1e0000-0000-0000-0000-000000000001",
+                                        "table_number": "T7",
+                                        "capacity": 4,
+                                        "status": "available"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Tables"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a table",
+                "description": "**Permission:** `tables:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "tables:write"
+            }
+        },
+        "/v1/menu": {
+            "get": {
+                "operationId": "HorecaController_menu",
+                "parameters": [
+                    {
+                        "name": "includeInactive",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "categories": [
+                                            {
+                                                "id": "c1000000-0000-0000-0000-000000000001",
+                                                "name": "Drinks",
+                                                "sort_order": 0,
+                                                "items": [
+                                                    {
+                                                        "id": "m1000000-0000-0000-0000-000000000001",
+                                                        "category_id": "c1000000-0000-0000-0000-000000000001",
+                                                        "name": "Mineral water",
+                                                        "price": 2000,
+                                                        "station": "bar",
+                                                        "is_active": true,
+                                                        "age_restricted": false
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        "uncategorised": []
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Menu"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Menu with categories and items",
+                "description": "**Permission:** `menu:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "menu:read"
+            }
+        },
+        "/v1/orders": {
+            "get": {
+                "operationId": "HorecaController_orders",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "open",
+                                "billed",
+                                "paid",
+                                "cancelled"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "tableId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "items": [
+                                            {
+                                                "id": "11111111-1111-1111-1111-111111111111",
+                                                "order_number": "ORD-1",
+                                                "table_id": "0b1e0000-0000-0000-0000-000000000001",
+                                                "order_type": "dine_in",
+                                                "status": "open",
+                                                "tab_name": null,
+                                                "party_size": 4,
+                                                "total_amount": 42000,
+                                                "service_charge_amount": 0,
+                                                "created_at": "2026-11-02T16:30:00Z",
+                                                "updated_at": "2026-11-02T16:41:10Z"
+                                            }
+                                        ],
+                                        "total": 1,
+                                        "limit": 50,
+                                        "offset": 0
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List orders (filter by status or table, paged)",
+                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:read"
+            },
+            "post": {
+                "operationId": "HorecaController_createOrder",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateOrderDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "11111111-1111-1111-1111-111111111111",
+                                        "order_number": "ORD-1",
+                                        "table_id": "0b1e0000-0000-0000-0000-000000000001",
+                                        "order_type": "dine_in",
+                                        "status": "open",
+                                        "tab_name": null,
+                                        "party_size": 4,
+                                        "total_amount": 42000,
+                                        "created_at": "2026-11-02T16:30:00Z"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Open an order (dine_in needs tableId, tab needs tabName)",
+                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:write"
+            }
+        },
+        "/v1/orders/{id}": {
+            "get": {
+                "operationId": "HorecaController_order",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "11111111-1111-1111-1111-111111111111",
+                                        "order_number": "ORD-1",
+                                        "table_id": "0b1e0000-0000-0000-0000-000000000001",
+                                        "order_type": "dine_in",
+                                        "status": "open",
+                                        "tab_name": null,
+                                        "party_size": 4,
+                                        "total_amount": 42000,
+                                        "service_charge_amount": 0,
+                                        "created_at": "2026-11-02T16:30:00Z",
+                                        "updated_at": "2026-11-02T16:41:10Z",
+                                        "items": [
+                                            {
+                                                "id": "a1000000-0000-0000-0000-000000000001",
+                                                "menu_item_id": "m1000000-0000-0000-0000-000000000001",
+                                                "item_name": "Mineral water",
+                                                "unit_price": 2000,
+                                                "qty": 2,
+                                                "station": "bar",
+                                                "kot_status": "new",
+                                                "modifiers": [],
+                                                "notes": null,
+                                                "discount_amount": 0,
+                                                "created_at": "2026-11-02T16:31:00Z"
+                                            }
+                                        ]
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "One order with its items",
+                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:read"
+            }
+        },
+        "/v1/kitchen": {
+            "get": {
+                "operationId": "HorecaController_kitchen",
+                "parameters": [
+                    {
+                        "name": "station",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "kitchen",
+                                "bar"
+                            ],
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": [
+                                        {
+                                            "id": "a1000000-0000-0000-0000-000000000001",
+                                            "item_name": "Grilled tilapia",
+                                            "qty": 1,
+                                            "station": "kitchen",
+                                            "kot_status": "preparing",
+                                            "modifiers": [
+                                                "no pepper"
+                                            ],
+                                            "notes": null,
+                                            "created_at": "2026-11-02T16:31:00Z",
+                                            "order": {
+                                                "id": "11111111-1111-1111-1111-111111111111",
+                                                "order_number": "ORD-1",
+                                                "table_id": "0b1e0000-0000-0000-0000-000000000001",
+                                                "order_type": "dine_in",
+                                                "tab_name": null,
+                                                "status": "open"
+                                            }
+                                        }
+                                    ],
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Kitchen"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Kitchen and bar screen: unserved items on open orders (optional station)",
+                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:read"
+            }
+        },
+        "/v1/orders/{id}/items": {
+            "post": {
+                "operationId": "HorecaController_addItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddItemDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "item": {
+                                            "id": "a1000000-0000-0000-0000-000000000001",
+                                            "item_name": "Mineral water",
+                                            "unit_price": 2000,
+                                            "qty": 2,
+                                            "station": "bar",
+                                            "kot_status": "new",
+                                            "modifiers": [],
+                                            "notes": null,
+                                            "discount_amount": 0
+                                        },
+                                        "orderTotal": 44000,
+                                        "merged": false
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add an item to an open order (a plain repeat merges into the waiting line)",
+                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:write"
+            }
+        },
+        "/v1/orders/{id}/items/{itemId}": {
+            "delete": {
+                "operationId": "HorecaController_removeItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "orderTotal": 2000
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Remove an item the kitchen has not started",
+                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:write"
+            }
+        },
+        "/v1/orders/{id}/items/{itemId}/status": {
+            "patch": {
+                "operationId": "HorecaController_setStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/KotStatusDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "a1000000-0000-0000-0000-000000000001",
+                                        "item_name": "Mineral water",
+                                        "qty": 2,
+                                        "station": "bar",
+                                        "kot_status": "ready"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Kitchen"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Move a ticket: new, preparing, ready, served (ready alerts the waiter)",
+                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:write"
+            }
+        },
+        "/v1/orders/{id}/cancel": {
+            "post": {
+                "operationId": "HorecaController_cancel",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "11111111-1111-1111-1111-111111111111",
+                                        "status": "cancelled"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Orders"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Cancel an open order with nothing billed",
+                "description": "**Permission:** `orders:cancel`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:cancel"
+            }
+        },
+        "/v1/orders/{id}/bill": {
+            "post": {
+                "operationId": "HorecaController_bill",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BillDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "orderId": "11111111-1111-1111-1111-111111111111",
+                                        "status": "billed",
+                                        "paymentMethod": "cash",
+                                        "saleId": "s1000000-0000-0000-0000-000000000001",
+                                        "saleNumber": "SALE-32171545"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Payments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Take cash and bill the order",
+                "description": "**Permission:** `billing:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "billing:write"
+            }
+        },
+        "/v1/orders/{id}/payments": {
+            "post": {
+                "operationId": "HorecaController_startPayment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StartPaymentDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "orderId": "11111111-1111-1111-1111-111111111111",
+                                        "paymentId": "pay_8f2c",
+                                        "amount": 42000,
+                                        "chargeAmount": 42000,
+                                        "feeAmount": 0,
+                                        "method": "mobile_money",
+                                        "paymentUrl": null,
+                                        "state": "pending"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Payments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Start a Mobile Money request or a card checkout (poll the status after)",
+                "description": "**Permission:** `billing:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "billing:write"
+            }
+        },
+        "/v1/orders/{id}/payments/{paymentId}": {
+            "get": {
+                "operationId": "HorecaController_paymentStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "paymentId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "orderId": "11111111-1111-1111-1111-111111111111",
+                                        "paymentId": "pay_8f2c",
+                                        "state": "paid",
+                                        "message": null,
+                                        "amount": 42000,
+                                        "saleId": "s1000000-0000-0000-0000-000000000001",
+                                        "saleNumber": "SALE-39432058"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Payments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Check whether a payment arrived (poll every 3 to 5 s until paid or failed)",
+                "description": "**Permission:** `billing:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "billing:write"
+            }
+        },
+        "/v1/orders/{id}/receipt": {
+            "get": {
+                "operationId": "CashierController_receipt",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "business": "Shotz Bar & Restaurant",
+                                        "orderNumber": "ORD-1",
+                                        "status": "billed",
+                                        "orderType": "dine_in",
+                                        "table": "T1",
+                                        "tabName": null,
+                                        "partySize": 4,
+                                        "date": "2026-11-02T16:30:00Z",
+                                        "lines": [
+                                            {
+                                                "name": "Mineral water",
+                                                "qty": 2,
+                                                "unitPrice": 2000,
+                                                "discount": 0,
+                                                "lineTotal": 4000
+                                            }
+                                        ],
+                                        "itemsTotal": 4000,
+                                        "serviceCharge": 0,
+                                        "total": 4000
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Payments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Everything needed to print a receipt",
+                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:read"
+            }
+        },
+        "/v1/reports/daily": {
+            "get": {
+                "operationId": "CashierController_daily",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "required": false,
+                        "in": "query",
+                        "description": "YYYY-MM-DD, Uganda time. Today when left out.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "date": "2026-11-02",
+                                        "orders": {
+                                            "open": 0,
+                                            "billed": 1,
+                                            "paid": 0,
+                                            "cancelled": 2
+                                        },
+                                        "sales": 2000,
+                                        "serviceCharge": 0,
+                                        "byOrderType": {
+                                            "dine_in": {
+                                                "orders": 1,
+                                                "sales": 2000
+                                            }
+                                        },
+                                        "topItems": [
+                                            {
+                                                "name": "Mineral water",
+                                                "qty": 1,
+                                                "revenue": 2000
+                                            }
+                                        ]
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Reports"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "One day's sales (date optional, default today)",
+                "description": "**Permission:** `reports:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "reports:read"
+            }
+        },
+        "/v1/reports/range": {
+            "get": {
+                "operationId": "CashierController_range",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "required": true,
+                        "in": "query",
+                        "description": "YYYY-MM-DD, Uganda time",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "required": true,
+                        "in": "query",
+                        "description": "YYYY-MM-DD, Uganda time, included",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "from": "2026-10-01",
+                                        "to": "2026-10-31",
+                                        "orders": {
+                                            "open": 0,
+                                            "billed": 5,
+                                            "paid": 0,
+                                            "cancelled": 9
+                                        },
+                                        "sales": 48000,
+                                        "serviceCharge": 0,
+                                        "average": 9600,
+                                        "byOrderType": {
+                                            "dine_in": {
+                                                "orders": 3,
+                                                "sales": 44000
+                                            }
+                                        },
+                                        "byMethod": {
+                                            "cash": {
+                                                "sales": 4,
+                                                "amount": 46000
+                                            },
+                                            "mobile_money": {
+                                                "sales": 1,
+                                                "amount": 2000
+                                            }
+                                        },
+                                        "byDay": [
+                                            {
+                                                "date": "2026-10-31",
+                                                "orders": 5,
+                                                "sales": 48000,
+                                                "methods": {
+                                                    "cash": 46000,
+                                                    "mobile_money": 2000
+                                                }
+                                            }
+                                        ],
+                                        "byWaiter": [
+                                            {
+                                                "name": "Not recorded",
+                                                "orders": 5,
+                                                "sales": 48000
+                                            }
+                                        ],
+                                        "topItems": [
+                                            {
+                                                "name": "Club Pilsner",
+                                                "qty": 4,
+                                                "revenue": 20000
+                                            }
+                                        ]
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Reports"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Sales over a period: totals, per day with payment methods, by staff, best sellers",
+                "description": "**Permission:** `reports:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "reports:read"
+            }
+        },
+        "/v1/payments": {
+            "get": {
+                "operationId": "CashierController_payments",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "from": "2026-11-02",
+                                        "to": "2026-11-02",
+                                        "total": 44000,
+                                        "count": 2,
+                                        "byMethod": {
+                                            "cash": {
+                                                "count": 1,
+                                                "amount": 42000
+                                            },
+                                            "mobile_money": {
+                                                "count": 1,
+                                                "amount": 2000
+                                            }
+                                        },
+                                        "rows": [
+                                            {
+                                                "orderId": "11111111-1111-1111-1111-111111111111",
+                                                "orderNumber": "ORD-1",
+                                                "saleNumber": "SALE-39432058",
+                                                "method": "mobile_money",
+                                                "amount": 2000,
+                                                "paidAt": "2026-11-02T17:10:00Z",
+                                                "table": "T1",
+                                                "tab": null,
+                                                "orderType": "dine_in",
+                                                "waiter": "Sarah"
+                                            }
+                                        ]
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Payments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Every payment in a period, newest first (from, to as YYYY-MM-DD)",
+                "description": "**Permission:** `payments:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "payments:read"
+            }
+        },
+        "/v1/tables/{id}": {
+            "patch": {
+                "operationId": "CashierController_updateTable",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateTableDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "0b1e0000-0000-0000-0000-000000000001",
+                                        "table_number": "T7",
+                                        "capacity": 6,
+                                        "status": "available"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Tables"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Edit a table (number, capacity, section)",
+                "description": "**Permission:** `tables:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "tables:write"
+            },
+            "delete": {
+                "operationId": "CashierController_deleteTable",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "removed": true
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Tables"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete a table (409 if it has an open order)",
+                "description": "**Permission:** `tables:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "tables:write"
+            }
+        },
+        "/v1/tables/{id}/status": {
+            "patch": {
+                "operationId": "CashierController_tableStatus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TableStatusDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "0b1e0000-0000-0000-0000-000000000001",
+                                        "table_number": "T1",
+                                        "capacity": 4,
+                                        "status": "dirty"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Tables"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Set a table to available, reserved or dirty (409 while an order is open)",
+                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:write"
+            }
+        },
+        "/v1/menu/categories": {
+            "post": {
+                "operationId": "CashierController_createCategory",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCategoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "c1000000-0000-0000-0000-000000000001",
+                                        "name": "Drinks",
+                                        "sort_order": 0
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Menu"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a menu category",
+                "description": "**Permission:** `menu:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "menu:write"
+            }
+        },
+        "/v1/menu/items": {
+            "post": {
+                "operationId": "CashierController_createItem",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateMenuItemDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "m1000000-0000-0000-0000-000000000001",
+                                        "category_id": "c1000000-0000-0000-0000-000000000001",
+                                        "name": "Mineral water",
+                                        "price": 2000,
+                                        "station": "bar",
+                                        "is_active": true,
+                                        "age_restricted": false
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Menu"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a menu item",
+                "description": "**Permission:** `menu:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "menu:write"
+            }
+        },
+        "/v1/menu/items/{id}": {
+            "patch": {
+                "operationId": "CashierController_updateItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateMenuItemDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "m1000000-0000-0000-0000-000000000001",
+                                        "category_id": "c1000000-0000-0000-0000-000000000001",
+                                        "name": "Mineral water",
+                                        "price": 2000,
+                                        "station": "bar",
+                                        "is_active": true,
+                                        "age_restricted": false
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "tags": [
+                    "Menu"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Edit or hide a menu item",
+                "description": "**Permission:** `menu:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "menu:write"
+            }
+        },
+        "/v1/shifts/current": {
+            "get": {
+                "operationId": "ShiftsController_current",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "open": true,
+                                        "shift": {
+                                            "id": "sh100000-0000-0000-0000-000000000001",
+                                            "opened_by": "5f1c...",
+                                            "opened_at": "2026-11-02T05:00:00Z",
+                                            "opening_float": 50000,
+                                            "status": "open"
+                                        },
+                                        "takings": {
+                                            "byMethod": {
+                                                "cash": {
+                                                    "sales": 4,
+                                                    "amount": 46000
+                                                },
+                                                "mobile_money": {
+                                                    "sales": 1,
+                                                    "amount": 2000
+                                                }
+                                            },
+                                            "total": 48000,
+                                            "cash": 46000
+                                        },
+                                        "expectedCash": 96000
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Shifts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "The open shift with takings and expected cash",
+                "description": "**Permission:** `shifts:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "shifts:read"
+            }
+        },
+        "/v1/shifts": {
+            "get": {
+                "operationId": "ShiftsController_history",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": [
+                                        {
+                                            "id": "sh100000-0000-0000-0000-000000000001",
+                                            "opened_at": "2026-11-02T05:00:00Z",
+                                            "closed_at": "2026-11-02T15:00:00Z",
+                                            "opening_float": 50000,
+                                            "counted_cash": 95000,
+                                            "expected_cash": 96000,
+                                            "variance": -1000,
+                                            "note": null,
+                                            "status": "closed"
+                                        }
+                                    ],
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Shifts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Last 30 shifts",
+                "description": "**Permission:** `shifts:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "shifts:read"
+            }
+        },
+        "/v1/shifts/open": {
+            "post": {
+                "operationId": "ShiftsController_open",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OpenShiftDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "sh100000-0000-0000-0000-000000000001",
+                                        "opened_at": "2026-11-02T05:00:00Z",
+                                        "opening_float": 50000,
+                                        "status": "open"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Shifts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Open a shift with a cash float",
+                "description": "**Permission:** `shifts:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "shifts:write"
+            }
+        },
+        "/v1/shifts/close": {
+            "post": {
+                "operationId": "ShiftsController_close",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CloseShiftDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "shift": {
+                                            "id": "sh100000-0000-0000-0000-000000000001",
+                                            "opened_at": "2026-11-02T05:00:00Z",
+                                            "closed_at": "2026-11-02T15:00:00Z",
+                                            "opening_float": 50000,
+                                            "counted_cash": 95000,
+                                            "expected_cash": 96000,
+                                            "variance": -1000,
+                                            "note": null,
+                                            "status": "closed"
+                                        },
+                                        "takings": {
+                                            "byMethod": {
+                                                "cash": {
+                                                    "sales": 4,
+                                                    "amount": 46000
+                                                },
+                                                "mobile_money": {
+                                                    "sales": 1,
+                                                    "amount": 2000
+                                                }
+                                            },
+                                            "total": 48000,
+                                            "cash": 46000
+                                        },
+                                        "expectedCash": 96000,
+                                        "variance": -1000,
+                                        "ordersStillOpen": 0
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Shifts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Close the shift with the counted cash",
+                "description": "**Permission:** `shifts:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "shifts:write"
+            }
+        },
+        "/v1/staff": {
+            "get": {
+                "operationId": "StaffController_list",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": [
+                                        {
+                                            "id": "5f1c...",
+                                            "name": "Magave Arnold",
+                                            "role": "staff",
+                                            "access": "manager",
+                                            "hasPin": true
+                                        }
+                                    ],
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    }
+                },
+                "tags": [
+                    "Staff"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "People of the business, their HORECA role and whether they have a PIN",
+                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:read"
+            }
+        },
+        "/v1/staff/{id}/pin": {
+            "put": {
+                "operationId": "StaffController_setPin",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetPinDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "saved": true
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "tags": [
+                    "Staff"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Set or change someone's 4 to 6 digit PIN",
+                "description": "**Permission:** `staff:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "staff:write"
+            }
+        },
+        "/v1/staff/{id}/role": {
+            "put": {
+                "operationId": "StaffController_setRole",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetRoleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "saved": true,
+                                        "role": "cashier"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "tags": [
+                    "Staff"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Give someone a role: manager, cashier, waiter or kitchen",
+                "description": "**Permission:** `staff:write`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "staff:write"
+            }
+        },
+        "/v1/staff/verify-pin": {
+            "post": {
+                "operationId": "StaffController_verify",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyPinDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "ok": true,
+                                        "userId": "5f1c...",
+                                        "name": "Magave Arnold",
+                                        "role": "staff"
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Staff"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Check a PIN to unlock the terminal for that person (5 wrong tries lock it 5 minutes)",
+                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "orders:read"
+            }
+        },
+        "/v1/auth/login": {
+            "post": {
+                "operationId": "AuthController_login",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "mfaRequired": false,
+                                        "session": {
+                                            "accessToken": "eyJ...",
+                                            "refreshToken": "abc...",
+                                            "tokenType": "bearer",
+                                            "expiresIn": 3600,
+                                            "expiresAt": 1793643611
+                                        },
+                                        "user": {
+                                            "id": "5f1c...",
+                                            "email": "amina@example.com"
+                                        },
+                                        "profile": {
+                                            "organizationId": "9a3b...",
+                                            "role": "admin"
+                                        }
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Sign in with email or staff username and password",
+                "description": "**Permission:** `public`",
+                "x-permission": "public",
+                "security": []
+            }
+        },
+        "/v1/auth/mfa/verify": {
+            "post": {
+                "operationId": "AuthController_verify",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MfaVerifyDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "mfaRequired": false,
+                                        "session": {
+                                            "accessToken": "eyJ...",
+                                            "refreshToken": "abc...",
+                                            "tokenType": "bearer",
+                                            "expiresIn": 3600,
+                                            "expiresAt": 1793643611
+                                        },
+                                        "user": {
+                                            "id": "5f1c...",
+                                            "email": "amina@example.com"
+                                        },
+                                        "profile": {
+                                            "organizationId": "9a3b...",
+                                            "role": "admin"
+                                        }
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Finish a two-step sign-in with the 6-digit code",
+                "description": "**Permission:** `public`",
+                "x-permission": "public",
+                "security": []
+            }
+        },
+        "/v1/auth/refresh": {
+            "post": {
+                "operationId": "AuthController_refresh",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "session": {
+                                            "accessToken": "eyJ...",
+                                            "refreshToken": "abc...",
+                                            "tokenType": "bearer",
+                                            "expiresIn": 3600,
+                                            "expiresAt": 1793643611
+                                        }
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get a new access token from the refresh token",
+                "description": "**Permission:** `public`",
+                "x-permission": "public",
+                "security": []
+            }
+        },
+        "/v1/auth/logout": {
+            "post": {
+                "operationId": "AuthController_logout",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "signedOut": true
+                                    },
+                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Not signed in or token expired"
+                    },
+                    "403": {
+                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                    },
+                    "400": {
+                        "description": "Invalid values"
+                    },
+                    "409": {
+                        "description": "Not allowed in the current state (for example order already billed)"
+                    }
+                },
+                "tags": [
+                    "Auth"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Sign out",
+                "description": "**Permission:** `signed in`\n\nSend `Authorization: Bearer <accessToken>`.",
+                "x-permission": "signed in"
+            }
+        }
+    },
+    "info": {
+        "title": "Baigamats HORECA API",
+        "version": "1.0",
+        "description": "Restaurant & bar API. Sign in with POST /v1/auth/login, then send `Authorization: Bearer <accessToken>`. Every answer (success or error) is wrapped as `{statusCode, message, payload, timestamp}`; the examples show the `payload`. Money is whole UGX. Dates are YYYY-MM-DD in Uganda time (UTC+3). The HORECA routes return 403 until the business's owner switches the API on. Roles: owner/manager (everything), cashier (takes payment), waiter (orders), kitchen (tickets)."
+    },
+    "tags": [
+        {
+            "name": "Auth"
+        },
+        {
+            "name": "Tables"
+        },
+        {
+            "name": "Menu"
+        },
+        {
+            "name": "Orders"
+        },
+        {
+            "name": "Kitchen"
+        },
+        {
+            "name": "Payments"
+        },
+        {
+            "name": "Shifts"
+        },
+        {
+            "name": "Staff"
+        },
+        {
+            "name": "Reports"
+        },
+        {
+            "name": "Health"
+        }
+    ],
+    "servers": [
+        {
+            "url": "https://YOUR-API-ADDRESS",
+            "description": "Replace with the DigitalOcean address of the API"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {
+            "CreateOrderDto": {
+                "type": "object",
+                "properties": {
+                    "orderType": {
+                        "type": "string",
+                        "enum": [
+                            "dine_in",
+                            "takeaway",
+                            "tab"
+                        ]
+                    },
+                    "tableId": {
+                        "type": "string"
+                    },
+                    "partySize": {
+                        "type": "number"
+                    },
+                    "tabName": {
+                        "type": "string",
+                        "description": "Required for a tab, e.g. the customer name"
+                    }
+                },
+                "required": [
+                    "orderType"
+                ]
+            },
+            "AddItemDto": {
+                "type": "object",
+                "properties": {
+                    "menuItemId": {
+                        "type": "string"
+                    },
+                    "qty": {
+                        "type": "number"
+                    },
+                    "modifiers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "ageVerifiedBy": {
+                        "type": "string",
+                        "description": "Name of the staff member who checked the customer ID. Required for age-restricted items."
+                    }
+                },
+                "required": [
+                    "menuItemId",
+                    "qty"
+                ]
+            },
+            "KotStatusDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "preparing",
+                            "ready",
+                            "served"
+                        ]
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "BillDto": {
+                "type": "object",
+                "properties": {
+                    "paymentMethod": {
+                        "type": "string",
+                        "enum": [
+                            "cash"
+                        ],
+                        "description": "Cash only for now"
+                    }
+                }
+            },
+            "StartPaymentDto": {
+                "type": "object",
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "mobile_money",
+                            "card"
+                        ]
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "description": "Customer Mobile Money number. Required for mobile_money."
+                    }
+                },
+                "required": [
+                    "method"
+                ]
+            },
+            "CreateTableDto": {
+                "type": "object",
+                "properties": {
+                    "tableNumber": {
+                        "type": "string",
+                        "example": "12"
+                    },
+                    "capacity": {
+                        "type": "number",
+                        "example": 4
+                    },
+                    "section": {
+                        "type": "string",
+                        "example": "Main dining",
+                        "description": "Floor area the table belongs to"
+                    }
+                },
+                "required": [
+                    "tableNumber",
+                    "capacity"
+                ]
+            },
+            "UpdateTableDto": {
+                "type": "object",
+                "properties": {
+                    "tableNumber": {
+                        "type": "string"
+                    },
+                    "capacity": {
+                        "type": "number"
+                    },
+                    "section": {
+                        "type": "string",
+                        "description": "Floor area. Send an empty text to remove it."
+                    }
+                }
+            },
+            "TableStatusDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "available",
+                            "reserved",
+                            "dirty"
+                        ],
+                        "description": "Free, reserved for a guest, or needing cleaning. A table with an open order shows as occupied by itself."
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "CreateCategoryDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "sortOrder": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "CreateMenuItemDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "Whole UGX"
+                    },
+                    "station": {
+                        "type": "string",
+                        "enum": [
+                            "kitchen",
+                            "bar"
+                        ]
+                    },
+                    "categoryId": {
+                        "type": "string"
+                    },
+                    "ageRestricted": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "price",
+                    "station"
+                ]
+            },
+            "UpdateMenuItemDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": "number"
+                    },
+                    "station": {
+                        "type": "string",
+                        "enum": [
+                            "kitchen",
+                            "bar"
+                        ]
+                    },
+                    "categoryId": {
+                        "type": "string"
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "description": "false hides the item from the menu without deleting it"
+                    },
+                    "ageRestricted": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "OpenShiftDto": {
+                "type": "object",
+                "properties": {
+                    "openingFloat": {
+                        "type": "number",
+                        "description": "Cash already in the drawer, whole UGX",
+                        "example": 50000
+                    }
+                },
+                "required": [
+                    "openingFloat"
+                ]
+            },
+            "CloseShiftDto": {
+                "type": "object",
+                "properties": {
+                    "countedCash": {
+                        "type": "number",
+                        "description": "Cash counted in the drawer, whole UGX"
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "countedCash"
+                ]
+            },
+            "SetPinDto": {
+                "type": "object",
+                "properties": {
+                    "pin": {
+                        "type": "string",
+                        "example": "4821",
+                        "description": "4 to 6 digits"
+                    }
+                },
+                "required": [
+                    "pin"
+                ]
+            },
+            "SetRoleDto": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "manager",
+                            "cashier",
+                            "waiter",
+                            "kitchen"
+                        ]
+                    }
+                },
+                "required": [
+                    "role"
+                ]
+            },
+            "VerifyPinDto": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string"
+                    },
+                    "pin": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "userId",
+                    "pin"
+                ]
+            },
+            "LoginDto": {
+                "type": "object",
+                "properties": {
+                    "loginId": {
+                        "type": "string",
+                        "description": "Email address, or the staff username given by the business"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "loginId",
+                    "password"
+                ]
+            },
+            "MfaSessionDto": {
+                "type": "object",
+                "properties": {
+                    "accessToken": {
+                        "type": "string"
+                    },
+                    "refreshToken": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "accessToken",
+                    "refreshToken"
+                ]
+            },
+            "MfaVerifyDto": {
+                "type": "object",
+                "properties": {
+                    "factorId": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "123456"
+                    },
+                    "mfaSession": {
+                        "$ref": "#/components/schemas/MfaSessionDto"
+                    }
+                },
+                "required": [
+                    "factorId",
+                    "code",
+                    "mfaSession"
+                ]
+            },
+            "RefreshDto": {
+                "type": "object",
+                "properties": {
+                    "refreshToken": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "refreshToken"
+                ]
+            }
+        }
+    }
+}

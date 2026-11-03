@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_blank" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}*{-webkit-user-select:none;user-select:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-secondary-fixed-variant": "#42474b", "outline-variant": "#c3c6d5", "surface-container-highest": "#e3e2e3", "error-container": "#ffdad6", "surface-container": "#efedee", "surface-container-high": "#e9e8e9", "primary-fixed": "#d9e2ff", secondary: "#5a5f63", "on-tertiary": "#ffffff", tertiary: "#6d5e00", "surface-tint": "#2259bf", "on-primary-fixed": "#001946", "on-secondary-fixed": "#171c20", "surface-bright": "#faf9fa", "on-error-container": "#93000a", "secondary-container": "#dfe3e8", "on-secondary": "#ffffff", "surface-variant": "#e3e2e3", "on-error": "#ffffff", "on-surface-variant": "#434653", "primary-fixed-dim": "#b1c5ff", "tertiary-fixed": "#f9e37a", "primary-container": "#3366cc", "on-secondary-container": "#606569", primary: "#094cb2", outline: "#737784", "on-tertiary-fixed-variant": "#524600", "inverse-on-surface": "#f2f0f1", "secondary-fixed": "#dfe3e8", "surface-container-lowest": "#ffffff", "on-background": "#1b1c1d", "inverse-surface": "#303031", "on-surface": "#1b1c1d", "on-primary-container": "#e7ebff", "on-tertiary-fixed": "#211b00", "on-primary-fixed-variant": "#00419d", "on-primary": "#ffffff", "tertiary-container": "#bfab49", surface: "#faf9fa", "secondary-fixed-dim": "#c2c7cc", "surface-container-low": "#f5f3f4", "on-tertiary-container": "#4a3f00", error: "#ba1a1a", background: "#faf9fa", "tertiary-fixed-dim": "#dcc661", "surface-dim": "#dbdadb", "inverse-primary": "#b1c5ff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {"space-xs": "0.25rem", "space-lg": "1.25rem", "space-sm": "0.5rem", "space-md": "0.75rem", margin: "0.75rem", "space-xl": "2rem", "gutter-desktop": "1rem", gutter: "0.75rem", "margin-desktop": "1.25rem"}, fontFamily: {"label-numeric-lg": ["JetBrains Mono"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-caps": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-numeric-xl": ["JetBrains Mono"], "body-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "label-numeric-md": ["JetBrains Mono"], headline: ["Noto Serif"], display: ["Noto Serif"], body: ["Inter"], label: ["Public Sans"]}, fontSize: {"label-numeric-lg": ["20px", {lineHeight: "24px", fontWeight: "600"}], "body-lg": ["18px", {lineHeight: "26px", fontWeight: "500"}], "headline-md": ["20px", {lineHeight: "26px", fontWeight: "700"}], "body-sm": ["13px", {lineHeight: "18px", fontWeight: "400"}], "label-caps": ["11px", {lineHeight: "14px", letterSpacing: "0.06em", fontWeight: "700"}], "headline-xl-mobile": ["28px", {lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "800"}], "headline-lg": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700"}], "label-numeric-xl": ["32px", {lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "700"}], "body-md": ["15px", {lineHeight: "22px", fontWeight: "400"}], "headline-sm": ["16px", {lineHeight: "22px", fontWeight: "600"}], "headline-xl": ["36px", {lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "800"}], "headline-lg-mobile": ["22px", {lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "700"}], "label-numeric-md": ["15px", {lineHeight: "20px", fontWeight: "500"}]}}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container pt-safe pb-safe"><main class="flex-1 flex flex-col relative w-full bg-surface"><div class="flex flex-col w-full min-w-0 px-4 pb-6 select-none">
+<!-- Top Telemetry & Terminal Identity Bar -->
+<div class="flex items-center justify-between py-3 mb-2">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">point_of_sale</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">Horeca OS</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase mt-0.5">Term 01 • Handheld Mobile</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface tracking-tight" id="live-clock">20:42</span>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">Fri, Oct 24</span>
+</div>
+</div>
+<!-- Main Pin Interface Container -->
+<div class="flex flex-col items-center justify-center w-full my-auto">
+<!-- Header Prompt & Tactical Avatar Indicator -->
+<div class="flex flex-col items-center mb-6">
+<div class="relative mb-3">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest p-0.5 shadow-md flex items-center justify-center">
+<img class="w-full h-full object-cover rounded-full" data-alt="Close up warm profile portrait of Alex, a professional bartender with focused expression in ambient dim moody bar lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBR12qHcB7IoasBy7lKaZP-sSpi392tiIfcdXtwEbxR3-ARzpzhhrpWXgeXVnPYmKJgjmcRXxYzv3WIubzhAIQ9-KPrEpwx5T5Irb41cU0jxzA4mhjLlVH3LQ-_SKcr93Zm6oUvt2J-OcdBQtkw6aBLsg3noTUbcS81Xk7MLoKUx4UxEqFAQGi6P3QXI35ACeM7Dy0xljdB6rLPQQNPMwsWvUH3GB59-LkCh3jfwVo"/>
+</div>
+<div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-primary font-bold">check</span>
+</div>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight text-center">
+        Enter Staff PIN
+      </h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5" id="staff-name-label">
+        Alex R. • Head Bartender
+      </p>
+</div>
+<!-- 4-Digit Indicator Matrix -->
+<div class="flex items-center justify-center gap-4 mb-7 py-2" id="pin-indicator-group">
+<div class="pin-dot w-4 h-4 rounded-full bg-primary shadow-sm transition-all duration-150"></div>
+<div class="pin-dot w-4 h-4 rounded-full bg-primary shadow-sm transition-all duration-150"></div>
+<div class="pin-dot w-4 h-4 rounded-full bg-primary shadow-sm transition-all duration-150"></div>
+<div class="pin-dot w-4 h-4 rounded-full bg-surface-container-highest transition-all duration-150"></div>
+</div>
+<!-- Numeric Keypad Grid (3x4 Tactile Instrument Design) -->
+<div class="w-full max-w-[340px] grid grid-cols-3 gap-2.5 mb-6">
+<!-- 1 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="1" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">1</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none"> </span>
+</button>
+<!-- 2 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="2" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">2</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">ABC</span>
+</button>
+<!-- 3 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="3" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">3</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">DEF</span>
+</button>
+<!-- 4 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="4" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">4</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">GHI</span>
+</button>
+<!-- 5 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="5" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">5</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">JKL</span>
+</button>
+<!-- 6 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="6" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">6</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">MNO</span>
+</button>
+<!-- 7 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="7" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">7</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">PQRS</span>
+</button>
+<!-- 8 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="8" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">8</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">TUV</span>
+</button>
+<!-- 9 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="9" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">9</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">WXYZ</span>
+</button>
+<!-- CLR (Utility) -->
+<button class="h-16 rounded-xl bg-surface-container-low active:bg-surface-container-high flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" id="btn-clr" type="button">
+<span class="font-label-caps text-label-caps text-error tracking-wider font-bold">CLR</span>
+</button>
+<!-- 0 -->
+<button class="keypad-btn h-16 rounded-xl bg-surface-container-high active:bg-surface-bright flex flex-col items-center justify-center transition-all duration-100 active:scale-95 shadow-sm" data-val="0" type="button">
+<span class="font-label-numeric-lg text-label-numeric-lg text-on-surface leading-none">0</span>
+<span class="font-label-caps text-[9px] text-outline mt-1 tracking-widest leading-none">+</span>
+</button>
+<!-- DEL (Backspace) -->
+<button class="h-16 rounded-xl bg-surface-container-low active:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-all duration-100 active:scale-95 shadow-sm" id="btn-del" type="button">
+<span class="material-symbols-outlined text-xl">backspace</span>
+</button>
+</div>
+</div>
+<!-- Bottom Functional Unit: Switch Staff & Telemetry Pills -->
+<div class="w-full flex flex-col items-center gap-3.5 mt-auto pt-2">
+<!-- Quick Staff Switcher Carousel/Pills -->
+<div class="w-full flex items-center justify-center gap-2 overflow-x-auto py-1">
+<!-- Alex (Active) -->
+<button class="staff-pill flex items-center gap-2 py-1.5 px-3 rounded-full bg-surface-container-highest shadow-sm active:scale-95 transition-transform" data-name="Alex R." data-role="Head Bartender" type="button">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-surface-bright flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Portrait avatar of Alex, head bartender with neat style in warm ambient hospitality environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzmyMYj_IIoySOxH1btgwra00joZlauF9it5MxIqegNUounTCuhbuk_rIczeCD3Fs5vdr-KoFzp0Tc-K-Gu92qzlvCGe25lk_uWLuKhum5DCosAWtVA6Dud0TKqAximo5YLZuLXcFz9SL2uJUcxFY7l5xLdCKo1POLE2xtIy-V1S0Znsenp6q3zHoFZ4lnvFFg88-Gqwlp9R7X8p36s9jri3OJ7E0i1jFrySUV8nA"/>
+</div>
+<div class="flex flex-col text-left">
+<span class="font-headline-sm text-[12px] text-primary leading-tight font-semibold">Alex</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant leading-none">Bartender</span>
+</div>
+</button>
+<!-- Sarah (Lead) -->
+<button class="staff-pill flex items-center gap-2 py-1.5 px-3 rounded-full bg-surface-container-low active:bg-surface-container-high shadow-sm active:scale-95 transition-transform opacity-70" data-name="Sarah M." data-role="Floor Lead" type="button">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-surface-bright flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Portrait avatar of Sarah, experienced hospitality floor lead with professional posture in soft background lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmNd-ahZI8Z7BXkTX8NRWQQnnibxcrJzwzk8DqROTF0dmrUNadFgb6OFUEFFf7Dt-T74DUlzUeQvrxslZ_LkBW2JRndfwCGS6M-L_pWHRbSAcoame-FdZyQSaCPu3XZoTHVO8rw7qA3LenW0sgp29fzwkzxCKfJ-l_U4vMTjKXiS8-m4lOSzEGgL1NTt0_phXdB0jYQ8xuKSeqCuLLCmR0EWSEJQZrdhM2zfz91b8"/>
+</div>
+<div class="flex flex-col text-left">
+<span class="font-headline-sm text-[12px] text-on-surface leading-tight font-semibold">Sarah</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant leading-none">Lead</span>
+</div>
+</button>
+<!-- Marcus (Sommelier) -->
+<button class="staff-pill flex items-center gap-2 py-1.5 px-3 rounded-full bg-surface-container-low active:bg-surface-container-high shadow-sm active:scale-95 transition-transform opacity-70" data-name="Marcus T." data-role="Sommelier" type="button">
+<div class="w-6 h-6 rounded-full overflow-hidden bg-surface-bright flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Portrait avatar of Marcus, refined sommelier in sleek formal apron against dark restaurant wine cellar backdrop" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCo4ZgyeWggB3UeLD18nUjpEQcpngElcYSOKwsO8q7VJD7Jx6WVf90ejlmm_HGufX-cEx94oWUVO8vfJEKenrEQhj90iWVvy0_nDpL99znidxBc5fPMTo9qjvkca0kI_YHxiQ_pLcuIW23C6zmhrmfCq2fYS16y7-BtT4_SMiDgrxszwNPLzsAntYpNZ2CdR45v9LJL12uYkgaxs6u3vUXli-lb-YXDo1YnuWFSB_M"/>
+</div>
+<div class="flex flex-col text-left">
+<span class="font-headline-sm text-[12px] text-on-surface leading-tight font-semibold">Marcus</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant leading-none">Sommelier</span>
+</div>
+</button>
+</div>
+<!-- Terminal Status Telemetry -->
+<div class="flex items-center justify-between w-full max-w-[340px] px-3 py-2 rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<span class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-wider">NFC Badge Ready</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="material-symbols-outlined text-sm">lock_clock</span>
+<span class="font-label-caps text-[11px] uppercase tracking-wider">Auto-Lock: 60s</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (() => {
+    let pin = '842';
+    const maxDigits = 4;
+    const dots = document.querySelectorAll('.pin-dot');
+    const keypadButtons = document.querySelectorAll('.keypad-btn');
+    const btnClr = document.getElementById('btn-clr');
+    const btnDel = document.getElementById('btn-del');
+    const staffLabel = document.getElementById('staff-name-label');
+    const staffPills = document.querySelectorAll('.staff-pill');
+
+    function renderDots() {
+      dots.forEach((dot, index) => {
+        if (index < pin.length) {
+          dot.className = 'pin-dot w-4 h-4 rounded-full bg-primary shadow-sm transition-all duration-150';
+        } else {
+          dot.className = 'pin-dot w-4 h-4 rounded-full bg-surface-container-highest transition-all duration-150';
+        }
+      });
+    }
+
+    keypadButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (pin.length < maxDigits) {
+          pin += btn.getAttribute('data-val');
+          renderDots();
+
+          if (pin.length === maxDigits) {
+            setTimeout(() => {
+              pin = '';
+              renderDots();
+            }, 400);
+          }
+        }
+      });
+    });
+
+    btnClr.addEventListener('click', () => {
+      pin = '';
+      renderDots();
+    });
+
+    btnDel.addEventListener('click', () => {
+      if (pin.length > 0) {
+        pin = pin.slice(0, -1);
+        renderDots();
+      }
+    });
+
+    staffPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        staffPills.forEach(p => {
+          p.classList.remove('bg-surface-container-highest', 'opacity-100');
+          p.classList.add('bg-surface-container-low', 'opacity-70');
+          const title = p.querySelector('span:first-child');
+          if (title) {
+            title.className = 'font-headline-sm text-[12px] text-on-surface leading-tight font-semibold';
+          }
+        });
+
+        pill.classList.remove('bg-surface-container-low', 'opacity-70');
+        pill.classList.add('bg-surface-container-highest', 'opacity-100');
+        const activeTitle = pill.querySelector('span:first-child');
+        if (activeTitle) {
+          activeTitle.className = 'font-headline-sm text-[12px] text-primary leading-tight font-semibold';
+        }
+
+        const name = pill.getAttribute('data-name');
+        const role = pill.getAttribute('data-role');
+        if (staffLabel) {
+          staffLabel.textContent = `${name} • ${role}`;
+        }
+
+        pin = '';
+        renderDots();
+      });
+    });
+
+    // Simple digital clock refresh
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const clockEl = document.getElementById('live-clock');
+      if (clockEl) {
+        clockEl.textContent = `${hours}:${minutes}`;
+      }
+    }
+    setInterval(updateClock, 1000);
+  })();
+</script></main></body></html>

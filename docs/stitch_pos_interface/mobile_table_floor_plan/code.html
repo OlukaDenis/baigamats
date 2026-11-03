@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html class="" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#0b1326;color:#dae2fd;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}*{-webkit-user-select:none;user-select:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-secondary-fixed-variant": "#42474b", "outline-variant": "#c3c6d5", "surface-container-highest": "#e3e2e3", "error-container": "#ffdad6", "surface-container": "#efedee", "surface-container-high": "#e9e8e9", "primary-fixed": "#d9e2ff", secondary: "#5a5f63", "on-tertiary": "#ffffff", tertiary: "#6d5e00", "surface-tint": "#2259bf", "on-primary-fixed": "#001946", "on-secondary-fixed": "#171c20", "surface-bright": "#faf9fa", "on-error-container": "#93000a", "secondary-container": "#dfe3e8", "on-secondary": "#ffffff", "surface-variant": "#e3e2e3", "on-error": "#ffffff", "on-surface-variant": "#434653", "primary-fixed-dim": "#b1c5ff", "tertiary-fixed": "#f9e37a", "primary-container": "#3366cc", "on-secondary-container": "#606569", primary: "#094cb2", outline: "#737784", "on-tertiary-fixed-variant": "#524600", "inverse-on-surface": "#f2f0f1", "secondary-fixed": "#dfe3e8", "surface-container-lowest": "#ffffff", "on-background": "#1b1c1d", "inverse-surface": "#303031", "on-surface": "#1b1c1d", "on-primary-container": "#e7ebff", "on-tertiary-fixed": "#211b00", "on-primary-fixed-variant": "#00419d", "on-primary": "#ffffff", "tertiary-container": "#bfab49", surface: "#faf9fa", "secondary-fixed-dim": "#c2c7cc", "surface-container-low": "#f5f3f4", "on-tertiary-container": "#4a3f00", error: "#ba1a1a", background: "#faf9fa", "tertiary-fixed-dim": "#dcc661", "surface-dim": "#dbdadb", "inverse-primary": "#b1c5ff"}, borderRadius: {DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem"}, spacing: {"space-xs": "0.25rem", "space-lg": "1.25rem", "space-sm": "0.5rem", "space-md": "0.75rem", margin: "0.75rem", "space-xl": "2rem", "gutter-desktop": "1rem", gutter: "0.75rem", "margin-desktop": "1.25rem"}, fontFamily: {"label-numeric-lg": ["JetBrains Mono"], "body-lg": ["Inter"], "headline-md": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-caps": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-numeric-xl": ["JetBrains Mono"], "body-md": ["Inter"], "headline-sm": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "label-numeric-md": ["JetBrains Mono"], headline: ["Noto Serif"], display: ["Noto Serif"], body: ["Inter"], label: ["Public Sans"]}, fontSize: {"label-numeric-lg": ["20px", {lineHeight: "24px", fontWeight: "600"}], "body-lg": ["18px", {lineHeight: "26px", fontWeight: "500"}], "headline-md": ["20px", {lineHeight: "26px", fontWeight: "700"}], "body-sm": ["13px", {lineHeight: "18px", fontWeight: "400"}], "label-caps": ["11px", {lineHeight: "14px", letterSpacing: "0.06em", fontWeight: "700"}], "headline-xl-mobile": ["28px", {lineHeight: "34px", letterSpacing: "-0.02em", fontWeight: "800"}], "headline-lg": ["28px", {lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "700"}], "label-numeric-xl": ["32px", {lineHeight: "36px", letterSpacing: "-0.03em", fontWeight: "700"}], "body-md": ["15px", {lineHeight: "22px", fontWeight: "400"}], "headline-sm": ["16px", {lineHeight: "22px", fontWeight: "600"}], "headline-xl": ["36px", {lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "800"}], "headline-lg-mobile": ["22px", {lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "700"}], "label-numeric-md": ["15px", {lineHeight: "20px", fontWeight: "500"}]}}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.25)]"><div class="h-14 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container-high"><span class="material-symbols-outlined text-primary text-[20px]">point_of_sale</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface leading-none">Tables</span><div class="flex items-center gap-1.5 mt-0.5"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-numeric-md text-[11px] text-on-surface-variant uppercase tracking-wider">T-01 • ONLINE</span></div></div></div><div class="flex items-center gap-space-xs"><button aria-label="Quick Lock" class="w-11 h-11 rounded-lg flex items-center justify-center bg-surface-container active:scale-95 transition-transform text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">lock</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-1"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-14 pb-20 bg-surface"><div class="flex flex-col w-full pb-24">
+<!-- Top Control Strip & Ambient Stats -->
+<section class="px-margin pt-space-sm pb-space-xs flex flex-col gap-space-sm">
+<!-- Floor Filter Chips (Horizontal Scroll) -->
+<div class="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5" id="floor-filter">
+<button class="floor-btn flex items-center justify-center h-10 px-4 rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm transition-all shadow-sm active:scale-95" data-filter="all" type="button">
+        All
+      </button>
+<button class="floor-btn flex items-center justify-center h-10 px-4 rounded-xl bg-surface-container text-on-surface-variant font-headline-sm text-headline-sm transition-all active:scale-95" data-filter="main" type="button">
+        Main Dining
+      </button>
+<button class="floor-btn flex items-center justify-center h-10 px-4 rounded-xl bg-surface-container text-on-surface-variant font-headline-sm text-headline-sm transition-all active:scale-95" data-filter="patio" type="button">
+        Patio
+      </button>
+<button class="floor-btn flex items-center justify-center h-10 px-4 rounded-xl bg-surface-container text-on-surface-variant font-headline-sm text-headline-sm transition-all active:scale-95" data-filter="bar" type="button">
+        Bar
+      </button>
+</div>
+<!-- Live Telemetry KPI Bar -->
+<div class="w-full bg-surface-container-low rounded-xl px-space-md py-space-sm flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-xs">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Occupancy</span>
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-semibold">14 / 24 <span class="text-on-surface-variant font-normal text-body-sm">(58%)</span></span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Live Open Tabs</span>
+<span class="font-label-numeric-md text-label-numeric-md text-primary font-bold">UGX 1,420,000</span>
+</div>
+</div>
+</section>
+<!-- Interactive 2-Column Table Grid -->
+<main class="px-margin pt-space-xs">
+<div class="grid grid-cols-2 gap-space-sm" id="tables-grid">
+<!-- Table 04: Selected State -->
+<article class="table-card group relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container-high transition-transform duration-100 active:scale-95 cursor-pointer shadow-md overflow-hidden min-h-[148px]" data-guests="4" data-section="main" data-status="occupied" data-tab="UGX 540,000" data-table="Table 04">
+<!-- Visual Accent Indicator (Active Selection indicator via background tone) -->
+<div class="table-selection-indicator absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<div class="flex items-start justify-between w-full">
+<div>
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">T-04</h2>
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="font-body-sm text-body-sm">4 Guests</span>
+</div>
+</div>
+<!-- Time elapsed alert (Amber) -->
+<div class="flex items-center gap-1 bg-secondary/15 px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-secondary text-[14px]">schedule</span>
+<span class="font-label-numeric-md text-[12px] text-secondary font-bold">34m</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs bg-surface-container-lowest/50 -mx-space-md -mb-space-md p-space-sm px-space-md flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Tab</span>
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-bold">UGX 540,000</span>
+</div>
+</article>
+<!-- Booth 05 -->
+<article class="table-card relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container transition-transform duration-100 active:scale-95 cursor-pointer shadow-sm overflow-hidden min-h-[148px]" data-guests="6" data-section="main" data-status="occupied" data-tab="UGX 342,000" data-table="Booth 05">
+<div class="table-selection-indicator absolute top-0 left-0 right-0 h-1 bg-transparent"></div>
+<div class="flex items-start justify-between w-full">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">B-05</h2>
+<div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="font-body-sm text-body-sm">6 Guests</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-[14px]">schedule</span>
+<span class="font-label-numeric-md text-[12px] text-on-surface font-medium">12m</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs bg-surface-container-lowest/50 -mx-space-md -mb-space-md p-space-sm px-space-md flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Tab</span>
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-bold">UGX 342,000</span>
+</div>
+</article>
+<!-- Table 06 -->
+<article class="table-card relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container transition-transform duration-100 active:scale-95 cursor-pointer shadow-sm overflow-hidden min-h-[148px]" data-guests="3" data-section="main" data-status="occupied" data-tab="UGX 92,000" data-table="Table 06">
+<div class="table-selection-indicator absolute top-0 left-0 right-0 h-1 bg-transparent"></div>
+<div class="flex items-start justify-between w-full">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">T-06</h2>
+<div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="font-body-sm text-body-sm">3 Guests</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-[14px]">schedule</span>
+<span class="font-label-numeric-md text-[12px] text-on-surface font-medium">22m</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs bg-surface-container-lowest/50 -mx-space-md -mb-space-md p-space-sm px-space-md flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Tab</span>
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-bold">UGX 92,000</span>
+</div>
+</article>
+<!-- Table 07: Available State -->
+<article class="table-card relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low transition-transform duration-100 active:scale-95 cursor-pointer shadow-sm overflow-hidden min-h-[148px]" data-guests="2" data-section="main" data-status="available" data-tab="UGX 0" data-table="Table 07">
+<div class="table-selection-indicator absolute top-0 left-0 right-0 h-1 bg-transparent"></div>
+<div class="flex items-start justify-between w-full">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface/80 tracking-tight">T-07</h2>
+<div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="font-body-sm text-body-sm">2 Guests</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-lg">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="font-label-caps text-[10px] text-primary uppercase font-bold">Free</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs bg-surface-container-lowest/30 -mx-space-md -mb-space-md p-space-sm px-space-md flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-outline font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">arrow_back_ios_new</span>
+            Clean &amp; Ready
+          </span>
+<span class="material-symbols-outlined text-[18px] text-outline">add_circle</span>
+</div>
+</article>
+<!-- H1 (High Top): Bar Section -->
+<article class="table-card relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container transition-transform duration-100 active:scale-95 cursor-pointer shadow-sm overflow-hidden min-h-[148px]" data-guests="2" data-section="bar" data-status="occupied" data-tab="UGX 48,000" data-table="H1 Bar Top">
+<div class="table-selection-indicator absolute top-0 left-0 right-0 h-1 bg-transparent"></div>
+<div class="flex items-start justify-between w-full">
+<div>
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">H-01</h2>
+<span class="font-label-caps text-[10px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant">BAR</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="font-body-sm text-body-sm">2 Guests</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-[14px]">schedule</span>
+<span class="font-label-numeric-md text-[12px] text-on-surface font-medium">18m</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs bg-surface-container-lowest/50 -mx-space-md -mb-space-md p-space-sm px-space-md flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Tab</span>
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-bold">UGX 48,000</span>
+</div>
+</article>
+<!-- Patio 01 -->
+<article class="table-card relative flex flex-col justify-between p-space-md rounded-xl bg-surface-container transition-transform duration-100 active:scale-95 cursor-pointer shadow-sm overflow-hidden min-h-[148px]" data-guests="4" data-section="patio" data-status="occupied" data-tab="UGX 116,000" data-table="Patio 01">
+<div class="table-selection-indicator absolute top-0 left-0 right-0 h-1 bg-transparent"></div>
+<div class="flex items-start justify-between w-full">
+<div>
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">P-01</h2>
+<span class="font-label-caps text-[10px] bg-surface-container-highest px-1.5 py-0.5 rounded text-on-surface-variant">PATIO</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="font-body-sm text-body-sm">4 Guests</span>
+</div>
+</div>
+<!-- Time elapsed alert (>40m Amber) -->
+<div class="flex items-center gap-1 bg-secondary/15 px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-secondary text-[14px]">schedule</span>
+<span class="font-label-numeric-md text-[12px] text-secondary font-bold">45m</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs bg-surface-container-lowest/50 -mx-space-md -mb-space-md p-space-sm px-space-md flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Tab</span>
+<span class="font-label-numeric-md text-label-numeric-md text-on-surface font-bold">UGX 116,000</span>
+</div>
+</article>
+</div>
+</main>
+<!-- Sticky Bottom Quick Preview Dock for Active Selected Table -->
+<aside class="fixed bottom-16 left-0 right-0 z-40 px-margin pb-space-xs transition-transform duration-200" id="selected-table-dock">
+<div class="w-full bg-surface-container-highest/95 backdrop-blur-md rounded-xl p-space-sm flex items-center justify-between shadow-2xl">
+<!-- Table Summary Meta -->
+<div class="flex items-center gap-space-sm min-w-0 pr-space-xs">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex flex-col items-center justify-center shrink-0">
+<span class="font-headline-sm text-headline-sm text-primary leading-none" id="dock-table-short">T04</span>
+<span class="font-label-caps text-[9px] text-on-surface-variant uppercase mt-0.5">Active</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5 truncate">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate" id="dock-table-name">Table 04</span>
+<span class="text-on-surface-variant text-[12px]">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant shrink-0" id="dock-table-guests">4 Guests</span>
+</div>
+<span class="font-label-numeric-md text-label-numeric-md text-primary font-bold tracking-tight" id="dock-table-amount">UGX 540,000</span>
+</div>
+</div>
+<!-- High-Frequency Primary Action Button (Tactile >= 48px target) -->
+<button class="h-12 px-space-lg rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-headline-sm flex items-center gap-1.5 active:scale-95 transition-all shadow-md shrink-0" id="open-order-btn" type="button">
+<span>Open Order</span>
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</aside>
+</div>
+<script>
+  (function initFloorInteractions() {
+    const tableCards = document.querySelectorAll('.table-card');
+    const dock = document.getElementById('selected-table-dock');
+    const dockShort = document.getElementById('dock-table-short');
+    const dockName = document.getElementById('dock-table-name');
+    const dockGuests = document.getElementById('dock-table-guests');
+    const dockAmount = document.getElementById('dock-table-amount');
+    const openOrderBtn = document.getElementById('open-order-btn');
+    const filterButtons = document.querySelectorAll('.floor-btn');
+
+    // Handle Table Selection
+    tableCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        // Clear active styles
+        tableCards.forEach((c) => {
+          c.classList.remove('bg-surface-container-high', 'shadow-md');
+          c.classList.add('bg-surface-container');
+          const indicator = c.querySelector('.table-selection-indicator');
+          if (indicator) indicator.classList.replace('bg-primary', 'bg-transparent');
+        });
+
+        // Set current card active
+        card.classList.remove('bg-surface-container', 'bg-surface-container-low');
+        card.classList.add('bg-surface-container-high', 'shadow-md');
+        const activeIndicator = card.querySelector('.table-selection-indicator');
+        if (activeIndicator) activeIndicator.classList.replace('bg-transparent', 'bg-primary');
+
+        // Extract metadata
+        const tName = card.getAttribute('data-table') || 'Table';
+        const tGuests = card.getAttribute('data-guests') || '2';
+        const tTab = card.getAttribute('data-tab') || 'UGX 0';
+        const tStatus = card.getAttribute('data-status');
+
+        // Short identifier derivation
+        const shortCode = tName.replace('Table ', 'T').replace('Booth ', 'B').replace('Patio ', 'P').split(' ')[0];
+        
+        dockShort.textContent = shortCode;
+        dockName.textContent = tName;
+        dockGuests.textContent = `${tGuests} Guests`;
+        dockAmount.textContent = tTab;
+
+        if (tStatus === 'available') {
+          openOrderBtn.innerHTML = `<span>Seat & Open</span><span class="material-symbols-outlined text-[20px]">table_bar</span>`;
+        } else {
+          openOrderBtn.innerHTML = `<span>Open Order</span><span class="material-symbols-outlined text-[20px]">arrow_forward</span>`;
+        }
+      });
+    });
+
+    // Handle Section Tabs
+    filterButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+
+        filterButtons.forEach((b) => {
+          b.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+          b.classList.add('bg-surface-container', 'text-on-surface-variant');
+        });
+
+        btn.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+        btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+
+        tableCards.forEach((card) => {
+          const section = card.getAttribute('data-section');
+          if (filter === 'all' || section === filter) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Button tactile reaction
+    openOrderBtn.addEventListener('click', () => {
+      openOrderBtn.classList.add('brightness-90');
+      setTimeout(() => openOrderBtn.classList.remove('brightness-90'), 150);
+    });
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface-container-low/95 backdrop-blur-xl shadow-[0_-1px_12px_rgba(0,0,0,0.35)]" data-active-classes="text-primary bg-surface-container-highest"><div class="h-16 px-space-xs flex items-center justify-around"><a aria-current="page" class="flex flex-col items-center justify-center min-w-[64px] h-12 rounded-lg transition-all duration-150 active:scale-95 text-primary bg-surface-container-highest" data-path="tables" href="#"><span class="material-symbols-outlined text-[22px]">table_restaurant</span><span class="font-label-caps text-label-caps mt-0.5">Tables</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 rounded-lg text-on-surface-variant transition-all duration-150 active:scale-95" data-path="order" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-caps text-label-caps mt-0.5">Order</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 rounded-lg text-on-surface-variant transition-all duration-150 active:scale-95" data-path="kitchen" href="#"><span class="material-symbols-outlined text-[22px]">soup_kitchen</span><span class="font-label-caps text-label-caps mt-0.5">Kitchen</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 rounded-lg text-on-surface-variant transition-all duration-150 active:scale-95" data-path="pay" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-label-caps text-label-caps mt-0.5">Pay</span></a></div></nav></body></html>

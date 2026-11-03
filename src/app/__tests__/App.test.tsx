@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
-import { useAuthStore } from '../../features/auth/store/authStore';
-import { usePreferencesStore } from '../../features/preferences/store/preferencesStore';
+import { useAuthStore } from '@sacco/features/auth/store/authStore';
+import { usePreferencesStore } from '@shared/preferences/preferencesStore';
 import { App } from '../App';
 
 describe('App', () => {
