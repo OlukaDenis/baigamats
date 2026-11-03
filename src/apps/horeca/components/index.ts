@@ -8,10 +8,12 @@ export * from './atoms/Badge';
 export * from './molecules/FormField';
 export * from './molecules/AlertBanner';
 export * from './molecules/SearchBar';
+export * from './molecules/Select';
 
 // Organisms
 export * from './organisms/HorecaAppBar';
 export * from './organisms/NumPad';
+export * from './organisms/TableCard';
 
 // Templates
 export * from './templates/ScreenTemplate';

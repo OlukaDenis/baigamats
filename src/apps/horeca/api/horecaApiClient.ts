@@ -24,6 +24,7 @@ import type {
   StaffMember,
   StartPaymentDto,
   Table,
+  TableCategory,
   UpdateTableDto,
   VerifyPinDto,
   VerifyPinResponse,
@@ -199,8 +200,24 @@ export const horecaApi = {
   },
 
   // Tables
-  getTables: async (): Promise<Table[]> => {
-    const res = await horecaClient.get('/v1/tables');
+  getTables: async (section?: string): Promise<Table[]> => {
+    try {
+      const res = await horecaClient.get('/tables', {
+        params: section ? { section } : undefined,
+      });
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.get('/v1/tables', {
+          params: section ? { section } : undefined,
+        });
+        return res.data;
+      }
+      throw err;
+    }
+  },
+  getTableCategories: async (): Promise<TableCategory[]> => {
+    const res = await horecaClient.get('/v1/tables/categories');
     return res.data;
   },
   createTable: async (dto: CreateTableDto): Promise<Table> => {

@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ArrowRightIcon,
-  CheckCircleIcon,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  View,
+} from 'react-native';
+import {
+  ArrowPathIcon,
   ClipboardDocumentListIcon,
-  ClockIcon,
-  PlusIcon,
-  UserGroupIcon,
+  ExclamationTriangleIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Table } from '@horeca/api/schemas';
@@ -15,16 +18,20 @@ import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
+import { Select, type SelectOption } from '@horeca/components/molecules/Select';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { TableCard } from '@horeca/components/organisms/TableCard';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { useFloorTables } from '../hooks/useFloorTables';
+import { useTableCategories } from '../hooks/useTableCategories';
+
+const TABLE_STATUSES = ['occupied', 'available', 'reserved', 'dirty'] as const;
 
 interface FloorPlanScreenProps {
   onOpenOrder: (table: Table) => void;
   onLockTerminal: () => void;
   onProfilePress?: () => void;
 }
-
-const SECTIONS = ['All', 'Main Dining', 'Patio', 'Bar'];
 
 export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   onOpenOrder,
@@ -34,99 +41,93 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
 
-  const tables = useHorecaStore(state => state.tables);
+  const [selectedSection, setSelectedSection] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
+  // Fetch tables from /tables with offline fallback
+  const {
+    tables,
+    isLoading,
+    isFetching,
+    isRefetching,
+    isError,
+    error,
+    refetch,
+    isOnline,
+  } = useFloorTables();
+  const { categories, refetch: refetchCategories } = useTableCategories();
+
   const activeTableId = useHorecaStore(state => state.activeTableId);
   const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
-  const isOnline = useHorecaStore(state => state.isOnline);
 
-  const [selectedSection, setSelectedSection] = useState<string>('All');
+  // Pull-to-refresh handler
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await Promise.all([refetch(), refetchCategories().catch(() => undefined)]);
+    } finally {
+      setIsPullRefreshing(false);
+    }
+  }, [refetch, refetchCategories]);
+
+  // Options come from GET /v1/tables/categories (cached offline); fall back to
+  // categories derived from the downloaded tables if none have been fetched yet.
+  const sectionOptions = useMemo<SelectOption[]>(() => {
+    const source =
+      categories.length > 0
+        ? categories.map(c => ({ name: c.name.trim(), count: c.count }))
+        : Array.from(
+            tables.reduce((acc, t) => {
+              const name = (t.section || '').trim();
+              if (name) acc.set(name, (acc.get(name) ?? 0) + 1);
+              return acc;
+            }, new Map<string, number>()),
+            ([name, count]) => ({ name, count }),
+          );
+    return [
+      { label: 'All', value: 'All', hint: String(tables.length) },
+      ...source.map(c => ({ label: c.name, value: c.name, hint: String(c.count) })),
+    ];
+  }, [categories, tables]);
+
+  const statusOptions = useMemo<SelectOption[]>(
+    () => [
+      { label: 'All statuses', value: 'all', hint: String(tables.length) },
+      ...TABLE_STATUSES.map(s => ({
+        label: s.charAt(0).toUpperCase() + s.slice(1),
+        value: s,
+        hint: String(tables.filter(t => t.status === s).length),
+      })),
+    ],
+    [tables],
+  );
 
   const filteredTables = tables.filter(tbl => {
-    if (selectedSection === 'All') return true;
-    return (tbl.section || '').toLowerCase() === selectedSection.toLowerCase();
+    const sectionOk =
+      selectedSection === 'All' ||
+      (tbl.section || '').toLowerCase() === selectedSection.toLowerCase();
+    const statusOk = selectedStatus === 'all' || tbl.status === selectedStatus;
+    return sectionOk && statusOk;
   });
 
   const occupiedCount = tables.filter(t => t.status === 'occupied').length;
-  const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
-  const occupancyPercent = totalCapacity > 0 ? Math.round((occupiedCount / tables.length) * 100) : 0;
+  const totalCapacity = tables.reduce((sum, t) => sum + (t.capacity || 0), 0);
+  const occupancyPercent =
+    totalCapacity > 0 && tables.length > 0 ? Math.round((occupiedCount / tables.length) * 100) : 0;
 
   const activeTable = tables.find(t => t.id === activeTableId) ?? tables[0];
 
-  const renderTableCard = ({ item }: { item: Table }) => {
-    const isSelected = item.id === activeTableId;
-    const isOccupied = item.status === 'occupied';
-
-    const statusBadgeVariant =
-      item.status === 'occupied'
-        ? 'occupied'
-        : item.status === 'reserved'
-          ? 'reserved'
-          : item.status === 'dirty'
-            ? 'dirty'
-            : 'available';
-
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Table ${item.table_number}, ${item.status}`}
-        onPress={() => setActiveTableId(item.id)}
-        className={`flex-1 m-1.5 p-3.5 rounded-2xl border bg-surface transition-all ${
-          isSelected
-            ? 'border-2 border-primary shadow-md'
-            : 'border-border shadow-sm active:border-primary/50'
-        }`}
-      >
-        {/* Top Card Row */}
-        <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-row items-center">
-            <AppText variant="title" className="text-xl font-bold text-text mr-1.5">
-              {item.table_number}
-            </AppText>
-            {isSelected ? (
-              <CheckCircleIcon color={colors.primary} size={16} />
-            ) : null}
-          </View>
-
-          <Badge
-            label={item.status.toUpperCase()}
-            variant={statusBadgeVariant}
-            size="sm"
-          />
-        </View>
-
-        {/* Section & Guests */}
-        <View className="flex-row items-center mb-3">
-          <UserGroupIcon color={colors.onSurfaceVariant} size={14} />
-          <AppText variant="caption" className="ml-1 text-text-secondary font-medium">
-            {item.capacity} Guests • {item.section || 'General'}
-          </AppText>
-        </View>
-
-        {/* Current Tab / Clean Action */}
-        <View className="pt-2 border-t border-border/50 flex-row items-center justify-between">
-          {isOccupied ? (
-            <View>
-              <AppText variant="caption" className="text-[10px] text-text-secondary uppercase font-semibold">
-                Current Tab
-              </AppText>
-              <AppText variant="label" className="text-primary font-bold">
-                UGX 540,000
-              </AppText>
-            </View>
-          ) : (
-            <View className="flex-row items-center justify-between w-full">
-              <AppText variant="caption" className="text-status-available font-semibold">
-                Available
-              </AppText>
-              <View className="h-6 w-6 rounded-full bg-status-available/15 items-center justify-center">
-                <PlusIcon color={colors.statusAvailable} size={14} />
-              </View>
-            </View>
-          )}
-        </View>
-      </Pressable>
-    );
-  };
+  const renderTableCard = ({ item }: { item: Table }) => (
+    <TableCard
+      table={item}
+      isSelected={item.id === activeTableId}
+      onPress={tbl => {
+        setActiveTableId(tbl.id);
+        onOpenOrder(tbl);
+      }}
+    />
+  );
 
   return (
     <ScreenTemplate
@@ -134,7 +135,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       header={
         <HorecaAppBar
           title="Floor Plan"
-          subtitle={`FLOOR • ${occupiedCount}/${tables.length} OCCUPIED`}
+          subtitle={`FLOOR • ${occupiedCount}/${tables.length} OCCUPIED • ${isOnline ? 'ONLINE' : 'OFFLINE'}`}
           isOnline={isOnline}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
@@ -163,33 +164,35 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       }
       contentContainerClassName="flex-1"
     >
-      {/* Sections Filter Bar */}
+      {/* Offline Mode Indicator Banner */}
+      {!isOnline ? (
+        <View className="bg-amber-500/10 border-b border-amber-500/25 px-4 py-2 flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1 mr-2">
+            <ExclamationTriangleIcon color={colors.statusReserved} size={15} />
+            <AppText variant="caption" className="ml-1.5 font-semibold text-amber-600 dark:text-amber-400 text-xs">
+              Offline Mode • Showing saved tables
+            </AppText>
+          </View>
+          <Badge label="OFFLINE" variant="reserved" size="sm" />
+        </View>
+      ) : null}
+
+      {/* Category Filter (offline, client-side) */}
       <View className="flex-row px-4 py-2.5 border-b border-border/40">
-        {SECTIONS.map(section => {
-          const isActive = selectedSection.toLowerCase() === section.toLowerCase();
-          return (
-            <Pressable
-              key={section}
-              accessibilityRole="button"
-              accessibilityLabel={`Filter section ${section}`}
-              onPress={() => setSelectedSection(section)}
-              className={`mr-2 px-3.5 py-1.5 rounded-xl border ${
-                isActive
-                  ? 'bg-primary border-primary shadow-sm'
-                  : 'bg-surface border-border active:bg-surface/80'
-              }`}
-            >
-              <AppText
-                variant="label"
-                className={`text-xs font-semibold ${
-                  isActive ? 'text-on-primary' : 'text-text'
-                }`}
-              >
-                {section}
-              </AppText>
-            </Pressable>
-          );
-        })}
+        <Select
+          className="flex-1 mr-2"
+          label="Table category"
+          options={sectionOptions}
+          value={selectedSection}
+          onChange={setSelectedSection}
+        />
+        <Select
+          className="flex-1"
+          label="Table status"
+          options={statusOptions}
+          value={selectedStatus}
+          onChange={setSelectedStatus}
+        />
       </View>
 
       {/* Live Floor Stats Overview Bar */}
@@ -213,50 +216,75 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
         </View>
       </View>
 
-      {/* Tables Grid */}
-      <FlatList
-        data={filteredTables}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        renderItem={renderTableCard}
-        contentContainerStyle={{
-          padding: 12,
-          paddingBottom: Math.max(insets.bottom, 16) + 84,
-        }}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Bottom Floating Active Table Bar */}
-      {activeTable ? (
-        <View
-          style={{ bottom: Math.max(insets.bottom, 12) + 8 }}
-          className="absolute left-4 right-4 rounded-2xl bg-surface border border-border p-3.5 shadow-xl flex-row items-center justify-between"
-        >
-          <View className="flex-row items-center flex-1 mr-3">
-            <View className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center mr-3">
-              <AppText variant="title" className="text-primary font-bold">
-                {activeTable.table_number}
-              </AppText>
-            </View>
-            <View className="flex-1">
-              <AppText variant="label" className="font-bold text-text" numberOfLines={1}>
-                Table {activeTable.table_number} • {activeTable.section || 'General'}
-              </AppText>
-              <AppText variant="caption" className="text-text-secondary">
-                {activeTable.status === 'occupied' ? 'UGX 540,000 • Order #8429' : 'Table is available'}
-              </AppText>
-            </View>
-          </View>
-
-          <Button
-            label={activeTable.status === 'occupied' ? 'Open Order' : 'Start Order'}
-            variant="primary"
-            size="md"
-            onPress={() => onOpenOrder(activeTable)}
-            rightIcon={<ArrowRightIcon color={colors.onPrimary} size={16} />}
-          />
+      {/* Tables Loading / Error / Content */}
+      {isLoading && tables.length === 0 ? (
+        <View className="flex-1 items-center justify-center p-6">
+          <ActivityIndicator size="large" color={colors.primary} />
+          <AppText variant="body" className="mt-4 text-text-secondary font-medium">
+            Loading floor tables...
+          </AppText>
         </View>
-      ) : null}
+      ) : isError && tables.length === 0 ? (
+        <FlatList
+          data={[]}
+          keyExtractor={() => 'error'}
+          renderItem={() => null}
+          refreshControl={
+            <RefreshControl
+              refreshing={isPullRefreshing || isRefetching}
+              onRefresh={handlePullRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}
+          ListEmptyComponent={
+            <View className="items-center justify-center">
+              <AppText variant="title" className="text-error font-bold mb-2">
+                Unable to load tables
+              </AppText>
+              <AppText variant="caption" className="text-text-secondary text-center mb-4">
+                {error?.message || 'Check your internet connection and pull down to retry.'}
+              </AppText>
+              <Button
+                label="Retry"
+                variant="primary"
+                size="sm"
+                onPress={handlePullRefresh}
+                leftIcon={<ArrowPathIcon color={colors.onPrimary} size={14} />}
+              />
+            </View>
+          }
+        />
+      ) : (
+        <FlatList
+          data={filteredTables}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          renderItem={renderTableCard}
+          refreshControl={
+            <RefreshControl
+              refreshing={isPullRefreshing || isRefetching}
+              onRefresh={handlePullRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
+          ListEmptyComponent={
+            <View className="items-center justify-center py-12">
+              <AppText variant="caption" className="text-text-secondary">
+                No tables match the selected filters
+              </AppText>
+            </View>
+          }
+          contentContainerStyle={{
+            padding: 12,
+            paddingBottom: Math.max(insets.bottom, 16) + 16,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
     </ScreenTemplate>
   );
 };

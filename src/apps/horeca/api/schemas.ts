@@ -20,11 +20,24 @@ export type TableStatus = z.infer<typeof tableStatusSchema>;
 export const tableSchema = z.object({
   id: z.string(),
   table_number: z.string(),
-  capacity: z.number(),
-  status: tableStatusSchema,
-  section: z.string().optional().default('Main dining'),
+  capacity: z.coerce.number(),
+  status: tableStatusSchema.or(
+    z.string().transform(s => {
+      const lower = s.toLowerCase();
+      return (['available', 'occupied', 'reserved', 'dirty'].includes(lower)
+        ? lower
+        : 'available') as TableStatus;
+    }),
+  ),
+  section: z.string().nullable().optional().default('Indoor'),
 });
 export type Table = z.infer<typeof tableSchema>;
+
+export const tableCategorySchema = z.object({
+  name: z.string(),
+  count: z.coerce.number().default(0),
+});
+export type TableCategory = z.infer<typeof tableCategorySchema>;
 
 export const createTableDtoSchema = z.object({
   tableNumber: z.string(),

@@ -8,6 +8,7 @@ import type {
   OrderItem,
   Shift,
   Table,
+  TableCategory,
 } from '../api/schemas';
 import {
   mockActiveOrder,
@@ -17,18 +18,19 @@ import {
   mockMenuItems,
   mockTables,
 } from '../mock/horecaMockData';
+import { tableStorage } from './tableStorage';
 
 export interface OutboxMutation {
   id: string;
   type:
-    | 'create_order'
-    | 'add_item'
-    | 'remove_item'
-    | 'update_kot_status'
-    | 'cancel_order'
-    | 'bill_cash'
-    | 'open_shift'
-    | 'close_shift';
+  | 'create_order'
+  | 'add_item'
+  | 'remove_item'
+  | 'update_kot_status'
+  | 'cancel_order'
+  | 'bill_cash'
+  | 'open_shift'
+  | 'close_shift';
   payload: any;
   createdAt: string;
   attempts: number;
@@ -37,6 +39,7 @@ export interface OutboxMutation {
 interface HorecaState {
   // Master data
   tables: Table[];
+  tableCategories: TableCategory[];
   categories: MenuCategory[];
   menuItems: MenuItem[];
   orders: Record<string, Order>;
@@ -53,7 +56,10 @@ interface HorecaState {
 
   // Actions
   setOnlineStatus: (isOnline: boolean) => void;
+  hydrateTables: () => Promise<void>;
   setTables: (tables: Table[]) => void;
+  hydrateTableCategories: () => Promise<void>;
+  setTableCategories: (categories: TableCategory[]) => void;
   setTableStatus: (tableId: string, status: Table['status']) => void;
   setActiveTableId: (id: string | null) => void;
   setActiveOrderId: (id: string | null) => void;
@@ -80,13 +86,14 @@ interface HorecaState {
 
 export const useHorecaStore = create<HorecaState>((set, get) => ({
   tables: env.ENABLE_MOCK ? mockTables : [],
+  tableCategories: [],
   categories: env.ENABLE_MOCK ? mockMenuCategories : [],
   menuItems: env.ENABLE_MOCK ? mockMenuItems : [],
   orders: env.ENABLE_MOCK ? { [mockActiveOrder.id]: mockActiveOrder } : {},
   kitchenTickets: env.ENABLE_MOCK ? mockKitchenTickets : [],
   currentShift: env.ENABLE_MOCK ? mockCurrentShift : null,
 
-  activeTableId: env.ENABLE_MOCK ? 'tbl-01' : null,
+  activeTableId: env.ENABLE_MOCK ? (mockTables[0]?.id ?? null) : null,
   activeOrderId: env.ENABLE_MOCK ? 'ord-8429' : null,
 
   isOnline: true,
@@ -94,7 +101,39 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
 
   setOnlineStatus: isOnline => set({ isOnline }),
 
-  setTables: tables => set({ tables }),
+  hydrateTables: async () => {
+    const cached = await tableStorage.getTables();
+    if (cached && cached.length > 0) {
+      set(state => ({
+        tables: state.tables.length === 0 ? cached : state.tables,
+        activeTableId: state.activeTableId ?? cached[0]?.id ?? null,
+      }));
+    }
+  },
+
+  hydrateTableCategories: async () => {
+    const cached = await tableStorage.getCategories();
+    if (cached && cached.length > 0) {
+      set(state => ({
+        tableCategories: state.tableCategories.length === 0 ? cached : state.tableCategories,
+      }));
+    }
+  },
+
+  setTableCategories: tableCategories => {
+    set({ tableCategories });
+    tableStorage.saveCategories(tableCategories).catch(() => { });
+  },
+
+  setTables: tables => {
+    set(state => ({
+      tables,
+      activeTableId: tables.some(t => t.id === state.activeTableId)
+        ? state.activeTableId
+        : (tables[0]?.id ?? null),
+    }));
+    tableStorage.saveTables(tables).catch(() => { });
+  },
 
   setTableStatus: (tableId, status) =>
     set(state => ({
@@ -296,11 +335,11 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       const order = state.orders[orderId];
       const updatedOrder = order
         ? {
-            ...order,
-            items: (order.items ?? []).map(it =>
-              it.id === itemId ? { ...it, kot_status: status } : it,
-            ),
-          }
+          ...order,
+          items: (order.items ?? []).map(it =>
+            it.id === itemId ? { ...it, kot_status: status } : it,
+          ),
+        }
         : null;
 
       const updatedKitchenTickets = state.kitchenTickets.map(kt =>

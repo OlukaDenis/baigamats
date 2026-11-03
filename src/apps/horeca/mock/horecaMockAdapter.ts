@@ -98,8 +98,18 @@ function getMockResponse(method: string, url: string, data?: any): any {
     return { saved: true };
   }
 
-  // GET /v1/tables
-  if (url.includes('/v1/tables') && method === 'get') {
+  // GET /v1/tables/categories
+  if (url.includes('/tables/categories') && method === 'get') {
+    const counts = new Map<string, number>();
+    mockTables.forEach(t => {
+      const name = (t.section || 'General').trim();
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    });
+    return Array.from(counts, ([name, count]) => ({ name, count }));
+  }
+
+  // GET /tables or /v1/tables
+  if ((url.endsWith('/tables') || url.includes('/tables?') || url.includes('/v1/tables')) && method === 'get') {
     return mockTables;
   }
 

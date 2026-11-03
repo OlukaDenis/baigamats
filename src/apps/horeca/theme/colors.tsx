@@ -42,6 +42,8 @@ export const horecaLightColors = {
   onError: '#ffffff',
   onErrorContainer: '#93000a',
 
+  warning: '#d97706',
+
   // Semantic status colors
   statusAvailable: '#16a34a',
   statusOccupied: '#094cb2',
@@ -93,6 +95,8 @@ export const horecaDarkColors: typeof horecaLightColors = {
   errorContainer: '#93000a',
   onError: '#690005',
   onErrorContainer: '#ffdad6',
+
+  warning: '#f59e0b',
 
   statusAvailable: '#22c55e',
   statusOccupied: '#6094fc',

@@ -16,30 +16,12 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "service": "horeca-api",
-                                        "status": "up",
-                                        "database": "up"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Health"
-                ],
-                "summary": "Is the API up? Add ?deep=1 to check the database too",
-                "description": "**Permission:** `public`",
-                "x-permission": "public",
-                "security": []
+                    "health"
+                ]
             }
         },
         "/v1/me": {
@@ -48,98 +30,75 @@
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "userId": "5f1c...",
-                                        "name": "Magave Arnold",
-                                        "organizationId": "9a3b...",
-                                        "role": "manager",
-                                        "permissions": [
-                                            "tables:read",
-                                            "orders:read",
-                                            "orders:write",
-                                            "billing:write",
-                                            "payments:read",
-                                            "reports:read"
-                                        ]
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Auth"
+                    "me"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
+                ]
+            }
+        },
+        "/v1/me/username": {
+            "put": {
+                "operationId": "MeController_setUsername",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UsernameDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "me"
                 ],
-                "summary": "Who am I, my role and what I may do",
-                "description": "**Permission:** `signed in`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "signed in"
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
             }
         },
         "/v1/tables": {
             "get": {
                 "operationId": "HorecaController_tables",
-                "parameters": [],
+                "parameters": [
+                    {
+                        "name": "section",
+                        "required": false,
+                        "in": "query",
+                        "description": "Only tables in this category, e.g. Outdoor. \"Uncategorised\" for tables with none.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": [
-                                        {
-                                            "id": "0b1e0000-0000-0000-0000-000000000001",
-                                            "table_number": "T1",
-                                            "capacity": 4,
-                                            "status": "occupied",
-                                            "section": "Main dining"
-                                        }
-                                    ],
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Tables"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "List tables (floor plan)",
-                "description": "**Permission:** `tables:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "tables:read"
+                ]
             },
             "post": {
                 "operationId": "CashierController_createTable",
@@ -156,47 +115,36 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "0b1e0000-0000-0000-0000-000000000001",
-                                        "table_number": "T7",
-                                        "capacity": 4,
-                                        "status": "available"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Tables"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
+                ]
+            }
+        },
+        "/v1/tables/categories": {
+            "get": {
+                "operationId": "HorecaController_tableCategories",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "restaurant-and-bar"
                 ],
-                "summary": "Create a table",
-                "description": "**Permission:** `tables:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "tables:write"
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
             }
         },
         "/v1/menu": {
@@ -214,56 +162,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "categories": [
-                                            {
-                                                "id": "c1000000-0000-0000-0000-000000000001",
-                                                "name": "Drinks",
-                                                "sort_order": 0,
-                                                "items": [
-                                                    {
-                                                        "id": "m1000000-0000-0000-0000-000000000001",
-                                                        "category_id": "c1000000-0000-0000-0000-000000000001",
-                                                        "name": "Mineral water",
-                                                        "price": 2000,
-                                                        "station": "bar",
-                                                        "is_active": true,
-                                                        "age_restricted": false
-                                                    }
-                                                ]
-                                            }
-                                        ],
-                                        "uncategorised": []
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Menu"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Menu with categories and items",
-                "description": "**Permission:** `menu:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "menu:read"
+                ]
             }
         },
         "/v1/orders": {
@@ -307,62 +216,30 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "mine",
+                        "required": false,
+                        "in": "query",
+                        "description": "true = only orders I took",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "items": [
-                                            {
-                                                "id": "11111111-1111-1111-1111-111111111111",
-                                                "order_number": "ORD-1",
-                                                "table_id": "0b1e0000-0000-0000-0000-000000000001",
-                                                "order_type": "dine_in",
-                                                "status": "open",
-                                                "tab_name": null,
-                                                "party_size": 4,
-                                                "total_amount": 42000,
-                                                "service_charge_amount": 0,
-                                                "created_at": "2026-11-02T16:30:00Z",
-                                                "updated_at": "2026-11-02T16:41:10Z"
-                                            }
-                                        ],
-                                        "total": 1,
-                                        "limit": 50,
-                                        "offset": 0
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Orders"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "List orders (filter by status or table, paged)",
-                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:read"
+                ]
             },
             "post": {
                 "operationId": "HorecaController_createOrder",
@@ -379,52 +256,17 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "11111111-1111-1111-1111-111111111111",
-                                        "order_number": "ORD-1",
-                                        "table_id": "0b1e0000-0000-0000-0000-000000000001",
-                                        "order_type": "dine_in",
-                                        "status": "open",
-                                        "tab_name": null,
-                                        "party_size": 4,
-                                        "total_amount": 42000,
-                                        "created_at": "2026-11-02T16:30:00Z"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Orders"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Open an order (dine_in needs tableId, tab needs tabName)",
-                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:write"
+                ]
             }
         },
         "/v1/orders/{id}": {
@@ -442,72 +284,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "11111111-1111-1111-1111-111111111111",
-                                        "order_number": "ORD-1",
-                                        "table_id": "0b1e0000-0000-0000-0000-000000000001",
-                                        "order_type": "dine_in",
-                                        "status": "open",
-                                        "tab_name": null,
-                                        "party_size": 4,
-                                        "total_amount": 42000,
-                                        "service_charge_amount": 0,
-                                        "created_at": "2026-11-02T16:30:00Z",
-                                        "updated_at": "2026-11-02T16:41:10Z",
-                                        "items": [
-                                            {
-                                                "id": "a1000000-0000-0000-0000-000000000001",
-                                                "menu_item_id": "m1000000-0000-0000-0000-000000000001",
-                                                "item_name": "Mineral water",
-                                                "unit_price": 2000,
-                                                "qty": 2,
-                                                "station": "bar",
-                                                "kot_status": "new",
-                                                "modifiers": [],
-                                                "notes": null,
-                                                "discount_amount": 0,
-                                                "created_at": "2026-11-02T16:31:00Z"
-                                            }
-                                        ]
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Orders"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "One order with its items",
-                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:read"
+                ]
             }
         },
         "/v1/kitchen": {
@@ -529,57 +316,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": [
-                                        {
-                                            "id": "a1000000-0000-0000-0000-000000000001",
-                                            "item_name": "Grilled tilapia",
-                                            "qty": 1,
-                                            "station": "kitchen",
-                                            "kot_status": "preparing",
-                                            "modifiers": [
-                                                "no pepper"
-                                            ],
-                                            "notes": null,
-                                            "created_at": "2026-11-02T16:31:00Z",
-                                            "order": {
-                                                "id": "11111111-1111-1111-1111-111111111111",
-                                                "order_number": "ORD-1",
-                                                "table_id": "0b1e0000-0000-0000-0000-000000000001",
-                                                "order_type": "dine_in",
-                                                "tab_name": null,
-                                                "status": "open"
-                                            }
-                                        }
-                                    ],
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Kitchen"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Kitchen and bar screen: unserved items on open orders (optional station)",
-                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:read"
+                ]
             }
         },
         "/v1/orders/{id}/items": {
@@ -607,59 +354,17 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "item": {
-                                            "id": "a1000000-0000-0000-0000-000000000001",
-                                            "item_name": "Mineral water",
-                                            "unit_price": 2000,
-                                            "qty": 2,
-                                            "station": "bar",
-                                            "kot_status": "new",
-                                            "modifiers": [],
-                                            "notes": null,
-                                            "discount_amount": 0
-                                        },
-                                        "orderTotal": 44000,
-                                        "merged": false
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Orders"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Add an item to an open order (a plain repeat merges into the waiting line)",
-                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:write"
+                ]
             }
         },
         "/v1/orders/{id}/items/{itemId}": {
@@ -685,47 +390,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "orderTotal": 2000
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Orders"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Remove an item the kitchen has not started",
-                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:write"
+                ]
             }
         },
         "/v1/orders/{id}/items/{itemId}/status": {
@@ -761,51 +436,17 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "a1000000-0000-0000-0000-000000000001",
-                                        "item_name": "Mineral water",
-                                        "qty": 2,
-                                        "station": "bar",
-                                        "kot_status": "ready"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Kitchen"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Move a ticket: new, preparing, ready, served (ready alerts the waiter)",
-                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:write"
+                ]
             }
         },
         "/v1/orders/{id}/cancel": {
@@ -823,48 +464,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "11111111-1111-1111-1111-111111111111",
-                                        "status": "cancelled"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Orders"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Cancel an open order with nothing billed",
-                "description": "**Permission:** `orders:cancel`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:cancel"
+                ]
             }
         },
         "/v1/orders/{id}/bill": {
@@ -892,51 +502,17 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "orderId": "11111111-1111-1111-1111-111111111111",
-                                        "status": "billed",
-                                        "paymentMethod": "cash",
-                                        "saleId": "s1000000-0000-0000-0000-000000000001",
-                                        "saleNumber": "SALE-32171545"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Payments"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Take cash and bill the order",
-                "description": "**Permission:** `billing:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "billing:write"
+                ]
             }
         },
         "/v1/orders/{id}/payments": {
@@ -964,54 +540,17 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "orderId": "11111111-1111-1111-1111-111111111111",
-                                        "paymentId": "pay_8f2c",
-                                        "amount": 42000,
-                                        "chargeAmount": 42000,
-                                        "feeAmount": 0,
-                                        "method": "mobile_money",
-                                        "paymentUrl": null,
-                                        "state": "pending"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Payments"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Start a Mobile Money request or a card checkout (poll the status after)",
-                "description": "**Permission:** `billing:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "billing:write"
+                ]
             }
         },
         "/v1/orders/{id}/payments/{paymentId}": {
@@ -1037,53 +576,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "orderId": "11111111-1111-1111-1111-111111111111",
-                                        "paymentId": "pay_8f2c",
-                                        "state": "paid",
-                                        "message": null,
-                                        "amount": 42000,
-                                        "saleId": "s1000000-0000-0000-0000-000000000001",
-                                        "saleNumber": "SALE-39432058"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Payments"
+                    "restaurant-and-bar"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Check whether a payment arrived (poll every 3 to 5 s until paid or failed)",
-                "description": "**Permission:** `billing:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "billing:write"
+                ]
             }
         },
         "/v1/orders/{id}/receipt": {
@@ -1101,66 +604,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "business": "Shotz Bar & Restaurant",
-                                        "orderNumber": "ORD-1",
-                                        "status": "billed",
-                                        "orderType": "dine_in",
-                                        "table": "T1",
-                                        "tabName": null,
-                                        "partySize": 4,
-                                        "date": "2026-11-02T16:30:00Z",
-                                        "lines": [
-                                            {
-                                                "name": "Mineral water",
-                                                "qty": 2,
-                                                "unitPrice": 2000,
-                                                "discount": 0,
-                                                "lineTotal": 4000
-                                            }
-                                        ],
-                                        "itemsTotal": 4000,
-                                        "serviceCharge": 0,
-                                        "total": 4000
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Payments"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Everything needed to print a receipt",
-                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:read"
+                ]
             }
         },
         "/v1/reports/daily": {
@@ -1179,59 +633,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "date": "2026-11-02",
-                                        "orders": {
-                                            "open": 0,
-                                            "billed": 1,
-                                            "paid": 0,
-                                            "cancelled": 2
-                                        },
-                                        "sales": 2000,
-                                        "serviceCharge": 0,
-                                        "byOrderType": {
-                                            "dine_in": {
-                                                "orders": 1,
-                                                "sales": 2000
-                                            }
-                                        },
-                                        "topItems": [
-                                            {
-                                                "name": "Mineral water",
-                                                "qty": 1,
-                                                "revenue": 2000
-                                            }
-                                        ]
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Reports"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "One day's sales (date optional, default today)",
-                "description": "**Permission:** `reports:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "reports:read"
+                ]
             }
         },
         "/v1/reports/range": {
@@ -1259,89 +671,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "from": "2026-10-01",
-                                        "to": "2026-10-31",
-                                        "orders": {
-                                            "open": 0,
-                                            "billed": 5,
-                                            "paid": 0,
-                                            "cancelled": 9
-                                        },
-                                        "sales": 48000,
-                                        "serviceCharge": 0,
-                                        "average": 9600,
-                                        "byOrderType": {
-                                            "dine_in": {
-                                                "orders": 3,
-                                                "sales": 44000
-                                            }
-                                        },
-                                        "byMethod": {
-                                            "cash": {
-                                                "sales": 4,
-                                                "amount": 46000
-                                            },
-                                            "mobile_money": {
-                                                "sales": 1,
-                                                "amount": 2000
-                                            }
-                                        },
-                                        "byDay": [
-                                            {
-                                                "date": "2026-10-31",
-                                                "orders": 5,
-                                                "sales": 48000,
-                                                "methods": {
-                                                    "cash": 46000,
-                                                    "mobile_money": 2000
-                                                }
-                                            }
-                                        ],
-                                        "byWaiter": [
-                                            {
-                                                "name": "Not recorded",
-                                                "orders": 5,
-                                                "sales": 48000
-                                            }
-                                        ],
-                                        "topItems": [
-                                            {
-                                                "name": "Club Pilsner",
-                                                "qty": 4,
-                                                "revenue": 20000
-                                            }
-                                        ]
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Reports"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Sales over a period: totals, per day with payment methods, by staff, best sellers",
-                "description": "**Permission:** `reports:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "reports:read"
+                ]
             }
         },
         "/v1/payments": {
@@ -1367,65 +707,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "from": "2026-11-02",
-                                        "to": "2026-11-02",
-                                        "total": 44000,
-                                        "count": 2,
-                                        "byMethod": {
-                                            "cash": {
-                                                "count": 1,
-                                                "amount": 42000
-                                            },
-                                            "mobile_money": {
-                                                "count": 1,
-                                                "amount": 2000
-                                            }
-                                        },
-                                        "rows": [
-                                            {
-                                                "orderId": "11111111-1111-1111-1111-111111111111",
-                                                "orderNumber": "ORD-1",
-                                                "saleNumber": "SALE-39432058",
-                                                "method": "mobile_money",
-                                                "amount": 2000,
-                                                "paidAt": "2026-11-02T17:10:00Z",
-                                                "table": "T1",
-                                                "tab": null,
-                                                "orderType": "dine_in",
-                                                "waiter": "Sarah"
-                                            }
-                                        ]
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Payments"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Every payment in a period, newest first (from, to as YYYY-MM-DD)",
-                "description": "**Permission:** `payments:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "payments:read"
+                ]
             }
         },
         "/v1/tables/{id}": {
@@ -1453,50 +745,17 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "0b1e0000-0000-0000-0000-000000000001",
-                                        "table_number": "T7",
-                                        "capacity": 6,
-                                        "status": "available"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Tables"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Edit a table (number, capacity, section)",
-                "description": "**Permission:** `tables:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "tables:write"
+                ]
             },
             "delete": {
                 "operationId": "CashierController_deleteTable",
@@ -1512,47 +771,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "removed": true
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Tables"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Delete a table (409 if it has an open order)",
-                "description": "**Permission:** `tables:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "tables:write"
+                ]
             }
         },
         "/v1/tables/{id}/status": {
@@ -1580,50 +809,17 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "0b1e0000-0000-0000-0000-000000000001",
-                                        "table_number": "T1",
-                                        "capacity": 4,
-                                        "status": "dirty"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Tables"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Set a table to available, reserved or dirty (409 while an order is open)",
-                "description": "**Permission:** `orders:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:write"
+                ]
             }
         },
         "/v1/menu/categories": {
@@ -1642,46 +838,17 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "c1000000-0000-0000-0000-000000000001",
-                                        "name": "Drinks",
-                                        "sort_order": 0
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Menu"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Create a menu category",
-                "description": "**Permission:** `menu:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "menu:write"
+                ]
             }
         },
         "/v1/menu/items": {
@@ -1700,50 +867,17 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "m1000000-0000-0000-0000-000000000001",
-                                        "category_id": "c1000000-0000-0000-0000-000000000001",
-                                        "name": "Mineral water",
-                                        "price": 2000,
-                                        "station": "bar",
-                                        "is_active": true,
-                                        "age_restricted": false
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Menu"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Create a menu item",
-                "description": "**Permission:** `menu:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "menu:write"
+                ]
             }
         },
         "/v1/menu/items/{id}": {
@@ -1771,50 +905,17 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "m1000000-0000-0000-0000-000000000001",
-                                        "category_id": "c1000000-0000-0000-0000-000000000001",
-                                        "name": "Mineral water",
-                                        "price": 2000,
-                                        "station": "bar",
-                                        "is_active": true,
-                                        "age_restricted": false
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Menu"
+                    "cashier-and-back-office"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Edit or hide a menu item",
-                "description": "**Permission:** `menu:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "menu:write"
+                ]
             }
         },
         "/v1/shifts/current": {
@@ -1823,60 +924,17 @@
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "open": true,
-                                        "shift": {
-                                            "id": "sh100000-0000-0000-0000-000000000001",
-                                            "opened_by": "5f1c...",
-                                            "opened_at": "2026-11-02T05:00:00Z",
-                                            "opening_float": 50000,
-                                            "status": "open"
-                                        },
-                                        "takings": {
-                                            "byMethod": {
-                                                "cash": {
-                                                    "sales": 4,
-                                                    "amount": 46000
-                                                },
-                                                "mobile_money": {
-                                                    "sales": 1,
-                                                    "amount": 2000
-                                                }
-                                            },
-                                            "total": 48000,
-                                            "cash": 46000
-                                        },
-                                        "expectedCash": 96000
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Shifts"
+                    "shifts"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "The open shift with takings and expected cash",
-                "description": "**Permission:** `shifts:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "shifts:read"
+                ]
             }
         },
         "/v1/shifts": {
@@ -1885,48 +943,17 @@
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": [
-                                        {
-                                            "id": "sh100000-0000-0000-0000-000000000001",
-                                            "opened_at": "2026-11-02T05:00:00Z",
-                                            "closed_at": "2026-11-02T15:00:00Z",
-                                            "opening_float": 50000,
-                                            "counted_cash": 95000,
-                                            "expected_cash": 96000,
-                                            "variance": -1000,
-                                            "note": null,
-                                            "status": "closed"
-                                        }
-                                    ],
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Shifts"
+                    "shifts"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Last 30 shifts",
-                "description": "**Permission:** `shifts:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "shifts:read"
+                ]
             }
         },
         "/v1/shifts/open": {
@@ -1945,47 +972,17 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "id": "sh100000-0000-0000-0000-000000000001",
-                                        "opened_at": "2026-11-02T05:00:00Z",
-                                        "opening_float": 50000,
-                                        "status": "open"
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Shifts"
+                    "shifts"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Open a shift with a cash float",
-                "description": "**Permission:** `shifts:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "shifts:write"
+                ]
             }
         },
         "/v1/shifts/close": {
@@ -2004,122 +1001,514 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "shifts"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts": {
+            "get": {
+                "operationId": "BackOfficeController_payouts",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "BackOfficeController_createPayout",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePayoutDto"
+                            },
+                            "example": {
+                                "category": "petty_cash",
+                                "payee": "Charcoal",
+                                "amount": 20000,
+                                "method": "cash",
+                                "paidOn": "2026-11-03"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
                                     "statusCode": 200,
                                     "message": "OK",
                                     "payload": {
-                                        "shift": {
-                                            "id": "sh100000-0000-0000-0000-000000000001",
-                                            "opened_at": "2026-11-02T05:00:00Z",
-                                            "closed_at": "2026-11-02T15:00:00Z",
-                                            "opening_float": 50000,
-                                            "counted_cash": 95000,
-                                            "expected_cash": 96000,
-                                            "variance": -1000,
-                                            "note": null,
-                                            "status": "closed"
-                                        },
-                                        "takings": {
-                                            "byMethod": {
-                                                "cash": {
-                                                    "sales": 4,
-                                                    "amount": 46000
-                                                },
-                                                "mobile_money": {
-                                                    "sales": 1,
-                                                    "amount": 2000
-                                                }
-                                            },
-                                            "total": 48000,
-                                            "cash": 46000
-                                        },
-                                        "expectedCash": 96000,
-                                        "variance": -1000,
-                                        "ordersStillOpen": 0
+                                        "id": "p20...",
+                                        "category": "petty_cash",
+                                        "payee": "Charcoal",
+                                        "amount": 20000,
+                                        "method": "cash",
+                                        "paid_on": "2026-11-03",
+                                        "note": null,
+                                        "status": "approved",
+                                        "created_at": "2026-11-03T17:20:00Z",
+                                        "needsApproval": false
                                     },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
                     }
                 },
                 "tags": [
-                    "Shifts"
+                    "payments-out-and-bookings"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Close the shift with the counted cash",
-                "description": "**Permission:** `shifts:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "shifts:write"
+                ]
             }
         },
-        "/v1/staff": {
+        "/v1/payouts/balance": {
             "get": {
-                "operationId": "StaffController_list",
+                "operationId": "BackOfficeController_balance",
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
                                     "statusCode": 200,
                                     "message": "OK",
-                                    "payload": [
-                                        {
-                                            "id": "5f1c...",
-                                            "name": "Magave Arnold",
-                                            "role": "staff",
-                                            "access": "manager",
-                                            "hasPin": true
-                                        }
-                                    ],
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "payload": {
+                                        "balance": 1250000,
+                                        "payoutsEnabled": true,
+                                        "dailyLimit": 2000000,
+                                        "services": [
+                                            {
+                                                "service": "UEDCL",
+                                                "label": "Electricity (UEDCL)"
+                                            }
+                                        ]
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
                     }
                 },
                 "tags": [
-                    "Staff"
+                    "payments-out-and-bookings"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "People of the business, their HORECA role and whether they have a PIN",
-                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:read"
+                ]
             }
         },
-        "/v1/staff/{id}/pin": {
-            "put": {
-                "operationId": "StaffController_setPin",
+        "/v1/payouts/validate-phone": {
+            "post": {
+                "operationId": "BackOfficeController_validatePhone",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ValidatePhoneDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts/validate-bill": {
+            "post": {
+                "operationId": "BackOfficeController_validateBill",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ValidateBillDto"
+                            },
+                            "example": {
+                                "service": "UEDCL",
+                                "reference": "04123456789"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "customerName": "NILE BAR LTD"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts/send": {
+            "post": {
+                "operationId": "BackOfficeController_send",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateRailPayoutDto"
+                            },
+                            "example": {
+                                "kind": "mobile_money",
+                                "category": "supplier",
+                                "payee": "Fresh Foods Ltd",
+                                "amount": 150000,
+                                "phone": "256771234567",
+                                "note": "Fish delivery"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "p1c...",
+                                        "needsApproval": false,
+                                        "railState": "success",
+                                        "message": null
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts/{id}/receipt": {
+            "get": {
+                "operationId": "BackOfficeController_receipt",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts/{id}/check": {
+            "post": {
+                "operationId": "BackOfficeController_check",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "railState": "success"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts/{id}/approve": {
+            "post": {
+                "operationId": "BackOfficeController_approve",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "p1d...",
+                                        "status": "approved",
+                                        "railState": "success",
+                                        "message": null
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/payouts/{id}/reject": {
+            "post": {
+                "operationId": "BackOfficeController_reject",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "p1d...",
+                                        "status": "rejected",
+                                        "railState": null,
+                                        "message": null
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/reservations": {
+            "get": {
+                "operationId": "BackOfficeController_reservations",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "BackOfficeController_createReservation",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateReservationDto"
+                            },
+                            "example": {
+                                "guestName": "Mr Okello",
+                                "phone": "256771234567",
+                                "partySize": 6,
+                                "reservedFor": "2026-11-03T19:30:00+03:00",
+                                "tableId": "0b1e...",
+                                "note": "Birthday"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "r1...",
+                                        "table_id": "0b1e...",
+                                        "guest_name": "Mr Okello",
+                                        "phone": "256771234567",
+                                        "party_size": 6,
+                                        "reserved_for": "2026-11-03T16:30:00Z",
+                                        "note": "Birthday",
+                                        "status": "booked"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "payments-out-and-bookings"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/reservations/{id}/status": {
+            "patch": {
+                "operationId": "BackOfficeController_reservationStatus",
                 "parameters": [
                     {
                         "name": "id",
@@ -2135,51 +1524,941 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SetPinDto"
+                                "$ref": "#/components/schemas/ReservationStatusDto"
+                            },
+                            "example": {
+                                "status": "seated"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
                                     "statusCode": 200,
                                     "message": "OK",
                                     "payload": {
-                                        "saved": true
+                                        "id": "r1...",
+                                        "status": "seated"
                                     },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
                     }
                 },
                 "tags": [
-                    "Staff"
+                    "payments-out-and-bookings"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
+                ]
+            }
+        },
+        "/v1/settings": {
+            "get": {
+                "operationId": "Stage3Controller_getSettings",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "businessName": "Magave Business Solutions",
+                                        "address": "Kamwokya",
+                                        "phone": "256779454050",
+                                        "tin": null,
+                                        "receiptFooter": "Thank you",
+                                        "showPoweredBy": true,
+                                        "payoutApprovalLimit": 300000
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
                 ],
-                "summary": "Set or change someone's 4 to 6 digit PIN",
-                "description": "**Permission:** `staff:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "staff:write"
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "put": {
+                "operationId": "Stage3Controller_putSettings",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSettingsDto"
+                            },
+                            "example": {
+                                "receiptFooter": "Thank you. Come again.",
+                                "payoutApprovalLimit": 500000
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "businessName": "Magave Business Solutions",
+                                        "address": "Kamwokya",
+                                        "phone": "256779454050",
+                                        "tin": null,
+                                        "receiptFooter": "Thank you. Come again.",
+                                        "showPoweredBy": true,
+                                        "payoutApprovalLimit": 500000
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/orders/{id}/items/{itemId}/void": {
+            "post": {
+                "operationId": "Stage3Controller_voidItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoidItemDto"
+                            },
+                            "example": {
+                                "reason": "Customer changed mind",
+                                "approverPin": "48213"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "orderTotal": 40000,
+                                        "voided": 38000
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/orders/{id}/discount": {
+            "post": {
+                "operationId": "Stage3Controller_discount",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DiscountDto"
+                            },
+                            "example": {
+                                "reason": "Regular customer",
+                                "percent": 10,
+                                "approverPin": "48213"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "orderTotal": 36000,
+                                        "discounted": 4000
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/orders/{id}/split": {
+            "post": {
+                "operationId": "Stage3Controller_split",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SplitDto"
+                            },
+                            "example": {
+                                "itemIds": [
+                                    "b1...",
+                                    "b2..."
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "newOrderId": "2222...",
+                                        "newOrderNumber": "ORD-1043-B",
+                                        "firstTotal": 26000,
+                                        "newTotal": 16000
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/approvals": {
+            "get": {
+                "operationId": "Stage3Controller_approvals",
+                "parameters": [
+                    {
+                        "name": "from",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/stock/items": {
+            "get": {
+                "operationId": "Stage3Controller_items",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "Stage3Controller_createItem",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StockItemDto"
+                            },
+                            "example": {
+                                "name": "Tilapia",
+                                "unit": "kg",
+                                "reorderLevel": 10,
+                                "costPrice": 12000,
+                                "supplierId": "s1..."
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "i1...",
+                                        "name": "Tilapia",
+                                        "unit": "kg",
+                                        "qty_on_hand": 0,
+                                        "reorder_level": 10,
+                                        "cost_price": 12000,
+                                        "supplier_id": "s1...",
+                                        "active": true
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/stock/items/{id}": {
+            "patch": {
+                "operationId": "Stage3Controller_updateItem",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StockItemDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/stock/items/{id}/move": {
+            "post": {
+                "operationId": "Stage3Controller_move",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StockMoveDto"
+                            },
+                            "example": {
+                                "kind": "purchase",
+                                "qty": 25,
+                                "unitCost": 12000,
+                                "supplierId": "s1...",
+                                "note": "Tuesday delivery",
+                                "paidMethod": "cash"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "i1...",
+                                        "before": 3,
+                                        "after": 28,
+                                        "delta": 25,
+                                        "payout": {
+                                            "id": "p21...",
+                                            "amount": 300000,
+                                            "status": "approved"
+                                        }
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/stock/moves": {
+            "get": {
+                "operationId": "Stage3Controller_moves",
+                "parameters": [
+                    {
+                        "name": "itemId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/suppliers": {
+            "get": {
+                "operationId": "Stage3Controller_suppliers",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "Stage3Controller_createSupplier",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SupplierDto"
+                            },
+                            "example": {
+                                "name": "Fresh Foods Ltd",
+                                "phone": "256771234567"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "s1...",
+                                        "name": "Fresh Foods Ltd",
+                                        "phone": "256771234567",
+                                        "note": null,
+                                        "active": true
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/suppliers/{id}": {
+            "patch": {
+                "operationId": "Stage3Controller_updateSupplier",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SupplierDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "approvals-settings-stock"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/staff": {
+            "get": {
+                "operationId": "StaffController_list",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": [
+                                        {
+                                            "id": "6c2e...",
+                                            "name": "Denis Okello",
+                                            "role": "staff",
+                                            "access": "waiter",
+                                            "hasPin": true,
+                                            "username": "denis",
+                                            "contact": {
+                                                "email": null,
+                                                "phone": "+25670•••2326"
+                                            }
+                                        }
+                                    ],
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "post": {
+                "operationId": "StaffController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateStaffDto"
+                            },
+                            "example": {
+                                "fullName": "Sarah Kato",
+                                "role": "waiter",
+                                "username": "sarah",
+                                "pinLength": 5,
+                                "phone": "256771234567"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "id": "7d3f...",
+                                        "name": "Sarah Kato",
+                                        "username": "sarah",
+                                        "role": "waiter",
+                                        "sentTo": {
+                                            "email": null,
+                                            "sms": "+25677•••4567"
+                                        },
+                                        "passwordLink": "not_requested"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/staff/{id}/contact": {
+            "put": {
+                "operationId": "StaffController_contact",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/staff/{id}/password-link": {
+            "post": {
+                "operationId": "StaffController_passwordLink",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "sent": true,
+                                        "to": "m•••@gmail.com"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/staff/{id}/pin/generate": {
+            "post": {
+                "operationId": "StaffController_generatePin",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GeneratePinDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "name": "Sarah Kato",
+                                        "sentTo": {
+                                            "email": null,
+                                            "sms": "+25677•••4567"
+                                        }
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/staff/devices": {
+            "get": {
+                "operationId": "StaffController_devices",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": [
+                                        {
+                                            "id": "d1a2...",
+                                            "name": "Bar till",
+                                            "created_at": "2026-11-01T08:12:44Z",
+                                            "last_used_at": "2026-11-03T17:50:02Z"
+                                        }
+                                    ],
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/staff/devices/{id}": {
+            "delete": {
+                "operationId": "StaffController_removeDevice",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
             }
         },
         "/v1/staff/{id}/role": {
@@ -2201,13 +2480,16 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/SetRoleDto"
+                            },
+                            "example": {
+                                "role": "cashier"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
@@ -2217,35 +2499,74 @@
                                         "saved": true,
                                         "role": "cashier"
                                     },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "404": {
-                        "description": "Not found"
                     }
                 },
                 "tags": [
-                    "Staff"
+                    "staff-pin"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
+                ]
+            }
+        },
+        "/v1/staff/{id}/username": {
+            "put": {
+                "operationId": "StaffController_setUsername",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
                 ],
-                "summary": "Give someone a role: manager, cashier, waiter or kitchen",
-                "description": "**Permission:** `staff:write`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "staff:write"
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UsernameDto"
+                            },
+                            "example": {
+                                "username": "sarah.k"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "saved": true,
+                                        "username": "sarah.k"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
             }
         },
         "/v1/staff/verify-pin": {
@@ -2258,13 +2579,16 @@
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/VerifyPinDto"
+                            },
+                            "example": {
+                                "pin": "48213"
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
@@ -2274,37 +2598,22 @@
                                         "ok": true,
                                         "userId": "5f1c...",
                                         "name": "Magave Arnold",
-                                        "role": "staff"
+                                        "role": "admin"
                                     },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
                     }
                 },
                 "tags": [
-                    "Staff"
+                    "staff-pin"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
-                ],
-                "summary": "Check a PIN to unlock the terminal for that person (5 wrong tries lock it 5 minutes)",
-                "description": "**Permission:** `orders:read`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "orders:read"
+                ]
             }
         },
         "/v1/auth/login": {
@@ -2323,49 +2632,12 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "mfaRequired": false,
-                                        "session": {
-                                            "accessToken": "eyJ...",
-                                            "refreshToken": "abc...",
-                                            "tokenType": "bearer",
-                                            "expiresIn": 3600,
-                                            "expiresAt": 1793643611
-                                        },
-                                        "user": {
-                                            "id": "5f1c...",
-                                            "email": "amina@example.com"
-                                        },
-                                        "profile": {
-                                            "organizationId": "9a3b...",
-                                            "role": "admin"
-                                        }
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Auth"
-                ],
-                "summary": "Sign in with email or staff username and password",
-                "description": "**Permission:** `public`",
-                "x-permission": "public",
-                "security": []
+                    "auth"
+                ]
             }
         },
         "/v1/auth/mfa/verify": {
@@ -2384,49 +2656,12 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "statusCode": 200,
-                                    "message": "OK",
-                                    "payload": {
-                                        "mfaRequired": false,
-                                        "session": {
-                                            "accessToken": "eyJ...",
-                                            "refreshToken": "abc...",
-                                            "tokenType": "bearer",
-                                            "expiresIn": 3600,
-                                            "expiresAt": 1793643611
-                                        },
-                                        "user": {
-                                            "id": "5f1c...",
-                                            "email": "amina@example.com"
-                                        },
-                                        "profile": {
-                                            "organizationId": "9a3b...",
-                                            "role": "admin"
-                                        }
-                                    },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
+                        "description": ""
                     }
                 },
                 "tags": [
-                    "Auth"
-                ],
-                "summary": "Finish a two-step sign-in with the 6-digit code",
-                "description": "**Permission:** `public`",
-                "x-permission": "public",
-                "security": []
+                    "auth"
+                ]
             }
         },
         "/v1/auth/refresh": {
@@ -2445,40 +2680,97 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "auth"
+                ]
+            }
+        },
+        "/v1/auth/enroll-device": {
+            "post": {
+                "operationId": "AuthController_enroll",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EnrollDeviceDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/auth/pin-login": {
+            "post": {
+                "operationId": "AuthController_pinLogin",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PinLoginDto"
+                            },
+                            "example": {
+                                "username": "denis",
+                                "pin": "48213",
+                                "deviceSecret": "a1b2c3d4e5f6"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
                                     "statusCode": 200,
                                     "message": "OK",
                                     "payload": {
+                                        "mfaRequired": false,
                                         "session": {
                                             "accessToken": "eyJ...",
                                             "refreshToken": "abc...",
                                             "tokenType": "bearer",
                                             "expiresIn": 3600,
                                             "expiresAt": 1793643611
+                                        },
+                                        "user": {
+                                            "id": "6c2e...",
+                                            "email": "denis@staff.baigamats.app"
+                                        },
+                                        "profile": {
+                                            "organizationId": "9a3b...",
+                                            "role": "staff"
                                         }
                                     },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
                     }
                 },
                 "tags": [
-                    "Auth"
-                ],
-                "summary": "Get a new access token from the refresh token",
-                "description": "**Permission:** `public`",
-                "x-permission": "public",
-                "security": []
+                    "auth"
+                ]
             }
         },
         "/v1/auth/logout": {
@@ -2487,88 +2779,384 @@
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "Success (shown: the `payload` inside the standard envelope)",
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "auth"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/activity": {
+            "get": {
+                "operationId": "AuditController_list",
+                "parameters": [
+                    {
+                        "name": "actorId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "action",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "before",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
                         "content": {
                             "application/json": {
                                 "example": {
                                     "statusCode": 200,
                                     "message": "OK",
                                     "payload": {
-                                        "signedOut": true
+                                        "rows": [
+                                            {
+                                                "id": "a91...",
+                                                "actor_id": "6c2e...",
+                                                "actor_name": "Denis Okello",
+                                                "action": "Wrong PIN entered",
+                                                "summary": null,
+                                                "target_id": "6c2e...",
+                                                "created_at": "2026-11-03T17:41:10Z"
+                                            }
+                                        ]
                                     },
-                                    "timestamp": "2026-11-02T17:20:11.482Z"
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Not signed in or token expired"
-                    },
-                    "403": {
-                        "description": "Role lacks the permission, or the API is not switched on for this business"
-                    },
-                    "400": {
-                        "description": "Invalid values"
-                    },
-                    "409": {
-                        "description": "Not allowed in the current state (for example order already billed)"
                     }
                 },
                 "tags": [
-                    "Auth"
+                    "activity"
                 ],
                 "security": [
                     {
                         "bearer": []
                     }
+                ]
+            }
+        },
+        "/v1/staff/{id}/password": {
+            "post": {
+                "operationId": "StaffPasswordController_set",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
                 ],
-                "summary": "Sign out",
-                "description": "**Permission:** `signed in`\n\nSend `Authorization: Bearer <accessToken>`.",
-                "x-permission": "signed in"
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetPasswordDto"
+                            },
+                            "example": {
+                                "password": "Quest2026pass"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "saved": true
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/pin-policy": {
+            "get": {
+                "operationId": "PinPolicyController_get",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "anyDevice": true
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "put": {
+                "operationId": "PinPolicyController_set",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PinPolicyDto"
+                            },
+                            "example": {
+                                "anyDevice": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "anyDevice": false
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "staff-pin"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/push/key": {
+            "get": {
+                "operationId": "PushController_key",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "enabled": true,
+                                        "publicKey": "BAjdmQb4Kh93xjb...-L5U"
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "push"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/push/subscribe": {
+            "post": {
+                "operationId": "PushController_subscribe",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubscribeDto"
+                            },
+                            "example": {
+                                "endpoint": "https://fcm.googleapis.com/fcm/send/f3k...",
+                                "keys": {
+                                    "p256dh": "BNc...",
+                                    "auth": "x9Q..."
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "subscribed": true
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "push"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "PushController_unsubscribe",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UnsubscribeDto"
+                            },
+                            "example": {
+                                "endpoint": "https://fcm.googleapis.com/fcm/send/f3k..."
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "subscribed": false
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "push"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/v1/push/test": {
+            "post": {
+                "operationId": "PushController_test",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "statusCode": 200,
+                                    "message": "OK",
+                                    "payload": {
+                                        "sent": 1
+                                    },
+                                    "timestamp": "2026-11-03T17:20:11.482Z"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "push"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
             }
         }
     },
     "info": {
-        "title": "Baigamats HORECA API",
+        "title": "HORECA API",
+        "description": "HORECA API. Responses use the envelope {statusCode, message, payload, timestamp}; the examples show the full envelope. Sample requests and responses are added to the newer routes (sign-in, staff, PIN policy, activity, payouts, approvals, reservations, stock, settings, push alerts).",
         "version": "1.0",
-        "description": "Restaurant & bar API. Sign in with POST /v1/auth/login, then send `Authorization: Bearer <accessToken>`. Every answer (success or error) is wrapped as `{statusCode, message, payload, timestamp}`; the examples show the `payload`. Money is whole UGX. Dates are YYYY-MM-DD in Uganda time (UTC+3). The HORECA routes return 403 until the business's owner switches the API on. Roles: owner/manager (everything), cashier (takes payment), waiter (orders), kitchen (tickets)."
+        "contact": {}
     },
-    "tags": [
-        {
-            "name": "Auth"
-        },
-        {
-            "name": "Tables"
-        },
-        {
-            "name": "Menu"
-        },
-        {
-            "name": "Orders"
-        },
-        {
-            "name": "Kitchen"
-        },
-        {
-            "name": "Payments"
-        },
-        {
-            "name": "Shifts"
-        },
-        {
-            "name": "Staff"
-        },
-        {
-            "name": "Reports"
-        },
-        {
-            "name": "Health"
-        }
-    ],
+    "tags": [],
     "servers": [
         {
-            "url": "https://YOUR-API-ADDRESS",
-            "description": "Replace with the DigitalOcean address of the API"
+            "url": "https://urchin-app-w43e8.ondigitalocean.app/v1",
+            "description": ""
         }
     ],
     "components": {
@@ -2580,6 +3168,19 @@
             }
         },
         "schemas": {
+            "UsernameDto": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "example": "sarah.k",
+                        "description": "3 to 30 characters: letters, numbers, dot, dash or underscore. Must not be used by anyone else."
+                    }
+                },
+                "required": [
+                    "username"
+                ]
+            },
             "CreateOrderDto": {
                 "type": "object",
                 "properties": {
@@ -2836,18 +3437,457 @@
                     "countedCash"
                 ]
             },
-            "SetPinDto": {
+            "ValidatePhoneDto": {
                 "type": "object",
                 "properties": {
-                    "pin": {
-                        "type": "string",
-                        "example": "4821",
-                        "description": "4 to 6 digits"
+                    "phone": {
+                        "type": "string"
                     }
                 },
                 "required": [
-                    "pin"
+                    "phone"
                 ]
+            },
+            "ValidateBillDto": {
+                "type": "object",
+                "properties": {
+                    "service": {
+                        "type": "string",
+                        "enum": [
+                            "NWSC",
+                            "UEDCL",
+                            "DSTV",
+                            "GOTV",
+                            "STARTIMES"
+                        ]
+                    },
+                    "reference": {
+                        "type": "string"
+                    },
+                    "option": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "service",
+                    "reference"
+                ]
+            },
+            "CreateRailPayoutDto": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "mobile_money",
+                            "bill",
+                            "airtime"
+                        ],
+                        "description": "mobile_money sends to a phone; bill pays water, electricity or TV; airtime buys airtime for a number"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "salary",
+                            "supplier",
+                            "bill",
+                            "petty_cash",
+                            "advance",
+                            "other"
+                        ]
+                    },
+                    "payee": {
+                        "type": "string",
+                        "example": "Sarah Kato / UMEME"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Whole UGX"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0771234567",
+                        "description": "mobile_money and airtime: the number to pay. bill: a phone number for the receipt message."
+                    },
+                    "service": {
+                        "type": "string",
+                        "enum": [
+                            "NWSC",
+                            "UEDCL",
+                            "DSTV",
+                            "GOTV",
+                            "STARTIMES"
+                        ],
+                        "description": "Required for a bill"
+                    },
+                    "customerRef": {
+                        "type": "string",
+                        "description": "Required for a bill: the meter, account or smartcard number"
+                    },
+                    "customerName": {
+                        "type": "string"
+                    },
+                    "option": {
+                        "type": "string",
+                        "description": "Water area or electricity type, when the biller needs one"
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "kind",
+                    "category",
+                    "payee",
+                    "amount",
+                    "phone"
+                ]
+            },
+            "CreatePayoutDto": {
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "salary",
+                            "supplier",
+                            "bill",
+                            "petty_cash",
+                            "advance",
+                            "other"
+                        ]
+                    },
+                    "payee": {
+                        "type": "string",
+                        "example": "Sarah Kato / Nile Breweries / UMEME"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Whole UGX"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "cash",
+                            "mobile_money",
+                            "bank",
+                            "other"
+                        ]
+                    },
+                    "paidOn": {
+                        "type": "string",
+                        "example": "2026-11-02",
+                        "description": "Uganda date it was paid. Today when left out."
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "category",
+                    "payee",
+                    "amount",
+                    "method"
+                ]
+            },
+            "CreateReservationDto": {
+                "type": "object",
+                "properties": {
+                    "guestName": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "partySize": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 500
+                    },
+                    "reservedFor": {
+                        "type": "string",
+                        "example": "2026-11-03T18:30:00+03:00"
+                    },
+                    "tableId": {
+                        "type": "string"
+                    },
+                    "note": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "guestName",
+                    "partySize",
+                    "reservedFor"
+                ]
+            },
+            "ReservationStatusDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "booked",
+                            "seated",
+                            "cancelled",
+                            "no_show"
+                        ]
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "UpdateSettingsDto": {
+                "type": "object",
+                "properties": {
+                    "businessName": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "tin": {
+                        "type": "string",
+                        "description": "Tax number printed on receipts"
+                    },
+                    "receiptFooter": {
+                        "type": "string"
+                    },
+                    "showPoweredBy": {
+                        "type": "boolean"
+                    },
+                    "payoutApprovalLimit": {
+                        "type": "number",
+                        "description": "Payments out at or above this need the owner. Whole UGX."
+                    }
+                }
+            },
+            "VoidItemDto": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    },
+                    "approverPin": {
+                        "type": "string",
+                        "description": "A manager or the owner types their PIN. Not needed when the caller is a manager."
+                    }
+                },
+                "required": [
+                    "reason"
+                ]
+            },
+            "DiscountDto": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    },
+                    "itemId": {
+                        "type": "string",
+                        "description": "One line only. When left out the discount applies to every unbilled line (percent only)."
+                    },
+                    "percent": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 100
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Whole UGX off one line"
+                    },
+                    "approverPin": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "reason"
+                ]
+            },
+            "SplitDto": {
+                "type": "object",
+                "properties": {
+                    "itemIds": {
+                        "description": "Lines to move onto a new bill for the same table",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "itemIds"
+                ]
+            },
+            "StockItemDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "example": "kg, bottles, crates"
+                    },
+                    "reorderLevel": {
+                        "type": "number",
+                        "description": "Warn when stock falls to this level"
+                    },
+                    "costPrice": {
+                        "type": "number",
+                        "description": "Usual cost per unit, whole UGX"
+                    },
+                    "supplierId": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "StockMoveDto": {
+                "type": "object",
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "purchase",
+                            "waste",
+                            "count"
+                        ],
+                        "description": "purchase adds, waste takes away, count sets what is really on the shelf"
+                    },
+                    "qty": {
+                        "type": "number",
+                        "minimum": 0
+                    },
+                    "unitCost": {
+                        "type": "number",
+                        "description": "Cost per unit for a purchase, whole UGX"
+                    },
+                    "supplierId": {
+                        "type": "string"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "paidMethod": {
+                        "type": "string",
+                        "enum": [
+                            "cash",
+                            "mobile_money",
+                            "bank",
+                            "other"
+                        ],
+                        "description": "For a purchase: also record the payment out now, using this method"
+                    }
+                },
+                "required": [
+                    "kind",
+                    "qty"
+                ]
+            },
+            "SupplierDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "CreateStaffDto": {
+                "type": "object",
+                "properties": {
+                    "fullName": {
+                        "type": "string",
+                        "example": "Sarah Kato"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "manager",
+                            "cashier",
+                            "waiter",
+                            "kitchen"
+                        ]
+                    },
+                    "username": {
+                        "type": "string",
+                        "example": "sarah.k",
+                        "description": "Left out: made from the name (sarah.kato). Must not be used by anyone else."
+                    },
+                    "pinLength": {
+                        "type": "number",
+                        "enum": [
+                            4,
+                            5,
+                            6
+                        ],
+                        "description": "PIN digits, default 5."
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "sarah@gmail.com",
+                        "description": "The person's OWN email. Their PIN is sent here. Email or phone is required."
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "0771234567",
+                        "description": "The person's OWN phone. Their PIN is sent here by SMS."
+                    },
+                    "sendPasswordLink": {
+                        "type": "boolean",
+                        "description": "Also email them a link to set their own password, so they can sign in without a PIN device. Default: true for managers, false for other roles. Needs an email."
+                    }
+                },
+                "required": [
+                    "fullName",
+                    "role"
+                ]
+            },
+            "ContactDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    }
+                }
+            },
+            "GeneratePinDto": {
+                "type": "object",
+                "properties": {
+                    "length": {
+                        "type": "number",
+                        "enum": [
+                            4,
+                            5,
+                            6
+                        ],
+                        "description": "How many digits. Default 5."
+                    }
+                }
             },
             "SetRoleDto": {
                 "type": "object",
@@ -2942,6 +3982,60 @@
                 "required": [
                     "refreshToken"
                 ]
+            },
+            "EnrollDeviceDto": {
+                "type": "object",
+                "properties": {
+                    "deviceSecret": {
+                        "type": "string",
+                        "description": "A long random secret the device keeps. Only its hash is stored."
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Bar till"
+                    }
+                },
+                "required": [
+                    "deviceSecret"
+                ]
+            },
+            "PinLoginDto": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "example": "sarah.k",
+                        "description": "The person's username. The PIN alone never identifies anyone."
+                    },
+                    "pin": {
+                        "type": "string",
+                        "description": "The PIN, checked against this username only."
+                    },
+                    "deviceSecret": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "username",
+                    "pin",
+                    "deviceSecret"
+                ]
+            },
+            "SetPasswordDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "PinPolicyDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "SubscribeDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "UnsubscribeDto": {
+                "type": "object",
+                "properties": {}
             }
         }
     }
