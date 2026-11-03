@@ -19,11 +19,13 @@ import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 
 interface ShiftManagementScreenProps {
   onLockTerminal: () => void;
+  onOrdersPress?: () => void;
   onProfilePress?: () => void;
 }
 
 export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
   onLockTerminal,
+  onOrdersPress,
   onProfilePress,
 }) => {
   const colors = useHorecaColors();
@@ -74,6 +76,7 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
           title="Shift & Drawer"
           subtitle={isShiftOpen ? 'DRAWER ACTIVE' : 'DRAWER LOCKED'}
           isOnline={isOnline}
+          onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
         />

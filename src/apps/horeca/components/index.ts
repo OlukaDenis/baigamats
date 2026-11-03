@@ -12,6 +12,7 @@ export * from './molecules/Select';
 
 // Organisms
 export * from './organisms/HorecaAppBar';
+export * from './organisms/HorecaSubAppBar';
 export * from './organisms/NumPad';
 export * from './organisms/TableCard';
 

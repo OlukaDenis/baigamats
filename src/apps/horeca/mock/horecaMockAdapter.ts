@@ -200,7 +200,7 @@ function getMockResponse(method: string, url: string, data?: any): any {
   }
 
   // POST /v1/auth/login
-  if (url.includes('/v1/auth/login')) {
+  if (url.includes('/v1/auth/login') || url.includes('/v1/auth/pin-login')) {
     return {
       mfaRequired: false,
       session: {

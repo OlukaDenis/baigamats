@@ -20,11 +20,13 @@ import { useHorecaAuthStore } from '../../auth/store/horecaAuthStore';
 
 interface BackOfficeScreenProps {
   onLockTerminal: () => void;
+  onOrdersPress?: () => void;
   onProfilePress?: () => void;
 }
 
 export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
   onLockTerminal,
+  onOrdersPress,
   onProfilePress,
 }) => {
   const { colors, isDark, toggleTheme } = useHorecaTheme();
@@ -75,6 +77,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
         <HorecaAppBar
           title="Admin Back Office"
           subtitle="MASTER CONFIG"
+          onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
         />

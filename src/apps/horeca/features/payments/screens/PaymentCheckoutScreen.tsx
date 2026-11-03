@@ -13,7 +13,7 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { AlertBanner } from '@horeca/components/molecules/AlertBanner';
-import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 
 interface PaymentCheckoutScreenProps {
@@ -88,19 +88,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
       withBottomInset
       className="bg-background"
       header={
-        <HorecaAppBar
-          title="Checkout & Payment"
-          subtitle="ORDER #8429 • TABLE 04"
-          onLockPress={onLockTerminal}
-          rightAction={
-            <Button
-              label="Cancel"
-              variant="ghost"
-              size="sm"
-              onPress={onCancel}
-            />
-          }
-        />
+        <HorecaSubAppBar title="Checkout & Payment" onBack={onCancel} onOrdersPress={onCancel} />
       }
       contentContainerClassName="px-4 py-5"
     >

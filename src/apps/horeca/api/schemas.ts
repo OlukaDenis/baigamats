@@ -306,6 +306,13 @@ export const loginDtoSchema = z.object({
 });
 export type LoginDto = z.infer<typeof loginDtoSchema>;
 
+export const pinLoginDtoSchema = z.object({
+  username: z.string().min(1),
+  pin: z.string().min(4).max(6),
+  deviceSecret: z.string().min(32),
+});
+export type PinLoginDto = z.infer<typeof pinLoginDtoSchema>;
+
 export const loginResponseSchema = z.object({
   mfaRequired: z.boolean(),
   factorId: z.string().optional(),

@@ -4,6 +4,7 @@ import type {
   KitchenTicket,
   MenuCategory,
   MenuItem,
+  MenuTree,
   Order,
   OrderItem,
   Shift,
@@ -59,10 +60,15 @@ interface HorecaState {
   hydrateTables: () => Promise<void>;
   setTables: (tables: Table[]) => void;
   hydrateTableCategories: () => Promise<void>;
+  hydrateMenu: () => Promise<void>;
+  setMenu: (menu: MenuTree) => void;
   setTableCategories: (categories: TableCategory[]) => void;
   setTableStatus: (tableId: string, status: Table['status']) => void;
   setActiveTableId: (id: string | null) => void;
   setActiveOrderId: (id: string | null) => void;
+  setOrders: (orders: Order[]) => void;
+  upsertOrder: (order: Order, replaceTempId?: string) => void;
+  replaceOrderItemId: (orderId: string, tempItemId: string, serverItem: Partial<OrderItem> & { id: string }, orderTotal?: number) => void;
 
   // Order actions
   createOrderOptimistic: (params: { tableId?: string; orderType: Order['order_type']; partySize?: number; tabName?: string }) => Order;
@@ -82,6 +88,13 @@ interface HorecaState {
   enqueueMutation: (mutation: Omit<OutboxMutation, 'id' | 'createdAt' | 'attempts'>) => void;
   dequeueMutation: (id: string) => void;
   clearOutbox: () => void;
+}
+
+/** Converts the API menu tree into the flat/sorted shape held in the store. */
+function menuTreeToState(menu: MenuTree): { categories: MenuCategory[]; menuItems: MenuItem[] } {
+  const categories = [...menu.categories].sort((a, b) => a.sort_order - b.sort_order);
+  const menuItems = [...categories.flatMap(c => c.items), ...(menu.uncategorised ?? [])];
+  return { categories, menuItems };
 }
 
 export const useHorecaStore = create<HorecaState>((set, get) => ({
@@ -109,6 +122,18 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
         activeTableId: state.activeTableId ?? cached[0]?.id ?? null,
       }));
     }
+  },
+
+  hydrateMenu: async () => {
+    const cached = await tableStorage.getMenu();
+    if (cached && cached.categories.length > 0) {
+      set(state => (state.categories.length === 0 ? menuTreeToState(cached) : state));
+    }
+  },
+
+  setMenu: menu => {
+    set(menuTreeToState(menu));
+    tableStorage.saveMenu(menu).catch(() => { });
   },
 
   hydrateTableCategories: async () => {
@@ -142,6 +167,75 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
 
   setActiveTableId: id => set({ activeTableId: id }),
   setActiveOrderId: id => set({ activeOrderId: id }),
+
+  setOrders: incomingOrders =>
+    set(state => {
+      const nextOrders: Record<string, Order> = {};
+      // Preserve unsynced optimistic orders (temp-ord-...)
+      Object.values(state.orders).forEach(ord => {
+        if (ord.id.startsWith('temp-ord-')) {
+          nextOrders[ord.id] = ord;
+        }
+      });
+      incomingOrders.forEach(ord => {
+        const existing = state.orders[ord.id];
+        nextOrders[ord.id] = {
+          ...existing,
+          ...ord,
+          // Keep existing items if list endpoint omitted items
+          items: ord.items && ord.items.length > 0 ? ord.items : (existing?.items ?? []),
+        };
+      });
+      return { orders: nextOrders };
+    }),
+
+  upsertOrder: (order, replaceTempId) =>
+    set(state => {
+      const nextOrders = { ...state.orders };
+      const tempOrder = replaceTempId ? nextOrders[replaceTempId] : undefined;
+      if (replaceTempId) {
+        delete nextOrders[replaceTempId];
+      }
+      const existing = nextOrders[order.id] ?? tempOrder;
+      nextOrders[order.id] = {
+        ...existing,
+        ...order,
+        items:
+          order.items && order.items.length > 0
+            ? order.items
+            : (existing?.items ?? []),
+        total_amount:
+          order.total_amount && order.total_amount > 0
+            ? order.total_amount
+            : (existing?.total_amount ?? 0),
+      };
+      return {
+        orders: nextOrders,
+        activeOrderId:
+          replaceTempId && state.activeOrderId === replaceTempId
+            ? order.id
+            : state.activeOrderId,
+      };
+    }),
+
+  replaceOrderItemId: (orderId, tempItemId, serverItem, orderTotal) =>
+    set(state => {
+      const order = state.orders[orderId];
+      if (!order) return state;
+      const items = (order.items ?? []).map(it =>
+        it.id === tempItemId ? { ...it, ...serverItem, id: serverItem.id } : it,
+      );
+      const total_amount =
+        typeof orderTotal === 'number'
+          ? orderTotal
+          : items.reduce((sum, it) => sum + it.unit_price * it.qty, 0);
+      return {
+        orders: {
+          ...state.orders,
+          [orderId]: { ...order, items, total_amount },
+        },
+      };
+    }),
 
   createOrderOptimistic: ({ tableId, orderType, partySize = 2, tabName }) => {
     const tempId = `temp-ord-${Date.now()}`;
@@ -268,6 +362,8 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   },
 
   updateItemQtyOptimistic: (orderId, itemId, delta) => {
+    // Capture the line before the optimistic update changes its quantity.
+    const existing = get().orders[orderId]?.items?.find(it => it.id === itemId);
     set(state => {
       const order = state.orders[orderId];
       if (!order) return state;
@@ -300,10 +396,25 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       };
     });
 
-    get().enqueueMutation({
-      type: 'add_item',
-      payload: { orderId, itemId, delta },
-    });
+    // The API has no "set quantity" endpoint, so replace the server line:
+    // remove the old one and re-add it with the new quantity.
+    if (existing) {
+      const nextQty = existing.qty + delta;
+      get().enqueueMutation({ type: 'remove_item', payload: { orderId, itemId } });
+      if (nextQty > 0) {
+        get().enqueueMutation({
+          type: 'add_item',
+          payload: {
+            orderId,
+            menuItemId: existing.menu_item_id,
+            qty: nextQty,
+            modifiers: existing.modifiers,
+            notes: existing.notes ?? undefined,
+            clientTempItemId: itemId,
+          },
+        });
+      }
+    }
   },
 
   deleteOrderOptimistic: orderId => {

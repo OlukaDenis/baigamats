@@ -1,43 +1,60 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import {
-  ArrowRightOnRectangleIcon,
   ComputerDesktopIcon,
   LockClosedIcon,
-  MoonIcon,
-  SunIcon,
+  ShoppingCartIcon,
+  UserIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHorecaTheme } from '../../theme/colors';
+import { useHorecaStore } from '../../db/offlineStore';
+import { useHorecaColors } from '../../theme/colors';
 import { AppText } from '../atoms/AppText';
 
 export interface HorecaAppBarProps {
   title: string;
   subtitle?: string;
   isOnline?: boolean;
+  leftIcon?: React.ReactNode;
+  ordersCount?: number;
+  onOrdersPress?: () => void;
   onLockPress?: () => void;
   onProfilePress?: () => void;
   rightAction?: React.ReactNode;
-  showThemeToggle?: boolean;
   className?: string;
 }
 
 /**
- * HORECA POS Terminal Header Organism.
- * Powered by NativeWind and Heroicons with online status indicator and quick actions.
+ * Primary AppBar displayed on bottom navigation bar screens.
+ * Shows left icon, screen title, and right actions: cart (orders) with counter, lock, and user account.
  */
 export function HorecaAppBar({
   title,
-  subtitle = 'T-01 • ONLINE',
-  isOnline = true,
+  leftIcon,
+  ordersCount,
+  onOrdersPress,
   onLockPress,
   onProfilePress,
-  rightAction,
-  showThemeToggle = true,
   className = '',
 }: HorecaAppBarProps) {
   const insets = useSafeAreaInsets();
-  const { isDark, toggleTheme, colors } = useHorecaTheme();
+  const colors = useHorecaColors();
+
+  const orders = useHorecaStore(state => state.orders);
+  const activeOrderId = useHorecaStore(state => state.activeOrderId);
+  const activeTableId = useHorecaStore(state => state.activeTableId);
+
+  const currentOrder =
+    (activeOrderId ? orders[activeOrderId] : null) ??
+    Object.values(orders).find(o => o.table_id === activeTableId && o.status === 'open');
+
+  const computedCount = currentOrder
+    ? (currentOrder.items ?? []).reduce((sum, item) => sum + item.qty, 0)
+    : Object.values(orders)
+        .filter(o => o.status === 'open')
+        .reduce((sum, o) => sum + (o.items ?? []).reduce((s, it) => s + it.qty, 0), 0);
+
+  const badgeCount = ordersCount ?? computedCount;
 
   return (
     <View
@@ -45,52 +62,39 @@ export function HorecaAppBar({
       className={`border-b border-border bg-surface px-4 pb-3 ${className}`.trim()}
     >
       <View className="flex-row items-center justify-between">
-        {/* Left: Terminal badge & title */}
+        {/* Left: Icon & Screen Name */}
         <View className="flex-row items-center flex-1 mr-2">
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mr-3">
-            <ComputerDesktopIcon
-              color={colors.primary}
-              size={20}
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-            />
-          </View>
-          <View className="flex-1">
-            <AppText variant="title" numberOfLines={1} className="text-text font-bold">
-              {title}
-            </AppText>
-            <View className="flex-row items-center mt-0.5">
-              <View
-                className={`h-2 w-2 rounded-full mr-1.5 ${
-                  isOnline ? 'bg-status-available' : 'bg-error'
-                }`}
+            {leftIcon ?? (
+              <ComputerDesktopIcon
+                color={colors.primary}
+                size={20}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
               />
-              <AppText variant="caption" className="text-text-secondary font-medium">
-                {subtitle}
-              </AppText>
-            </View>
+            )}
           </View>
+          <AppText variant="title" numberOfLines={1} className="text-text font-bold flex-1">
+            {title}
+          </AppText>
         </View>
 
-        {/* Right: Actions */}
+        {/* Right: Cart (Orders) Counter, Lock, Account */}
         <View className="flex-row items-center">
-          {rightAction}
-
-          {showThemeToggle ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              onPress={toggleTheme}
-              className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border mr-2 active:opacity-70"
-              hitSlop={6}
-            >
-              {isDark ? (
-                <SunIcon color={colors.primary} size={18} />
-              ) : (
-                <MoonIcon color={colors.onSurfaceVariant} size={18} />
-              )}
-            </Pressable>
-          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View Orders, ${badgeCount} selected`}
+            onPress={onOrdersPress}
+            className="relative h-10 w-10 items-center justify-center rounded-xl bg-background border border-border mr-2 active:opacity-70"
+            hitSlop={6}
+          >
+            <ShoppingCartIcon color={colors.onSurfaceVariant} size={18} />
+            <View className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary items-center justify-center">
+              <AppText className="text-[10px] font-bold text-on-primary">
+                {badgeCount}
+              </AppText>
+            </View>
+          </Pressable>
 
           {onLockPress ? (
             <Pressable
@@ -107,12 +111,12 @@ export function HorecaAppBar({
           {onProfilePress ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Sign out or Switch Staff"
+              accessibilityLabel="User Profile"
               onPress={onProfilePress}
-              className="h-10 w-10 items-center justify-center rounded-xl bg-error/10 border border-error/20 active:opacity-70"
+              className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border active:opacity-70"
               hitSlop={6}
             >
-              <ArrowRightOnRectangleIcon color={colors.error} size={18} />
+              <UserIcon color={colors.onSurfaceVariant} size={18} />
             </Pressable>
           ) : null}
         </View>

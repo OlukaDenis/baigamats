@@ -18,11 +18,13 @@ import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 
 interface KitchenDisplayScreenProps {
   onLockTerminal: () => void;
+  onOrdersPress?: () => void;
   onProfilePress?: () => void;
 }
 
 export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
   onLockTerminal,
+  onOrdersPress,
   onProfilePress,
 }) => {
   const insets = useSafeAreaInsets();
@@ -164,6 +166,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
           title="Kitchen Display (KDS)"
           subtitle={`KDS • ${filteredTickets.length} ACTIVE TICKETS`}
           isOnline={isOnline}
+          onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
         />

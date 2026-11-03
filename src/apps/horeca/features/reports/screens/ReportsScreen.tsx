@@ -14,11 +14,13 @@ import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 
 interface ReportsScreenProps {
   onLockTerminal: () => void;
+  onOrdersPress?: () => void;
   onProfilePress?: () => void;
 }
 
 export const ReportsScreen: React.FC<ReportsScreenProps> = ({
   onLockTerminal,
+  onOrdersPress,
   onProfilePress,
 }) => {
   const colors = useHorecaColors();
@@ -33,6 +35,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         <HorecaAppBar
           title="Reports & Analytics"
           subtitle="EXECUTIVE DASHBOARD"
+          onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
         />

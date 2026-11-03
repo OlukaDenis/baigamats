@@ -5,7 +5,7 @@ import { horecaApi } from '@horeca/api/horecaApiClient';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
-import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { NumPad } from '@horeca/components/organisms/NumPad';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
@@ -82,20 +82,7 @@ export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
       withBottomInset
       className="bg-background"
       header={
-        <HorecaAppBar
-          title="Set Staff PIN"
-          subtitle={activeStaff ? `${activeStaff.name} • ${activeStaff.role}` : 'STAFF PIN'}
-          rightAction={
-            onBack ? (
-              <Button
-                label="Cancel"
-                variant="ghost"
-                size="sm"
-                onPress={onBack}
-              />
-            ) : null
-          }
-        />
+        <HorecaSubAppBar title="Set Staff PIN" onBack={onBack} />
       }
       contentContainerClassName="px-4 py-6 justify-between items-center"
     >

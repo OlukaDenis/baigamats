@@ -12,7 +12,7 @@ import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
-import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 
 interface DigitalReceiptScreenProps {
@@ -41,11 +41,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
       withBottomInset
       className="bg-background"
       header={
-        <HorecaAppBar
-          title="Digital Receipt"
-          subtitle="TRANSACTION COMPLETED"
-          onLockPress={onLockTerminal}
-        />
+        <HorecaSubAppBar title="Digital Receipt" onBack={onDone} />
       }
       contentContainerClassName="px-4 py-5"
     >

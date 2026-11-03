@@ -5,9 +5,12 @@ import { useHorecaStore } from './offlineStore';
 class SyncEngine {
   private isProcessing = false;
   private unsubscribeNetInfo: (() => void) | null = null;
+  private unsubscribeStore: (() => void) | null = null;
   private idMap: Map<string, string> = new Map();
 
   start() {
+    this.stop();
+
     this.unsubscribeNetInfo = NetInfo.addEventListener(state => {
       const isOnline = !!(state.isConnected && state.isInternetReachable !== false);
       useHorecaStore.getState().setOnlineStatus(isOnline);
@@ -15,6 +18,16 @@ class SyncEngine {
       if (isOnline) {
         this.processOutbox();
       }
+    });
+
+    // Subscribe to outbox changes so mutations flush immediately when online
+    let prevOutboxLength = useHorecaStore.getState().outbox.length;
+    this.unsubscribeStore = useHorecaStore.subscribe(state => {
+      const nextLength = state.outbox.length;
+      if (nextLength > prevOutboxLength && state.isOnline) {
+        this.processOutbox();
+      }
+      prevOutboxLength = nextLength;
     });
 
     // Initial check
@@ -32,6 +45,10 @@ class SyncEngine {
       this.unsubscribeNetInfo();
       this.unsubscribeNetInfo = null;
     }
+    if (this.unsubscribeStore) {
+      this.unsubscribeStore();
+      this.unsubscribeStore = null;
+    }
   }
 
   async processOutbox() {
@@ -39,11 +56,12 @@ class SyncEngine {
     this.isProcessing = true;
 
     try {
-      const store = useHorecaStore.getState();
-      const outbox = [...store.outbox];
-
-      for (const mutation of outbox) {
-        if (!store.isOnline) break;
+      while (
+        useHorecaStore.getState().isOnline &&
+        useHorecaStore.getState().outbox.length > 0
+      ) {
+        const mutation = useHorecaStore.getState().outbox[0];
+        if (!mutation) break;
 
         try {
           switch (mutation.type) {
@@ -57,6 +75,7 @@ class SyncEngine {
               });
               if (res?.id && clientTempId) {
                 this.idMap.set(clientTempId, res.id);
+                useHorecaStore.getState().upsertOrder(res, clientTempId);
               }
               break;
             }
@@ -66,13 +85,24 @@ class SyncEngine {
               if (this.idMap.has(orderId)) {
                 orderId = this.idMap.get(orderId)!;
               }
-              await horecaApi.addItemToOrder(orderId, {
+              const addRes = await horecaApi.addItemToOrder(orderId, {
                 menuItemId: mutation.payload.menuItemId,
                 qty: mutation.payload.qty,
                 modifiers: mutation.payload.modifiers,
                 notes: mutation.payload.notes,
                 ageVerifiedBy: mutation.payload.ageVerifiedBy,
               });
+              if (addRes?.item?.id && mutation.payload.clientTempItemId) {
+                this.idMap.set(mutation.payload.clientTempItemId, addRes.item.id);
+                useHorecaStore
+                  .getState()
+                  .replaceOrderItemId(
+                    orderId,
+                    mutation.payload.clientTempItemId,
+                    addRes.item,
+                    addRes.orderTotal,
+                  );
+              }
               break;
             }
 
@@ -81,7 +111,10 @@ class SyncEngine {
               if (this.idMap.has(orderId)) {
                 orderId = this.idMap.get(orderId)!;
               }
-              await horecaApi.removeItemFromOrder(orderId, mutation.payload.itemId);
+              await horecaApi.removeItemFromOrder(
+                orderId,
+                this.idMap.get(mutation.payload.itemId) ?? mutation.payload.itemId,
+              );
               break;
             }
 
@@ -92,7 +125,7 @@ class SyncEngine {
               }
               await horecaApi.updateItemKotStatus(
                 orderId,
-                mutation.payload.itemId,
+                this.idMap.get(mutation.payload.itemId) ?? mutation.payload.itemId,
                 mutation.payload.status,
               );
               break;
@@ -133,10 +166,9 @@ class SyncEngine {
           // Dequeue successfully synced mutation
           useHorecaStore.getState().dequeueMutation(mutation.id);
         } catch (err: any) {
-          // If error is 409 or network failure, retain in outbox or back off
           console.warn(`[SyncEngine] Mutation ${mutation.id} error:`, err?.message);
           mutation.attempts += 1;
-          break; // Pause outbox processing until next network cycle
+          break; // Pause outbox processing until next trigger
         }
       }
     } finally {

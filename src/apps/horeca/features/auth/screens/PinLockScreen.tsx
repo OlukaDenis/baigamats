@@ -1,50 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import {
-  CheckCircleIcon,
   ComputerDesktopIcon,
   KeyIcon,
   MoonIcon,
   SunIcon,
 } from 'react-native-heroicons/outline';
+import { env } from '@shared/config/env';
+import { getDeviceSecret } from '@shared/services/deviceSecret';
+import { tokenStorage } from '@shared/services/tokenStorage';
 import { horecaApi } from '@horeca/api/horecaApiClient';
 import type { StaffMember } from '@horeca/api/schemas';
 import { useHorecaTheme } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
-import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
+import { FormField } from '@horeca/components/molecules/FormField';
 import { NumPad } from '@horeca/components/organisms/NumPad';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
 
+const PIN_LENGTH = 4;
+
 export const PinLockScreen: React.FC = () => {
   const { isDark, toggleTheme, colors } = useHorecaTheme();
-  const staffList = useHorecaAuthStore(state => state.staffList);
-  const activeStaff = useHorecaAuthStore(state => state.activeStaff);
+  const loginSuccess = useHorecaAuthStore(state => state.loginSuccess);
   const unlockWithStaff = useHorecaAuthStore(state => state.unlockWithStaff);
+  const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const switchToPasswordLogin = useHorecaAuthStore(state => state.switchToPasswordLogin);
 
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(
-    activeStaff ?? (staffList.length > 0 ? staffList[0] : null),
-  );
+  const [username, setUsername] = useState<string>('');
   const [pin, setPin] = useState<string>('');
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
 
   useEffect(() => {
-    if (!selectedStaff && staffList.length > 0) {
-      setSelectedStaff(activeStaff ?? staffList[0]);
-    }
-  }, [staffList, activeStaff, selectedStaff]);
-
-  useEffect(() => {
     const updateClock = () => {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-      const dateStr = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
-      setCurrentTime(timeStr);
-      setCurrentDate(dateStr);
+      setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+      setCurrentDate(
+        now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase(),
+      );
     };
     updateClock();
     const timer = setInterval(updateClock, 30_000);
@@ -52,63 +48,67 @@ export const PinLockScreen: React.FC = () => {
   }, []);
 
   const handleDigitPress = (digit: string) => {
-    if (pin.length < 6) {
-      const nextPin = pin + digit;
-      setPin(nextPin);
-      if (nextPin.length === 4) {
-        verifyPin(nextPin);
-      }
-    }
+    if (isVerifying) return;
+    setPin(prev => (prev.length < PIN_LENGTH ? prev + digit : prev));
   };
 
-  const handleClear = () => {
-    setPin('');
-  };
+  const handleClear = () => setPin('');
+  const handleBackspace = () => setPin(prev => prev.slice(0, -1));
 
-  const handleBackspace = () => {
-    setPin(prev => prev.slice(0, -1));
-  };
+  const canSubmit = username.trim().length > 0 && pin.length === PIN_LENGTH && !isVerifying;
 
-  const verifyPin = async (candidatePin: string) => {
-    if (isVerifying || !selectedStaff) return;
+  const handleSignIn = async () => {
+    if (!canSubmit) return;
     setIsVerifying(true);
 
     try {
-      const res = await horecaApi.verifyPin({
-        userId: selectedStaff.id,
-        pin: candidatePin,
+      const deviceSecret = await getDeviceSecret();
+      const res = await horecaApi.pinLogin({
+        username: username.trim(),
+        pin,
+        deviceSecret,
       });
 
-      if (res.ok) {
-        unlockWithStaff(selectedStaff);
+      if (res.session?.accessToken) {
+        await tokenStorage.saveTokens({
+          accessToken: res.session.accessToken,
+          refreshToken: res.session.refreshToken,
+        });
+        const me = await horecaApi.me();
+        let staffList: StaffMember[] = [];
+        try {
+          staffList = await horecaApi.getStaff();
+          useHorecaAuthStore.getState().setStaffList(staffList);
+        } catch {
+          // staff endpoint may be restricted for this role
+        }
+        loginSuccess(me, staffList.find(s => s.id === me.userId) ?? staffList[0]);
       } else {
-        Alert.alert('Incorrect PIN', 'Please enter your correct staff PIN.');
+        Alert.alert('Sign In Failed', 'Unexpected response from server.');
         setPin('');
       }
-    } catch {
-      // In development / demo mode, auto-unlock on 4 digits
-      unlockWithStaff(selectedStaff);
+    } catch (err: any) {
+      if (env.ENABLE_MOCK && activeStaff) {
+        // Demo mode: unlock without a backend
+        unlockWithStaff(activeStaff);
+      } else {
+        const message =
+          err?.response?.data?.message || err?.message || 'Incorrect username or PIN.';
+        Alert.alert('Sign In Failed', String(message));
+        setPin('');
+      }
     } finally {
       setIsVerifying(false);
     }
   };
 
-  const staffName = selectedStaff?.name ?? 'Staff';
-  const staffRole = selectedStaff?.role ?? '';
-  const staffInitials = staffName
-    .split(' ')
-    .filter(Boolean)
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || 'ST';
-
   return (
     <ScreenTemplate
+      scrollable
       withTopInset
       withBottomInset
       className="bg-background"
-      contentContainerClassName="px-4 py-3 justify-between"
+      contentContainerClassName="px-4 py-3"
     >
       {/* Top Header Bar */}
       <View className="flex-row items-center justify-between pb-3 border-b border-border">
@@ -118,23 +118,20 @@ export const PinLockScreen: React.FC = () => {
           </View>
           <View>
             <AppText variant="label" className="font-bold text-text">
-              HorecaOS
-            </AppText>
-            <AppText variant="caption" className="text-[10px] text-text-secondary font-semibold tracking-wider">
-              TERM 01 • HANDHELD POS
+              HorecaPOS
             </AppText>
           </View>
         </View>
 
         <View className="flex-row items-center">
-          <View className="items-end mr-3">
+          {/* <View className="items-end mr-3">
             <AppText variant="label" className="font-bold text-text">
               {currentTime || '12:54'}
             </AppText>
             <AppText variant="caption" className="text-[10px] text-text-secondary font-medium">
               {currentDate || 'FRI, OCT 24'}
             </AppText>
-          </View>
+          </View> */}
 
           <Pressable
             accessibilityRole="button"
@@ -160,38 +157,36 @@ export const PinLockScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Staff Avatar & PIN Indicator */}
-      <View className="items-center my-3">
-        <View className="relative mb-2">
-          <View className="h-16 w-16 items-center justify-center rounded-full bg-primary/10 border-2 border-primary shadow-sm">
-            <AppText className="text-xl font-bold text-primary">
-              {staffInitials}
-            </AppText>
-          </View>
-          {selectedStaff ? (
-            <View className="absolute -bottom-1 -right-1 bg-surface rounded-full p-0.5">
-              <CheckCircleIcon color={colors.primary} size={18} />
-            </View>
-          ) : null}
-        </View>
-
+      {/* Username + PIN indicators */}
+      <View className="mt-4">
         <AppText variant="title" className="text-text font-bold text-center">
-          {selectedStaff ? 'Enter Staff PIN' : 'POS Terminal Locked'}
+          Staff PIN Sign In
         </AppText>
-        <AppText variant="caption" className="text-text-secondary mt-0.5 text-center font-medium">
-          {selectedStaff ? `${staffName} • ${staffRole.toUpperCase()}` : 'Sign in to access restaurant terminal'}
+        <AppText variant="caption" className="text-text-secondary mt-0.5 mb-3 text-center font-medium">
+          Enter your username and PIN
         </AppText>
 
-        {/* PIN Indicators */}
-        <View className="flex-row items-center justify-center mt-4">
-          {[0, 1, 2, 3].map(index => {
+        <FormField
+          label="Username"
+          value={username}
+          onChangeText={setUsername}
+          placeholder="e.g. denis"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="next"
+          editable={!isVerifying}
+          containerClassName="w-full max-w-sm self-center px-4 mb-2"
+        />
+
+        <View className="flex-row items-center justify-center mt-2">
+          {Array.from({ length: PIN_LENGTH }, (_, index) => {
             const isFilled = pin.length > index;
             return (
               <View
                 key={index}
-                className={`mx-2 h-4 w-4 rounded-full border transition-all ${
+                className={`mx-2 h-4 w-4 rounded-full border ${
                   isFilled
-                    ? 'bg-primary border-primary scale-110 shadow-sm'
+                    ? 'bg-primary border-primary'
                     : 'bg-surface border-border'
                 }`}
               />
@@ -200,8 +195,8 @@ export const PinLockScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Alexandria Numeric Keypad */}
-      <View className="my-1">
+      {/* Numeric Keypad */}
+      <View className="my-3">
         <NumPad
           onDigitPress={handleDigitPress}
           onClearPress={handleClear}
@@ -209,81 +204,13 @@ export const PinLockScreen: React.FC = () => {
         />
       </View>
 
-      {/* Staff Selector Pills Carousel */}
-      <View className="pt-2 border-t border-border/40">
-        {staffList.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' }}
-          >
-            {staffList.map(staff => {
-              const isSelected = selectedStaff?.id === staff.id;
-              const initials = staff.name
-                .split(' ')
-                .filter(Boolean)
-                .map(n => n[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase() || 'ST';
-
-              return (
-                <Pressable
-                  key={staff.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Switch to ${staff.name}`}
-                  onPress={() => {
-                    setSelectedStaff(staff);
-                    setPin('');
-                  }}
-                  className={`flex-row items-center mr-2.5 px-3 py-2 rounded-xl border ${
-                    isSelected
-                      ? 'bg-primary border-primary shadow-sm'
-                      : 'bg-surface border-border active:bg-surface/80'
-                  }`}
-                >
-                  <View
-                    className={`h-6 w-6 rounded-full items-center justify-center mr-2 ${
-                      isSelected ? 'bg-on-primary/20' : 'bg-primary/10'
-                    }`}
-                  >
-                    <AppText
-                      className={`text-xs font-bold ${
-                        isSelected ? 'text-on-primary' : 'text-primary'
-                      }`}
-                    >
-                      {initials}
-                    </AppText>
-                  </View>
-                  <View>
-                    <AppText
-                      variant="label"
-                      className={`font-semibold ${
-                        isSelected ? 'text-on-primary' : 'text-text'
-                      }`}
-                    >
-                      {staff.name}
-                    </AppText>
-                    <AppText
-                      variant="caption"
-                      className={`text-[10px] ${
-                        isSelected ? 'text-on-primary/80' : 'text-text-secondary'
-                      }`}
-                    >
-                      {staff.role}
-                    </AppText>
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        ) : (
-          <View className="py-2 items-center">
-            <AppText variant="caption" className="text-text-secondary">
-              Terminal Locked • Enter Master or Staff PIN
-            </AppText>
-          </View>
-        )}
+      <View className="w-full max-w-sm self-center px-4">
+        <Button
+          label={isVerifying ? 'Signing in...' : 'Sign In'}
+          variant="primary"
+          onPress={handleSignIn}
+          disabled={!canSubmit}
+        />
       </View>
     </ScreenTemplate>
   );

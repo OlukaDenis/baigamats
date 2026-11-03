@@ -2,13 +2,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Pressable,
   RefreshControl,
   View,
 } from 'react-native';
 import {
   ArrowPathIcon,
-  ClipboardDocumentListIcon,
   ExclamationTriangleIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,17 +22,20 @@ import { TableCard } from '@horeca/components/organisms/TableCard';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useFloorTables } from '../hooks/useFloorTables';
 import { useTableCategories } from '../hooks/useTableCategories';
+import { useOpenOrders } from '../../orders/hooks/useOpenOrders';
 
 const TABLE_STATUSES = ['occupied', 'available', 'reserved', 'dirty'] as const;
 
 interface FloorPlanScreenProps {
   onOpenOrder: (table: Table) => void;
+  onOrdersPress?: () => void;
   onLockTerminal: () => void;
   onProfilePress?: () => void;
 }
 
 export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   onOpenOrder,
+  onOrdersPress,
   onLockTerminal,
   onProfilePress,
 }) => {
@@ -49,7 +50,6 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const {
     tables,
     isLoading,
-    isFetching,
     isRefetching,
     isError,
     error,
@@ -57,6 +57,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
     isOnline,
   } = useFloorTables();
   const { categories, refetch: refetchCategories } = useTableCategories();
+  const { refetch: refetchOrders, orders } = useOpenOrders();
 
   const activeTableId = useHorecaStore(state => state.activeTableId);
   const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
@@ -65,11 +66,15 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchCategories().catch(() => undefined)]);
+      await Promise.all([
+        refetch(),
+        refetchCategories().catch(() => undefined),
+        refetchOrders(),
+      ]);
     } finally {
       setIsPullRefreshing(false);
     }
-  }, [refetch, refetchCategories]);
+  }, [refetch, refetchCategories, refetchOrders]);
 
   // Options come from GET /v1/tables/categories (cached offline); fall back to
   // categories derived from the downloaded tables if none have been fetched yet.
@@ -116,18 +121,27 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const occupancyPercent =
     totalCapacity > 0 && tables.length > 0 ? Math.round((occupiedCount / tables.length) * 100) : 0;
 
-  const activeTable = tables.find(t => t.id === activeTableId) ?? tables[0];
+  const renderTableCard = ({ item }: { item: Table }) => {
+    const tableOrder = Object.values(orders).find(
+      o => o.table_id === item.id && o.status === 'open',
+    );
+    const tabAmount =
+      tableOrder && tableOrder.total_amount > 0
+        ? `UGX ${tableOrder.total_amount.toLocaleString()}`
+        : undefined;
 
-  const renderTableCard = ({ item }: { item: Table }) => (
-    <TableCard
-      table={item}
-      isSelected={item.id === activeTableId}
-      onPress={tbl => {
-        setActiveTableId(tbl.id);
-        onOpenOrder(tbl);
-      }}
-    />
-  );
+    return (
+      <TableCard
+        table={item}
+        isSelected={item.id === activeTableId}
+        currentTabAmount={tabAmount}
+        onPress={tbl => {
+          setActiveTableId(tbl.id);
+          onOpenOrder(tbl);
+        }}
+      />
+    );
+  };
 
   return (
     <ScreenTemplate
@@ -135,31 +149,9 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       header={
         <HorecaAppBar
           title="Floor Plan"
-          subtitle={`FLOOR • ${occupiedCount}/${tables.length} OCCUPIED • ${isOnline ? 'ONLINE' : 'OFFLINE'}`}
-          isOnline={isOnline}
+          onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
-          rightAction={
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="View Active Orders"
-              onPress={() => onOpenOrder(activeTable)}
-              className="h-10 px-3 mr-2 flex-row items-center justify-center rounded-xl bg-primary/10 border border-primary/25 active:opacity-70"
-              hitSlop={6}
-            >
-              <ClipboardDocumentListIcon color={colors.primary} size={18} />
-              <AppText variant="label" className="text-primary font-bold ml-1.5 text-xs">
-                Orders
-              </AppText>
-              {occupiedCount > 0 ? (
-                <View className="ml-1.5 px-1.5 py-0.5 rounded-full bg-primary items-center justify-center">
-                  <AppText className="text-[10px] font-bold text-on-primary">
-                    {occupiedCount}
-                  </AppText>
-                </View>
-              ) : null}
-            </Pressable>
-          }
         />
       }
       contentContainerClassName="flex-1"
@@ -168,7 +160,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       {!isOnline ? (
         <View className="bg-amber-500/10 border-b border-amber-500/25 px-4 py-2 flex-row items-center justify-between">
           <View className="flex-row items-center flex-1 mr-2">
-            <ExclamationTriangleIcon color={colors.statusReserved} size={15} />
+            <ExclamationTriangleIcon color={colors.warning ?? '#f59e0b'} size={15} />
             <AppText variant="caption" className="ml-1.5 font-semibold text-amber-600 dark:text-amber-400 text-xs">
               Offline Mode • Showing saved tables
             </AppText>
@@ -177,7 +169,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
         </View>
       ) : null}
 
-      {/* Category Filter (offline, client-side) */}
+      {/* Category & Status Filters (offline, client-side) */}
       <View className="flex-row px-4 py-2.5 border-b border-border/40">
         <Select
           className="flex-1 mr-2"
@@ -284,7 +276,6 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
           showsVerticalScrollIndicator={false}
         />
       )}
-
     </ScreenTemplate>
   );
 };

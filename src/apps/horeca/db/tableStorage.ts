@@ -1,5 +1,5 @@
 import * as Keychain from 'react-native-keychain';
-import type { Table, TableCategory } from '../api/schemas';
+import type { MenuTree, Table, TableCategory } from '../api/schemas';
 
 const TABLE_STORAGE_SERVICE = 'com.baigamats.horeca.tables.offline';
 const TABLE_STORAGE_ACCOUNT = 'horeca_tables';
@@ -8,6 +8,9 @@ const CATEGORY_STORAGE_ACCOUNT = 'horeca_table_categories';
 
 let inMemoryTables: Table[] | null = null;
 let inMemoryCategories: TableCategory[] | null = null;
+let inMemoryMenu: MenuTree | null = null;
+const MENU_STORAGE_SERVICE = 'com.baigamats.horeca.menu.offline';
+const MENU_STORAGE_ACCOUNT = 'horeca_menu';
 
 export const tableStorage = {
   /**
@@ -88,14 +91,47 @@ export const tableStorage = {
   },
 
   /**
-   * Clear cached tables and categories.
+   * Persist the menu tree for offline ordering.
+   */
+  async saveMenu(menu: MenuTree): Promise<void> {
+    inMemoryMenu = menu;
+    try {
+      await Keychain.setGenericPassword(MENU_STORAGE_ACCOUNT, JSON.stringify(menu), {
+        service: MENU_STORAGE_SERVICE,
+        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+      });
+    } catch {
+      // Retain in-memory copy if keychain is not accessible
+    }
+  },
+
+  async getMenu(): Promise<MenuTree | null> {
+    try {
+      const credentials = await Keychain.getGenericPassword({ service: MENU_STORAGE_SERVICE });
+      if (credentials && credentials.password) {
+        const parsed = JSON.parse(credentials.password);
+        if (parsed && Array.isArray(parsed.categories)) {
+          inMemoryMenu = parsed;
+          return parsed;
+        }
+      }
+    } catch {
+      // Fallback to in-memory copy
+    }
+    return inMemoryMenu;
+  },
+
+  /**
+   * Clear cached tables, categories and menu.
    */
   async clear(): Promise<void> {
     inMemoryTables = null;
     inMemoryCategories = null;
+    inMemoryMenu = null;
     try {
       await Keychain.resetGenericPassword({ service: TABLE_STORAGE_SERVICE });
       await Keychain.resetGenericPassword({ service: CATEGORY_STORAGE_SERVICE });
+      await Keychain.resetGenericPassword({ service: MENU_STORAGE_SERVICE });
     } catch {
       // Ignore
     }

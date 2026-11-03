@@ -17,6 +17,7 @@ import type {
   MenuTree,
   OpenShiftDto,
   Order,
+  PinLoginDto,
   PaymentStatus,
   Receipt,
   SetPinDto,
@@ -168,6 +169,10 @@ export const horecaApi = {
     const res = await horecaClient.post('/v1/auth/login', dto, { skipAuth: true });
     return res.data;
   },
+  pinLogin: async (dto: PinLoginDto): Promise<LoginResponse> => {
+    const res = await horecaClient.post('/v1/auth/pin-login', dto, { skipAuth: true });
+    return res.data;
+  },
   mfaVerify: async (factorId: string, code: string, mfaSession: { accessToken: string; refreshToken: string }): Promise<LoginResponse> => {
     const res = await horecaClient.post('/v1/auth/mfa/verify', { factorId, code, mfaSession }, { skipAuth: true });
     return res.data;
@@ -256,7 +261,13 @@ export const horecaApi = {
   },
 
   // Orders
-  getOrders: async (params?: { status?: string; tableId?: string; limit?: number; offset?: number }): Promise<{ items: Order[]; total: number }> => {
+  getOrders: async (params?: {
+    status?: string;
+    tableId?: string;
+    limit?: number;
+    offset?: number;
+    mine?: boolean | string;
+  }): Promise<{ items: Order[]; total: number } | Order[]> => {
     const res = await horecaClient.get('/v1/orders', { params });
     return res.data;
   },
