@@ -1,16 +1,23 @@
 import * as Keychain from 'react-native-keychain';
-import type { MenuTree, Table, TableCategory } from '../api/schemas';
+import type { MenuCategory, MenuItem, MenuTree, Table, TableCategory } from '../api/schemas';
+
+export interface CachedMenuCatalogue {
+  hash: string | null;
+  categories: MenuCategory[];
+  items: MenuItem[];
+  categoriesEtag?: string;
+}
 
 const TABLE_STORAGE_SERVICE = 'com.baigamats.horeca.tables.offline';
 const TABLE_STORAGE_ACCOUNT = 'horeca_tables';
 const CATEGORY_STORAGE_SERVICE = 'com.baigamats.horeca.table-categories.offline';
 const CATEGORY_STORAGE_ACCOUNT = 'horeca_table_categories';
+const MENU_STORAGE_SERVICE = 'com.baigamats.horeca.menu.offline';
+const MENU_STORAGE_ACCOUNT = 'horeca_menu';
 
 let inMemoryTables: Table[] | null = null;
 let inMemoryCategories: TableCategory[] | null = null;
-let inMemoryMenu: MenuTree | null = null;
-const MENU_STORAGE_SERVICE = 'com.baigamats.horeca.menu.offline';
-const MENU_STORAGE_ACCOUNT = 'horeca_menu';
+let inMemoryMenuCatalogue: CachedMenuCatalogue | null = null;
 
 export const tableStorage = {
   /**
@@ -91,12 +98,12 @@ export const tableStorage = {
   },
 
   /**
-   * Persist the menu tree for offline ordering.
+   * Persist Menu API v2 catalogue (hash, flat categories, flat items, ETag) for offline ordering.
    */
-  async saveMenu(menu: MenuTree): Promise<void> {
-    inMemoryMenu = menu;
+  async saveMenuCatalogue(catalogue: CachedMenuCatalogue): Promise<void> {
+    inMemoryMenuCatalogue = catalogue;
     try {
-      await Keychain.setGenericPassword(MENU_STORAGE_ACCOUNT, JSON.stringify(menu), {
+      await Keychain.setGenericPassword(MENU_STORAGE_ACCOUNT, JSON.stringify(catalogue), {
         service: MENU_STORAGE_SERVICE,
         accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
       });
@@ -105,20 +112,33 @@ export const tableStorage = {
     }
   },
 
-  async getMenu(): Promise<MenuTree | null> {
+  async getMenuCatalogue(): Promise<CachedMenuCatalogue | null> {
     try {
       const credentials = await Keychain.getGenericPassword({ service: MENU_STORAGE_SERVICE });
       if (credentials && credentials.password) {
         const parsed = JSON.parse(credentials.password);
-        if (parsed && Array.isArray(parsed.categories)) {
-          inMemoryMenu = parsed;
+        if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.items)) {
+          inMemoryMenuCatalogue = parsed;
           return parsed;
         }
       }
     } catch {
       // Fallback to in-memory copy
     }
-    return inMemoryMenu;
+    return inMemoryMenuCatalogue;
+  },
+
+  /** @deprecated Legacy helper wrapped around saveMenuCatalogue */
+  async saveMenu(menu: MenuTree): Promise<void> {
+    const items = [
+      ...menu.categories.flatMap(c => c.items ?? []),
+      ...(menu.uncategorised ?? []),
+    ];
+    await this.saveMenuCatalogue({
+      hash: null,
+      categories: menu.categories.map(({ id, name, sort_order }) => ({ id, name, sort_order })),
+      items,
+    });
   },
 
   /**
@@ -127,7 +147,7 @@ export const tableStorage = {
   async clear(): Promise<void> {
     inMemoryTables = null;
     inMemoryCategories = null;
-    inMemoryMenu = null;
+    inMemoryMenuCatalogue = null;
     try {
       await Keychain.resetGenericPassword({ service: TABLE_STORAGE_SERVICE });
       await Keychain.resetGenericPassword({ service: CATEGORY_STORAGE_SERVICE });
@@ -137,4 +157,3 @@ export const tableStorage = {
     }
   },
 };
-

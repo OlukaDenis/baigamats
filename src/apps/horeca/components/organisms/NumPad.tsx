@@ -14,14 +14,14 @@ export interface NumPadProps {
 
 const PAD_LAYOUT = [
   { digit: '1', sub: '' },
-  { digit: '2', sub: 'ABC' },
-  { digit: '3', sub: 'DEF' },
-  { digit: '4', sub: 'GHI' },
-  { digit: '5', sub: 'JKL' },
-  { digit: '6', sub: 'MNO' },
-  { digit: '7', sub: 'PQRS' },
-  { digit: '8', sub: 'TUV' },
-  { digit: '9', sub: 'WXYZ' },
+  { digit: '2', sub: '' },
+  { digit: '3', sub: '' },
+  { digit: '4', sub: '' },
+  { digit: '5', sub: '' },
+  { digit: '6', sub: '' },
+  { digit: '7', sub: '' },
+  { digit: '8', sub: '' },
+  { digit: '9', sub: '' },
 ];
 
 /**
@@ -65,9 +65,8 @@ export function NumPad({
           accessibilityRole="button"
           onPress={onClearPress}
           disabled={disableClear}
-          className={`w-[30%] h-16 items-center justify-center rounded-2xl bg-surface border border-border shadow-sm active:bg-error/10 active:border-error ${
-            disableClear ? 'opacity-30' : ''
-          }`}
+          className={`w-[30%] h-16 items-center justify-center rounded-2xl bg-surface border border-border shadow-sm active:bg-error/10 active:border-error ${disableClear ? 'opacity-30' : ''
+            }`}
         >
           <AppText className="text-base font-bold text-error">
             CLR

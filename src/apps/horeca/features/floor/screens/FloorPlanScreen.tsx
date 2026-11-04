@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   RefreshControl,
   View,
@@ -22,6 +23,7 @@ import { TableCard } from '@horeca/components/organisms/TableCard';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useFloorTables } from '../hooks/useFloorTables';
 import { useTableCategories } from '../hooks/useTableCategories';
+import { StartOrderModal } from '../../orders/components/StartOrderModal';
 import { useOpenOrders } from '../../orders/hooks/useOpenOrders';
 
 const TABLE_STATUSES = ['occupied', 'available', 'reserved', 'dirty'] as const;
@@ -45,6 +47,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const [selectedSection, setSelectedSection] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const [selectedTableForOrder, setSelectedTableForOrder] = useState<Table | null>(null);
 
   // Fetch tables from /tables with offline fallback
   const {
@@ -61,6 +64,52 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
 
   const activeTableId = useHorecaStore(state => state.activeTableId);
   const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
+  const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
+  const createOrderOptimistic = useHorecaStore(state => state.createOrderOptimistic);
+
+  const handleTablePress = (tbl: Table) => {
+    setActiveTableId(tbl.id);
+
+    // Check if table already has an active open order
+    const existingOrder = Object.values(orders).find(
+      o => o.table_id === tbl.id && o.status === 'open',
+    );
+
+    if (existingOrder) {
+      setActiveOrderId(existingOrder.id);
+      onOpenOrder(tbl);
+      return;
+    }
+
+    // Open bottom sheet modal to start an order (tables can receive orders even if occupied)
+    setSelectedTableForOrder(tbl);
+  };
+
+  const handleConfirmStartOrder = async (tbl: Table) => {
+    try {
+      // 1. If online, create order directly on server to ensure immediate real UUID
+      const res = await horecaApi.createOrder({
+        tableId: tbl.id,
+        orderType: 'dine_in',
+      });
+
+      if (res?.id) {
+        useHorecaStore.getState().upsertOrder(res);
+        setActiveOrderId(res.id);
+        onOpenOrder(tbl);
+        return;
+      }
+    } catch {
+      // Offline fallback: create optimistically and queue sync mutation
+    }
+
+    const newOrder = createOrderOptimistic({
+      tableId: tbl.id,
+      orderType: 'dine_in',
+    });
+    setActiveOrderId(newOrder.id);
+    onOpenOrder(tbl);
+  };
 
   // Pull-to-refresh handler
   const handlePullRefresh = useCallback(async () => {
@@ -83,13 +132,13 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       categories.length > 0
         ? categories.map(c => ({ name: c.name.trim(), count: c.count }))
         : Array.from(
-            tables.reduce((acc, t) => {
-              const name = (t.section || '').trim();
-              if (name) acc.set(name, (acc.get(name) ?? 0) + 1);
-              return acc;
-            }, new Map<string, number>()),
-            ([name, count]) => ({ name, count }),
-          );
+          tables.reduce((acc, t) => {
+            const name = (t.section || '').trim();
+            if (name) acc.set(name, (acc.get(name) ?? 0) + 1);
+            return acc;
+          }, new Map<string, number>()),
+          ([name, count]) => ({ name, count }),
+        );
     return [
       { label: 'All', value: 'All', hint: String(tables.length) },
       ...source.map(c => ({ label: c.name, value: c.name, hint: String(c.count) })),
@@ -135,10 +184,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
         table={item}
         isSelected={item.id === activeTableId}
         currentTabAmount={tabAmount}
-        onPress={tbl => {
-          setActiveTableId(tbl.id);
-          onOpenOrder(tbl);
-        }}
+        onPress={handleTablePress}
       />
     );
   };
@@ -148,7 +194,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       className="bg-background"
       header={
         <HorecaAppBar
-          title="Floor Plan"
+          title="Home"
           onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
@@ -196,14 +242,6 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
           </AppText>
           <AppText variant="caption" className="text-text font-bold text-[11px]">
             {occupancyPercent}% ({occupiedCount}/{tables.length})
-          </AppText>
-        </View>
-        <View className="flex-row items-center">
-          <AppText variant="caption" className="text-text-secondary font-semibold text-[11px]">
-            TABS:{' '}
-          </AppText>
-          <AppText variant="caption" className="text-primary font-bold text-[11px]">
-            UGX 1,280,000
           </AppText>
         </View>
       </View>
@@ -276,6 +314,14 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Start Order Bottom Sheet Modal */}
+      <StartOrderModal
+        table={selectedTableForOrder}
+        visible={Boolean(selectedTableForOrder)}
+        onClose={() => setSelectedTableForOrder(null)}
+        onConfirm={handleConfirmStartOrder}
+      />
     </ScreenTemplate>
   );
 };

@@ -15,6 +15,8 @@ export * from './organisms/HorecaAppBar';
 export * from './organisms/HorecaSubAppBar';
 export * from './organisms/NumPad';
 export * from './organisms/TableCard';
+export * from './organisms/OrderCard';
+export * from './organisms/MenuItemCard';
 
 // Templates
 export * from './templates/ScreenTemplate';

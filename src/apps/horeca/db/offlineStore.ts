@@ -43,6 +43,8 @@ interface HorecaState {
   tableCategories: TableCategory[];
   categories: MenuCategory[];
   menuItems: MenuItem[];
+  menuHash: string | null;
+  categoriesEtag?: string;
   orders: Record<string, Order>;
   kitchenTickets: KitchenTicket[];
   currentShift: Shift | null;
@@ -62,6 +64,13 @@ interface HorecaState {
   hydrateTableCategories: () => Promise<void>;
   hydrateMenu: () => Promise<void>;
   setMenu: (menu: MenuTree) => void;
+  setMenuCatalogue: (payload: {
+    hash?: string | null;
+    categories: MenuCategory[];
+    items: MenuItem[];
+    categoriesEtag?: string;
+  }) => void;
+  applyMenuAvailability: (availability: Record<string, boolean>) => void;
   setTableCategories: (categories: TableCategory[]) => void;
   setTableStatus: (tableId: string, status: Table['status']) => void;
   setActiveTableId: (id: string | null) => void;
@@ -79,6 +88,7 @@ interface HorecaState {
   cancelOrderOptimistic: (orderId: string) => void;
   deleteOrderOptimistic: (orderId: string) => void;
   billOrderOptimistic: (orderId: string, paymentMethod: 'cash') => void;
+  completeOrderSettlement: (orderId: string, status: 'billed' | 'paid') => void;
 
   // Shift actions
   openShiftOptimistic: (float: number) => void;
@@ -93,7 +103,7 @@ interface HorecaState {
 /** Converts the API menu tree into the flat/sorted shape held in the store. */
 function menuTreeToState(menu: MenuTree): { categories: MenuCategory[]; menuItems: MenuItem[] } {
   const categories = [...menu.categories].sort((a, b) => a.sort_order - b.sort_order);
-  const menuItems = [...categories.flatMap(c => c.items), ...(menu.uncategorised ?? [])];
+  const menuItems = [...categories.flatMap(c => c.items ?? []), ...(menu.uncategorised ?? [])];
   return { categories, menuItems };
 }
 
@@ -102,6 +112,8 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   tableCategories: [],
   categories: env.ENABLE_MOCK ? mockMenuCategories : [],
   menuItems: env.ENABLE_MOCK ? mockMenuItems : [],
+  menuHash: null,
+  categoriesEtag: undefined,
   orders: env.ENABLE_MOCK ? { [mockActiveOrder.id]: mockActiveOrder } : {},
   kitchenTickets: env.ENABLE_MOCK ? mockKitchenTickets : [],
   currentShift: env.ENABLE_MOCK ? mockCurrentShift : null,
@@ -125,9 +137,20 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   },
 
   hydrateMenu: async () => {
-    const cached = await tableStorage.getMenu();
-    if (cached && cached.categories.length > 0) {
-      set(state => (state.categories.length === 0 ? menuTreeToState(cached) : state));
+    const cached = await tableStorage.getMenuCatalogue();
+    if (cached && cached.items.length > 0) {
+      set(state =>
+        state.menuItems.length === 0
+          ? {
+              menuHash: cached.hash,
+              categories: [...cached.categories].sort(
+                (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name),
+              ),
+              menuItems: cached.items,
+              categoriesEtag: cached.categoriesEtag,
+            }
+          : state,
+      );
     }
   },
 
@@ -135,6 +158,35 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
     set(menuTreeToState(menu));
     tableStorage.saveMenu(menu).catch(() => { });
   },
+
+  setMenuCatalogue: ({ hash = null, categories, items, categoriesEtag }) => {
+    const sortedCategories = [...categories].sort(
+      (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name),
+    );
+    set(state => ({
+      menuHash: hash ?? state.menuHash,
+      categories: sortedCategories,
+      menuItems: items,
+      categoriesEtag: categoriesEtag ?? state.categoriesEtag,
+    }));
+    tableStorage
+      .saveMenuCatalogue({
+        hash,
+        categories: sortedCategories,
+        items,
+        categoriesEtag,
+      })
+      .catch(() => { });
+  },
+
+  applyMenuAvailability: availability =>
+    set(state => ({
+      menuItems: state.menuItems.map(item =>
+        Object.prototype.hasOwnProperty.call(availability, item.id)
+          ? { ...item, is_active: Boolean(availability[item.id]) }
+          : item,
+      ),
+    })),
 
   hydrateTableCategories: async () => {
     const cached = await tableStorage.getCategories();
@@ -171,22 +223,67 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   setOrders: incomingOrders =>
     set(state => {
       const nextOrders: Record<string, Order> = {};
-      // Preserve unsynced optimistic orders (temp-ord-...)
-      Object.values(state.orders).forEach(ord => {
-        if (ord.id.startsWith('temp-ord-')) {
-          nextOrders[ord.id] = ord;
+      const incomingTableMap = new Map<string, Order>();
+
+      incomingOrders.forEach(ord => {
+        if (ord.table_id && ord.status === 'open') {
+          incomingTableMap.set(ord.table_id, ord);
         }
       });
+
+      let nextActiveOrderId = state.activeOrderId;
+
+      // Preserve unsynced optimistic orders unless a server open order for the same table arrived
+      Object.values(state.orders).forEach(ord => {
+        if (ord.id.startsWith('temp-ord-')) {
+          const matchingServerOrder = ord.table_id
+            ? incomingTableMap.get(ord.table_id)
+            : undefined;
+          if (matchingServerOrder) {
+            if (nextActiveOrderId === ord.id) {
+              nextActiveOrderId = matchingServerOrder.id;
+            }
+          } else {
+            nextOrders[ord.id] = ord;
+          }
+        }
+      });
+
       incomingOrders.forEach(ord => {
-        const existing = state.orders[ord.id];
+        const existing =
+          state.orders[ord.id] ??
+          Object.values(state.orders).find(
+            o => o.id.startsWith('temp-ord-') && o.table_id && o.table_id === ord.table_id,
+          );
+        const items =
+          ord.items && ord.items.length > 0 ? ord.items : (existing?.items ?? []);
+        const total_amount =
+          ord.total_amount && ord.total_amount > 0
+            ? ord.total_amount
+            : (existing?.total_amount ??
+              items.reduce((sum, it) => sum + it.unit_price * it.qty, 0));
+
         nextOrders[ord.id] = {
           ...existing,
           ...ord,
-          // Keep existing items if list endpoint omitted items
-          items: ord.items && ord.items.length > 0 ? ord.items : (existing?.items ?? []),
+          items,
+          total_amount,
         };
       });
-      return { orders: nextOrders };
+
+      // Ensure activeOrderId points to a valid server open order when available
+      if (!nextActiveOrderId || !nextOrders[nextActiveOrderId]) {
+        const openForActiveTable = incomingOrders.find(
+          o => o.table_id === state.activeTableId && o.status === 'open',
+        );
+        const firstOpen = incomingOrders.find(o => o.status === 'open');
+        nextActiveOrderId = openForActiveTable?.id ?? firstOpen?.id ?? nextActiveOrderId;
+      }
+
+      return {
+        orders: nextOrders,
+        activeOrderId: nextActiveOrderId,
+      };
     }),
 
   upsertOrder: (order, replaceTempId) =>
@@ -237,9 +334,9 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       };
     }),
 
-  createOrderOptimistic: ({ tableId, orderType, partySize = 2, tabName }) => {
+  createOrderOptimistic: ({ tableId, orderType, partySize, tabName }) => {
     const tempId = `temp-ord-${Date.now()}`;
-    const orderNumber = `#${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNumber = `MAG-ORD-${Math.floor(10000000 + Math.random() * 90000000)}`;
     const newOrder: Order = {
       id: tempId,
       order_number: orderNumber,
@@ -247,28 +344,27 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       order_type: orderType,
       status: 'open',
       tab_name: tabName ?? null,
-      party_size: partySize,
+      party_size: partySize ?? null,
       total_amount: 0,
       service_charge_amount: 0,
       created_at: new Date().toISOString(),
       items: [],
     };
 
-    set(state => {
-      const updatedTables = tableId
-        ? state.tables.map(t => (t.id === tableId ? { ...t, status: 'occupied' as const } : t))
-        : state.tables;
-
-      return {
-        tables: updatedTables,
-        orders: { ...state.orders, [tempId]: newOrder },
-        activeOrderId: tempId,
-      };
-    });
+    set(state => ({
+      orders: { ...state.orders, [tempId]: newOrder },
+      activeOrderId: tempId,
+    }));
 
     get().enqueueMutation({
       type: 'create_order',
-      payload: { tableId, orderType, partySize, tabName, clientTempId: tempId },
+      payload: {
+        tableId,
+        orderType,
+        clientTempId: tempId,
+        ...(partySize !== undefined ? { partySize } : {}),
+        ...(tabName ? { tabName } : {}),
+      },
     });
 
     return newOrder;
@@ -509,6 +605,25 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
     get().enqueueMutation({
       type: 'bill_cash',
       payload: { orderId, paymentMethod: 'cash' },
+    });
+  },
+
+  completeOrderSettlement: (orderId, status) => {
+    set(state => {
+      const order = state.orders[orderId];
+      const updatedTables = order?.table_id
+        ? state.tables.map(t => (t.id === order.table_id ? { ...t, status: 'dirty' as const } : t))
+        : state.tables;
+
+      const updatedOrders = order
+        ? { ...state.orders, [orderId]: { ...order, status } }
+        : state.orders;
+
+      return {
+        tables: updatedTables,
+        orders: updatedOrders,
+        kitchenTickets: state.kitchenTickets.filter(kt => kt.order.id !== orderId),
+      };
     });
   },
 

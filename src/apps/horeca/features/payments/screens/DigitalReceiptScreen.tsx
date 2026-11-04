@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
 import {
   CheckCircleIcon,
@@ -7,6 +7,9 @@ import {
   QrCodeIcon,
   ShareIcon,
 } from 'react-native-heroicons/outline';
+import { horecaApi } from '@horeca/api/horecaApiClient';
+import type { Receipt } from '@horeca/api/schemas';
+import { useHorecaStore } from '@horeca/db/offlineStore';
 import { mockReceipt } from '@horeca/mock/horecaMockData';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
@@ -14,25 +17,96 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import type { CompletedPaymentResult } from './PaymentCheckoutScreen';
 
 interface DigitalReceiptScreenProps {
+  saleInfo?: CompletedPaymentResult | null;
   onDone: () => void;
   onLockTerminal: () => void;
 }
 
 export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
+  saleInfo,
   onDone,
-  onLockTerminal,
 }) => {
   const colors = useHorecaColors();
-  const receipt = mockReceipt;
+  const orders = useHorecaStore(state => state.orders);
+  const tables = useHorecaStore(state => state.tables);
+  const activeTableId = useHorecaStore(state => state.activeTableId);
+
+  const [fetchedReceipt, setFetchedReceipt] = useState<Receipt | null>(null);
+
+  useEffect(() => {
+    if (!saleInfo?.orderId || saleInfo.orderId.startsWith('temp-ord-')) return;
+    let mounted = true;
+    horecaApi
+      .getReceipt(saleInfo.orderId)
+      .then(res => {
+        if (mounted && res) {
+          setFetchedReceipt(res);
+        }
+      })
+      .catch(() => {
+        // Fallback to local order + saleInfo
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [saleInfo?.orderId]);
+
+  const settledOrder = saleInfo?.orderId ? orders[saleInfo.orderId] : undefined;
+  const settledTable =
+    tables.find(t => t.id === (settledOrder?.table_id ?? activeTableId)) ?? tables[0];
+
+  const receipt = useMemo<Receipt>(() => {
+    if (fetchedReceipt) {
+      return {
+        ...mockReceipt,
+        ...fetchedReceipt,
+        orderNumber: saleInfo?.saleNumber || fetchedReceipt.orderNumber,
+      };
+    }
+
+    if (settledOrder && settledOrder.items && settledOrder.items.length > 0) {
+      const lines = settledOrder.items.map(it => ({
+        name: it.item_name,
+        qty: it.qty,
+        unitPrice: it.unit_price,
+        discount: it.discount_amount ?? 0,
+        lineTotal: it.unit_price * it.qty - (it.discount_amount ?? 0),
+      }));
+      const itemsTotal = lines.reduce((sum, l) => sum + l.lineTotal, 0);
+      const total = saleInfo?.amount || settledOrder.total_amount || itemsTotal;
+
+      return {
+        ...mockReceipt,
+        orderNumber: saleInfo?.saleNumber || settledOrder.order_number,
+        table: settledTable ? `T${settledTable.table_number}` : mockReceipt.table,
+        lines,
+        itemsTotal,
+        total,
+      };
+    }
+
+    return {
+      ...mockReceipt,
+      orderNumber: saleInfo?.saleNumber || mockReceipt.orderNumber,
+      total: saleInfo?.amount || mockReceipt.total,
+    };
+  }, [fetchedReceipt, saleInfo, settledOrder, settledTable]);
+
+  const subtotal = Math.round(receipt.total / 1.18);
+  const vatAmount = Math.max(0, receipt.total - subtotal);
 
   const handlePrint = () => {
     Alert.alert('Printing', 'Thermal receipt sent to Bluetooth ESC/POS printer.');
   };
 
   const handleShare = () => {
-    Alert.alert('Digital Receipt', 'Receipt link copied to clipboard and ready to share via WhatsApp / SMS.');
+    Alert.alert(
+      'Digital Receipt',
+      'Receipt link copied to clipboard and ready to share via WhatsApp / SMS.',
+    );
   };
 
   return (
@@ -40,9 +114,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
       scrollable
       withBottomInset
       className="bg-background"
-      header={
-        <HorecaSubAppBar title="Digital Receipt" onBack={onDone} />
-      }
+      header={<HorecaSubAppBar title="Digital Receipt" onBack={onDone} />}
       contentContainerClassName="px-4 py-5"
     >
       {/* Top Status Header */}
@@ -53,7 +125,17 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
             LEDGER SYNCHRONIZED
           </AppText>
         </View>
-        <Badge label="CUSTOMER COPY" variant="neutral" size="sm" />
+        <Badge
+          label={
+            saleInfo?.method === 'mobile_money'
+              ? 'PAID • MOBILE MONEY'
+              : saleInfo?.method === 'cash'
+                ? 'PAID • CASH'
+                : 'CUSTOMER COPY'
+          }
+          variant="neutral"
+          size="sm"
+        />
       </View>
 
       {/* Paper Receipt Card */}
@@ -86,7 +168,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
         <View className="flex-row justify-between py-4 border-b border-border/40">
           <View>
             <AppText variant="caption" className="text-text-secondary uppercase text-[10px] font-semibold">
-              Order #
+              Sale / Order #
             </AppText>
             <AppText variant="label" className="font-bold text-text">
               {receipt.orderNumber}
@@ -97,15 +179,15 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
               Table / Section
             </AppText>
             <AppText variant="label" className="font-bold text-text">
-              {receipt.table} • Main Dining
+              {receipt.table} • {settledTable?.section ?? 'Main Dining'}
             </AppText>
           </View>
           <View className="items-end">
             <AppText variant="caption" className="text-text-secondary uppercase text-[10px] font-semibold">
-              Date & Time
+              Method
             </AppText>
             <AppText variant="label" className="font-bold text-text">
-              24 Oct 13:42
+              {saleInfo?.method === 'mobile_money' ? 'MoMo' : 'Cash'}
             </AppText>
           </View>
         </View>
@@ -140,7 +222,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
               Subtotal
             </AppText>
             <AppText variant="caption" className="text-text font-medium">
-              UGX 457,627
+              UGX {subtotal.toLocaleString()}
             </AppText>
           </View>
           <View className="flex-row justify-between py-1">
@@ -148,7 +230,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
               VAT (18% Statutory Tax)
             </AppText>
             <AppText variant="caption" className="text-text font-medium">
-              UGX 82,373
+              UGX {vatAmount.toLocaleString()}
             </AppText>
           </View>
           <View className="flex-row justify-between pt-2 mt-1 border-t border-border/30 items-center">

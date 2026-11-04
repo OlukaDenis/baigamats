@@ -21,8 +21,8 @@ export const HorecaLoginScreen: React.FC = () => {
   const loginSuccess = useHorecaAuthStore(state => state.loginSuccess);
   const switchToPinLogin = useHorecaAuthStore(state => state.switchToPinLogin);
 
-  const [loginId, setLoginId] = useState<string>('staff.alex');
-  const [password, setPassword] = useState<string>('Pass1234!');
+  const [loginId, setLoginId] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // MFA state
@@ -131,7 +131,7 @@ export const HorecaLoginScreen: React.FC = () => {
             Baigamats HORECA
           </AppText>
           <AppText variant="caption" className="text-text-secondary mt-1 text-center font-medium">
-            Restaurant, Bar & Hospitality POS
+            Restaurant, Hotel and Bar POS
           </AppText>
         </View>
 
@@ -147,7 +147,7 @@ export const HorecaLoginScreen: React.FC = () => {
               </AppText>
 
               <FormField
-                label="Staff Username or Email"
+                label="Username or Email"
                 placeholder="e.g. staff.alex or manager@bistro.com"
                 value={loginId}
                 onChangeText={setLoginId}

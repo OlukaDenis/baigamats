@@ -1,8 +1,7 @@
-import React from 'react';
-import { Alert, FlatList, Pressable, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Pressable, View } from 'react-native';
 import {
   CreditCardIcon,
-  FireIcon,
   MinusIcon,
   PlusIcon,
   ShoppingBagIcon,
@@ -11,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Order, OrderItem } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
+import { syncEngine } from '@horeca/db/syncEngine';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
@@ -32,53 +32,135 @@ const EMPTY_ORDER: Order = {
 };
 
 interface OrderEntryScreenProps {
-  onPayNow: (orderTotal: number) => void;
-  onKitchenFire: () => void;
+  orderId?: string | null;
+  onPayNow: (orderId: string, orderTotal: number) => void;
+  onKitchenFire?: () => void;
   onLockTerminal: () => void;
   onProfilePress?: () => void;
   onBack?: () => void;
 }
 
 export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
+  orderId: propOrderId,
   onPayNow,
   onKitchenFire,
   onBack,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
-  useOpenOrders();
+  const { isLoading, isFetching, refetch } = useOpenOrders();
+  const [isResolvingOrder, setIsResolvingOrder] = useState(false);
 
   const activeTableId = useHorecaStore(state => state.activeTableId);
   const tables = useHorecaStore(state => state.tables);
   const orders = useHorecaStore(state => state.orders);
   const activeOrderId = useHorecaStore(state => state.activeOrderId);
+  const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
+  const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
   const removeItemOptimistic = useHorecaStore(state => state.removeItemOptimistic);
   const updateItemQtyOptimistic = useHorecaStore(state => state.updateItemQtyOptimistic);
   const deleteOrderOptimistic = useHorecaStore(state => state.deleteOrderOptimistic);
 
-  const activeTable = tables.find(t => t.id === activeTableId) ?? tables[0];
-  const currentOrder =
-    (activeOrderId ? orders[activeOrderId] : null) ??
-    Object.values(orders).find(o => o.table_id === activeTableId && o.status === 'open') ??
-    EMPTY_ORDER;
+  // Always call GET /orders?mine=true&status=open when entering the order screen
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      await syncEngine.processOutbox();
+      if (mounted) {
+        await refetch();
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [refetch]);
+
+  const openOrdersList = useMemo(
+    () => Object.values(orders).filter(o => o.status === 'open'),
+    [orders],
+  );
+
+  const currentOrder = useMemo(() => {
+    // 0. Prefer propOrderId if passed
+    if (propOrderId && orders[propOrderId]) {
+      return orders[propOrderId];
+    }
+
+    // 1. Prefer server-persisted open order for activeOrderId
+    if (activeOrderId && orders[activeOrderId] && orders[activeOrderId].status === 'open') {
+      if (!activeOrderId.startsWith('temp-ord-')) {
+        return orders[activeOrderId];
+      }
+      // Check if a server order for the same table already arrived
+      const tempTableId = orders[activeOrderId].table_id;
+      const serverMatch = openOrdersList.find(
+        o => !o.id.startsWith('temp-ord-') && o.table_id && o.table_id === tempTableId,
+      );
+      if (serverMatch) {
+        return serverMatch;
+      }
+    }
+
+    // 2. Prefer server-persisted open order matching activeTableId
+    const serverTableOrder = openOrdersList.find(
+      o => !o.id.startsWith('temp-ord-') && o.table_id === activeTableId,
+    );
+    if (serverTableOrder) {
+      return serverTableOrder;
+    }
+
+    // 3. Any open order matching activeTableId or activeOrderId
+    const anyTableOrder = openOrdersList.find(o => o.table_id === activeTableId);
+    if (anyTableOrder) {
+      return anyTableOrder;
+    }
+    if (activeOrderId && orders[activeOrderId] && orders[activeOrderId].status === 'open') {
+      return orders[activeOrderId];
+    }
+
+    // 4. Fallback to the current user's first open order (preferring server order)
+    const firstServerOpen = openOrdersList.find(o => !o.id.startsWith('temp-ord-'));
+    return firstServerOpen ?? openOrdersList[0] ?? EMPTY_ORDER;
+  }, [propOrderId, activeOrderId, activeTableId, openOrdersList, orders]);
+
+  // Keep activeOrderId in sync with the resolved open order
+  useEffect(() => {
+    if (currentOrder.id && currentOrder.id !== activeOrderId) {
+      setActiveOrderId(currentOrder.id);
+    }
+  }, [currentOrder.id, activeOrderId, setActiveOrderId]);
+
+  const activeTable =
+    tables.find(t => t.id === (currentOrder.table_id ?? activeTableId)) ?? tables[0];
 
   const orderItems: OrderItem[] = currentOrder.items ?? [];
   const totalItemsCount = orderItems.reduce((sum, it) => sum + it.qty, 0);
-  const totalAmount = currentOrder.total_amount || 0;
+  const totalAmount =
+    currentOrder.total_amount && currentOrder.total_amount > 0
+      ? currentOrder.total_amount
+      : orderItems.reduce((sum, it) => sum + it.unit_price * it.qty, 0);
+
+  const isBilled = currentOrder.status === 'billed';
 
   const handleDeleteEntireOrder = () => {
     if (!currentOrder.id) return;
     Alert.alert(
-      'Delete Order',
-      `Are you sure you want to cancel and delete Order ${currentOrder.order_number}? This will clear all items and mark the table as available.`,
+      'Cancel Order',
+      `Are you sure you want to cancel Order ${currentOrder.order_number}? This will remove all items and make Table ${activeTable?.table_number ?? ''} available.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Keep Order', style: 'cancel' },
         {
-          text: 'Delete Order',
+          text: 'Cancel Order',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             deleteOrderOptimistic(currentOrder.id);
-            Alert.alert('Order Deleted', `Order ${currentOrder.order_number} has been deleted.`);
+            try {
+              await syncEngine.processOutbox();
+              await refetch();
+            } catch {
+              // Synced in background
+            }
+            Alert.alert('Order Cancelled', `Order ${currentOrder.order_number} has been cancelled.`);
             onBack?.();
           },
         },
@@ -86,12 +168,49 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
     );
   };
 
-  const handlePay = () => {
-    if (orderItems.length === 0) {
+  const handlePay = async () => {
+    if (orderItems.length === 0 && totalAmount <= 0) {
       Alert.alert('Empty Order', 'Please add items to the order before proceeding to checkout.');
       return;
     }
-    onPayNow(totalAmount);
+
+    let resolvedOrderId = currentOrder.id;
+
+    // If order is still a temp ID or missing, flush outbox and refetch open orders
+    if (!resolvedOrderId || resolvedOrderId.startsWith('temp-ord-')) {
+      setIsResolvingOrder(true);
+      try {
+        await syncEngine.processOutbox();
+        const refreshedOrders = await refetch();
+        const matched =
+          refreshedOrders.find(
+            o =>
+              !o.id.startsWith('temp-ord-') &&
+              o.status === 'open' &&
+              (o.table_id === (currentOrder.table_id ?? activeTableId) ||
+                refreshedOrders.length === 1),
+          ) ??
+          refreshedOrders.find(o => !o.id.startsWith('temp-ord-') && o.status === 'open');
+
+        if (matched?.id) {
+          resolvedOrderId = matched.id;
+          setActiveOrderId(matched.id);
+        }
+      } finally {
+        setIsResolvingOrder(false);
+      }
+    }
+
+    if (!resolvedOrderId) {
+      Alert.alert(
+        'Order Not Ready',
+        'Could not find an active open order ID. Please refresh and try again.',
+      );
+      return;
+    }
+
+    setActiveOrderId(resolvedOrderId);
+    onPayNow(resolvedOrderId, totalAmount);
   };
 
   const renderOrderItemRow = ({ item }: { item: OrderItem }) => {
@@ -176,7 +295,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
       className="bg-background"
       header={
         <HorecaSubAppBar
-          title="Order Items"
+          title="Order Details"
           onBack={onBack}
           ordersCount={totalItemsCount}
         />
@@ -195,9 +314,18 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
             <AppText variant="label" className="font-bold text-text" numberOfLines={1}>
               Table {activeTable?.table_number ?? '01'} • {activeTable?.section ?? 'Main Dining'}
             </AppText>
-            <AppText variant="caption" className="text-text-secondary text-[11px]">
-              Order {currentOrder.order_number} • {currentOrder.party_size ?? 2} Guests
-            </AppText>
+            <View className="flex-row items-center">
+              <AppText variant="caption" className="text-text-secondary text-[11px]">
+                Order {currentOrder.order_number} • {currentOrder.party_size ?? 2} Guests
+              </AppText>
+              {isFetching ? (
+                <ActivityIndicator
+                  size="small"
+                  color={colors.primary}
+                  style={{ marginLeft: 6, transform: [{ scale: 0.7 }] }}
+                />
+              ) : null}
+            </View>
           </View>
         </View>
 
@@ -211,15 +339,17 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
             </AppText>
           </View>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Delete Entire Order"
-            onPress={handleDeleteEntireOrder}
-            className="h-8 w-8 rounded-xl bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
-            hitSlop={6}
-          >
-            <TrashIcon color={colors.error} size={16} />
-          </Pressable>
+          {!isBilled ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancel Entire Order"
+              onPress={handleDeleteEntireOrder}
+              className="h-8 w-8 rounded-xl bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
+              hitSlop={6}
+            >
+              <TrashIcon color={colors.error} size={16} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -235,73 +365,85 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View className="py-16 items-center justify-center">
-              <View className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-3">
-                <ShoppingBagIcon color={colors.primary} size={28} />
+            isLoading ? (
+              <View className="py-16 items-center justify-center">
+                <ActivityIndicator size="large" color={colors.primary} />
+                <AppText variant="body" className="text-text-secondary font-medium mt-3">
+                  Loading open order...
+                </AppText>
               </View>
-              <AppText variant="title" className="text-text font-bold mb-1">
-                Order is Empty
-              </AppText>
-              <AppText variant="caption" className="text-text-secondary text-center max-w-xs mb-4">
-                Go back to the table menu and tap items to add them to this order.
-              </AppText>
-              {onBack ? (
-                <Button
-                  label="Browse Table Menu"
-                  variant="primary"
-                  size="sm"
-                  onPress={onBack}
-                />
-              ) : null}
-            </View>
+            ) : (
+              <View className="py-16 items-center justify-center">
+                <View className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-3">
+                  <ShoppingBagIcon color={colors.primary} size={28} />
+                </View>
+                <AppText variant="title" className="text-text font-bold mb-1">
+                  Order is Empty
+                </AppText>
+                <AppText variant="caption" className="text-text-secondary text-center max-w-xs mb-4">
+                  Go back to the table menu and tap items to add them to this order.
+                </AppText>
+                {onBack ? (
+                  <Button
+                    label="Browse Table Menu"
+                    variant="primary"
+                    size="sm"
+                    onPress={onBack}
+                  />
+                ) : null}
+              </View>
+            )
           }
         />
       </View>
 
-      {/* Bottom Sticky Order Ticket Bar */}
-      <View
-        style={{ paddingBottom: Math.max(insets.bottom, 12) + 6 }}
-        className="absolute left-0 right-0 bottom-0 bg-surface/95 border-t border-border px-4 pt-3 shadow-2xl"
-      >
-        {/* Ticket Summary Line */}
-        <View className="flex-row items-center justify-between mb-3">
-          <View className="flex-row items-center">
-            <View className="h-2 w-2 rounded-full bg-status-available mr-1.5" />
-            <AppText variant="caption" className="text-text-secondary font-semibold">
-              {totalItemsCount} {totalItemsCount === 1 ? 'ITEM' : 'ITEMS'} IN ORDER
-            </AppText>
-          </View>
-          <View className="flex-row items-center">
-            <AppText variant="caption" className="text-text-secondary font-semibold">
-              TOTAL:{' '}
-            </AppText>
-            <AppText variant="label" className="text-text font-bold text-lg">
-              UGX {totalAmount.toLocaleString()}
-            </AppText>
-          </View>
-        </View>
-
-        {/* Dual Actions: Kitchen Fire & Pay Now */}
-        <View className="flex-row items-center">
-          <View className="flex-1 mr-2">
-            <Button
-              label="Fire Kitchen"
-              variant="secondary"
-              onPress={onKitchenFire}
-              leftIcon={<FireIcon color={colors.statusReserved} size={18} />}
-            />
+      {/* Bottom Sticky Order Ticket Bar (Only shown for open orders; hidden when billed/paid) */}
+      {!isBilled ? (
+        <View
+          style={{ paddingBottom: Math.max(insets.bottom, 12) + 6 }}
+          className="absolute left-0 right-0 bottom-0 bg-surface/95 border-t border-border px-4 pt-3 shadow-2xl"
+        >
+          {/* Ticket Summary Line */}
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <View className="h-2 w-2 rounded-full bg-status-available mr-1.5" />
+              <AppText variant="caption" className="text-text-secondary font-semibold">
+                {totalItemsCount} {totalItemsCount === 1 ? 'ITEM' : 'ITEMS'} IN ORDER
+              </AppText>
+            </View>
+            <View className="flex-row items-center">
+              <AppText variant="caption" className="text-text-secondary font-semibold">
+                TOTAL:{' '}
+              </AppText>
+              <AppText variant="label" className="text-text font-bold text-lg">
+                UGX {totalAmount.toLocaleString()}
+              </AppText>
+            </View>
           </View>
 
-          <View className="flex-1">
-            <Button
-              label="Confirm & Pay"
-              variant="primary"
-              onPress={handlePay}
-              leftIcon={<CreditCardIcon color={colors.onPrimary} size={18} />}
-            />
+          {/* Dual Actions: Cancel Order & Confirm & Pay */}
+          <View className="flex-row items-center">
+            <View className="flex-1 mr-2">
+              <Button
+                label="Cancel Order"
+                variant="secondary"
+                onPress={handleDeleteEntireOrder}
+                leftIcon={<TrashIcon color={colors.error} size={18} />}
+              />
+            </View>
+
+            <View className="flex-1">
+              <Button
+                label="Confirm & Pay"
+                variant="primary"
+                onPress={handlePay}
+                loading={isResolvingOrder}
+                leftIcon={<CreditCardIcon color={colors.onPrimary} size={18} />}
+              />
+            </View>
           </View>
         </View>
-      </View>
+      ) : null}
     </ScreenTemplate>
   );
 };

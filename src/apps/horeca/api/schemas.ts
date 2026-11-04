@@ -54,14 +54,14 @@ export const updateTableDtoSchema = z.object({
 export type UpdateTableDto = z.infer<typeof updateTableDtoSchema>;
 
 // ==========================================
-// Menu
+// Menu (API v2)
 // ==========================================
 export const preparationStationSchema = z.enum(['kitchen', 'bar']);
 export type PreparationStation = z.infer<typeof preparationStationSchema>;
 
 export const menuItemSchema = z.object({
   id: z.string(),
-  category_id: z.string(),
+  category_id: z.string().nullable(),
   name: z.string(),
   price: z.number(),
   station: preparationStationSchema,
@@ -74,9 +74,27 @@ export const menuCategorySchema = z.object({
   id: z.string(),
   name: z.string(),
   sort_order: z.number(),
-  items: z.array(menuItemSchema),
+  items: z.array(menuItemSchema).optional(),
 });
 export type MenuCategory = z.infer<typeof menuCategorySchema>;
+
+export const menuVersionSchema = z.object({
+  hash: z.string(),
+  categories: z.number(),
+  items: z.number(),
+});
+export type MenuVersion = z.infer<typeof menuVersionSchema>;
+
+export const menuItemsPageSchema = z.object({
+  items: z.array(menuItemSchema),
+  total: z.number(),
+  limit: z.number(),
+  offset: z.number(),
+});
+export type MenuItemsPage = z.infer<typeof menuItemsPageSchema>;
+
+export const menuAvailabilitySchema = z.record(z.string(), z.boolean());
+export type MenuAvailabilityMap = z.infer<typeof menuAvailabilitySchema>;
 
 export const menuTreeSchema = z.object({
   categories: z.array(menuCategorySchema),
@@ -180,11 +198,32 @@ export const billDtoSchema = z.object({
 });
 export type BillDto = z.infer<typeof billDtoSchema>;
 
+export const billResponseSchema = z.object({
+  orderId: z.string(),
+  status: z.string(),
+  paymentMethod: z.string().optional(),
+  saleId: z.string(),
+  saleNumber: z.string(),
+});
+export type BillResponse = z.infer<typeof billResponseSchema>;
+
 export const startPaymentDtoSchema = z.object({
   method: z.enum(['mobile_money', 'card']),
   phoneNumber: z.string().optional(),
 });
 export type StartPaymentDto = z.infer<typeof startPaymentDtoSchema>;
+
+export const startPaymentResponseSchema = z.object({
+  orderId: z.string(),
+  paymentId: z.string(),
+  amount: z.number(),
+  chargeAmount: z.number().optional(),
+  feeAmount: z.number().optional(),
+  method: z.string(),
+  paymentUrl: z.string().nullable().optional(),
+  state: z.enum(['pending', 'paid', 'failed', 'cancelled']),
+});
+export type StartPaymentResponse = z.infer<typeof startPaymentResponseSchema>;
 
 export const paymentStatusSchema = z.object({
   orderId: z.string(),
@@ -192,8 +231,8 @@ export const paymentStatusSchema = z.object({
   state: z.enum(['pending', 'paid', 'failed', 'cancelled']),
   message: z.string().nullable().optional(),
   amount: z.number(),
-  saleId: z.string().optional(),
-  saleNumber: z.string().optional(),
+  saleId: z.string().nullable().optional(),
+  saleNumber: z.string().nullable().optional(),
 });
 export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
 

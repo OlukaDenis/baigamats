@@ -24,15 +24,30 @@ import { BackOfficeScreen } from '../features/backoffice/screens/BackOfficeScree
 import { FloorPlanScreen } from '../features/floor/screens/FloorPlanScreen';
 import { KitchenDisplayScreen } from '../features/kitchen/screens/KitchenDisplayScreen';
 import { OrderEntryScreen } from '../features/orders/screens/OrderEntryScreen';
+import { OrdersListScreen } from '../features/orders/screens/OrdersListScreen';
 import { TableDetailsScreen } from '../features/orders/screens/TableDetailsScreen';
 import { DigitalReceiptScreen } from '../features/payments/screens/DigitalReceiptScreen';
-import { PaymentCheckoutScreen } from '../features/payments/screens/PaymentCheckoutScreen';
+import {
+  type CompletedPaymentResult,
+  PaymentCheckoutScreen,
+} from '../features/payments/screens/PaymentCheckoutScreen';
 import { ReportsScreen } from '../features/reports/screens/ReportsScreen';
 import { ShiftManagementScreen } from '../features/shifts/screens/ShiftManagementScreen';
+import { useHorecaStore } from '../db/offlineStore';
 import { useHorecaTheme } from '../theme/colors';
 import { AppText } from '../components/atoms/AppText';
 
-type MainTab = 'tables' | 'table' | 'order' | 'kitchen' | 'pay' | 'shift' | 'reports' | 'backoffice' | 'profile';
+type MainTab =
+  | 'tables'
+  | 'table'
+  | 'orders_list'
+  | 'order'
+  | 'kitchen'
+  | 'pay'
+  | 'shift'
+  | 'reports'
+  | 'backoffice'
+  | 'profile';
 
 export const HorecaNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -41,13 +56,37 @@ export const HorecaNavigator: React.FC = () => {
   const status = useHorecaAuthStore(state => state.status);
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const lockTerminal = useHorecaAuthStore(state => state.lockTerminal);
+  const autoLockSeconds = useHorecaAuthStore(state => state.autoLockSeconds);
   const hydrate = useHorecaAuthStore(state => state.hydrate);
+  const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
+  const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
 
   const [currentTab, setCurrentTab] = useState<MainTab>('tables');
   const [previousTab, setPreviousTab] = useState<MainTab>('tables');
   const [isReceiptActive, setIsReceiptActive] = useState<boolean>(false);
   const [isSettingPin, setIsSettingPin] = useState<boolean>(false);
-  const [activePaymentTotal, setActivePaymentTotal] = useState<number>(540_000);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [activePaymentOrderId, setActivePaymentOrderId] = useState<string | null>(null);
+  const [activePaymentTotal, setActivePaymentTotal] = useState<number>(0);
+  const [completedSale, setCompletedSale] = useState<CompletedPaymentResult | null>(null);
+
+  // Auto-lock when inactive for 6 minutes (360 seconds)
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+
+    let timer: NodeJS.Timeout;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        lockTerminal();
+      }, (autoLockSeconds || 360) * 1000);
+    };
+
+    resetInactivityTimer();
+
+    return () => clearTimeout(timer);
+  }, [status, autoLockSeconds, lockTerminal]);
 
   useEffect(() => {
     hydrate();
@@ -87,10 +126,36 @@ export const HorecaNavigator: React.FC = () => {
     setCurrentTab('table');
   };
 
+  /**
+   * Navigates to the Orders List screen when the AppBar cart/orders icon is tapped.
+   */
   const handleOpenOrdersScreen = () => {
-    if (currentTab !== 'order') {
+    if (currentTab !== 'orders_list') {
       setPreviousTab(currentTab);
     }
+    setCurrentTab('orders_list');
+  };
+
+  /**
+   * When ordering for a table, tapping "View order" navigates directly to Order Details.
+   */
+  const handleViewTableOrder = () => {
+    if (currentTab !== 'order') {
+      setPreviousTab('table');
+    }
+    setCurrentTab('order');
+  };
+
+  /**
+   * When an order is tapped from the Orders List screen, open Order Details for that order.
+   */
+  const handleSelectOrderFromList = (order: { id: string; table_id?: string | null }) => {
+    setSelectedOrderId(order.id);
+    setActiveOrderId(order.id);
+    if (order.table_id) {
+      setActiveTableId(order.table_id);
+    }
+    setPreviousTab('orders_list');
     setCurrentTab('order');
   };
 
@@ -101,18 +166,24 @@ export const HorecaNavigator: React.FC = () => {
     setCurrentTab('profile');
   };
 
-  const handlePayNow = (total: number) => {
+  const handlePayNow = (orderId: string, total: number) => {
+    setActivePaymentOrderId(orderId);
+    setActiveOrderId(orderId);
     setActivePaymentTotal(total);
+    setCompletedSale(null);
     setIsReceiptActive(false);
     setCurrentTab('pay');
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = (result: CompletedPaymentResult) => {
+    setCompletedSale(result);
     setIsReceiptActive(true);
   };
 
   const handleDoneReceipt = () => {
     setIsReceiptActive(false);
+    setCompletedSale(null);
+    setActivePaymentOrderId(null);
     setCurrentTab('tables');
   };
 
@@ -140,20 +211,33 @@ export const HorecaNavigator: React.FC = () => {
       case 'table':
         return (
           <TableDetailsScreen
-            onViewOrder={handleOpenOrdersScreen}
+            onViewOrder={handleViewTableOrder}
             onBack={() => setCurrentTab('tables')}
             onLockTerminal={lockTerminal}
             onProfilePress={handleOpenProfile}
           />
         );
+      case 'orders_list':
+        return (
+          <OrdersListScreen
+            onSelectOrder={handleSelectOrderFromList}
+            onLockTerminal={lockTerminal}
+            onProfilePress={handleOpenProfile}
+            onNewOrderPress={() => setCurrentTab('tables')}
+          />
+        );
       case 'order':
         return (
           <OrderEntryScreen
+            orderId={selectedOrderId}
             onPayNow={handlePayNow}
             onKitchenFire={() => setCurrentTab('kitchen')}
             onLockTerminal={lockTerminal}
             onProfilePress={handleOpenProfile}
-            onBack={() => setCurrentTab(previousTab === 'order' ? 'table' : previousTab)}
+            onBack={() => {
+              setSelectedOrderId(null);
+              setCurrentTab(previousTab === 'order' ? 'tables' : previousTab);
+            }}
           />
         );
       case 'kitchen':
@@ -168,6 +252,7 @@ export const HorecaNavigator: React.FC = () => {
         if (isReceiptActive) {
           return (
             <DigitalReceiptScreen
+              saleInfo={completedSale}
               onDone={handleDoneReceipt}
               onLockTerminal={lockTerminal}
             />
@@ -175,6 +260,7 @@ export const HorecaNavigator: React.FC = () => {
         }
         return (
           <PaymentCheckoutScreen
+            orderId={activePaymentOrderId}
             totalAmount={activePaymentTotal}
             onPaymentSuccess={handlePaymentSuccess}
             onCancel={() => setCurrentTab('order')}
@@ -217,7 +303,7 @@ export const HorecaNavigator: React.FC = () => {
   };
 
   const navItems = [
-    { id: 'tables', label: 'Tables', Icon: TableCellsIcon },
+    { id: 'tables', label: 'Home', Icon: TableCellsIcon },
     { id: 'kitchen', label: 'Kitchen', Icon: FireIcon },
     { id: 'shift', label: 'Shift', Icon: BanknotesIcon },
     { id: 'reports', label: 'Reports', Icon: ChartBarIcon },

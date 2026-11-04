@@ -1,3 +1,4 @@
+import * as Keychain from 'react-native-keychain';
 import { create } from 'zustand';
 import { env } from '@shared/config/env';
 import { tokenStorage } from '@shared/services/tokenStorage';
@@ -5,12 +6,16 @@ import { horecaApi } from '../../../api/horecaApiClient';
 import type { MeResponse, StaffMember } from '../../../api/schemas';
 import { mockStaffMembers } from '../../../mock/horecaMockData';
 
+const LAST_USERNAME_SERVICE = 'com.baigamats.horeca.auth.last_username';
+const LAST_USERNAME_ACCOUNT = 'last_staff_username';
+
 interface HorecaAuthState {
   status: 'hydrating' | 'unauthenticated' | 'authenticated' | 'locked';
   me: MeResponse | null;
   activeStaff: StaffMember | null;
   staffList: StaffMember[];
   autoLockSeconds: number;
+  lastUsername: string;
 
   // Actions
   hydrate: () => Promise<void>;
@@ -21,6 +26,7 @@ interface HorecaAuthState {
   setStaffList: (list: StaffMember[]) => void;
   switchToPinLogin: () => void;
   switchToPasswordLogin: () => void;
+  setLastUsername: (username: string) => Promise<void>;
 }
 
 export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
@@ -47,9 +53,22 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
     : null,
   activeStaff: env.ENABLE_MOCK ? mockStaffMembers[0] : null,
   staffList: env.ENABLE_MOCK ? mockStaffMembers : [],
-  autoLockSeconds: 60,
+  autoLockSeconds: 360, // 6 minutes (360 seconds)
+  lastUsername: '',
 
   hydrate: async () => {
+    // 1. Restore cached last-used username
+    try {
+      const storedCreds = await Keychain.getGenericPassword({
+        service: LAST_USERNAME_SERVICE,
+      });
+      if (storedCreds && storedCreds.password) {
+        set({ lastUsername: storedCreds.password });
+      }
+    } catch {
+      // Ignore keychain read failure
+    }
+
     try {
       const token = await tokenStorage.getAccessToken();
       if (!token) {
@@ -95,6 +114,21 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
           me: null,
         });
       }
+    }
+  },
+
+  setLastUsername: async (username: string) => {
+    const clean = username.trim();
+    set({ lastUsername: clean });
+    try {
+      if (clean) {
+        await Keychain.setGenericPassword(LAST_USERNAME_ACCOUNT, clean, {
+          service: LAST_USERNAME_SERVICE,
+          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+        });
+      }
+    } catch {
+      // Retain in memory
     }
   },
 

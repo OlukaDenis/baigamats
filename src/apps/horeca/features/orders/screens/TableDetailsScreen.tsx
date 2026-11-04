@@ -10,8 +10,6 @@ import {
 import {
   ArrowPathIcon,
   ChevronRightIcon,
-  MinusIcon,
-  PlusIcon,
   ShoppingBagIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +21,7 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { SearchBar } from '@horeca/components/molecules/SearchBar';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
+import { MenuItemCard } from '@horeca/components/organisms/MenuItemCard';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useMenu } from '../hooks/useMenu';
 import { useOpenOrders } from '../hooks/useOpenOrders';
@@ -56,6 +55,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   const tables = useHorecaStore(state => state.tables);
   const orders = useHorecaStore(state => state.orders);
   const activeTableId = useHorecaStore(state => state.activeTableId);
+  const activeOrderId = useHorecaStore(state => state.activeOrderId);
   const isOnline = useHorecaStore(state => state.isOnline);
   const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
   const createOrderOptimistic = useHorecaStore(state => state.createOrderOptimistic);
@@ -67,6 +67,8 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const table = tables.find(t => t.id === activeTableId);
+  // Tables can receive more orders/items even when occupied
+  const isTableOccupied = false;
 
   const currentOrder: Order | undefined = useMemo(
     () =>
@@ -101,34 +103,44 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
     const source =
       selectedCategory === ALL
         ? menuItems
-        : (categories.find(c => c.id === selectedCategory)?.items ?? []);
-    return source.filter(
-      it => it.is_active !== false && (!query || it.name.toLowerCase().includes(query)),
-    );
-  }, [categories, menuItems, selectedCategory, search]);
+        : menuItems.filter(it => it.category_id === selectedCategory);
+    return source.filter(it => !query || it.name.toLowerCase().includes(query));
+  }, [menuItems, selectedCategory, search]);
 
   const handleAdd = useCallback(
     (item: MenuItem) => {
-      if (!activeTableId) return;
+      if (!activeTableId || isTableOccupied || item.is_active === false) return;
       const line = lineByMenuItem.get(item.id);
       if (currentOrder && line) {
         updateItemQtyOptimistic(currentOrder.id, line.id, 1);
         return;
       }
+      // Target existing order or activeOrderId, falling back to creating an order if none exists
+      const targetOrderId =
+        currentOrder?.id ??
+        (activeOrderId && !activeOrderId.startsWith('temp-ord-') ? activeOrderId : null);
+
       const order =
         currentOrder ??
-        createOrderOptimistic({
-          tableId: activeTableId,
-          orderType: 'dine_in',
-          partySize: DEFAULT_PARTY_SIZE,
-        });
+        (targetOrderId && orders[targetOrderId]
+          ? orders[targetOrderId]
+          : createOrderOptimistic({
+              tableId: activeTableId,
+              orderType: 'dine_in',
+              partySize: table?.capacity ?? DEFAULT_PARTY_SIZE,
+            }));
+
       addItemOptimistic(order.id, item, 1);
     },
     [
       activeTableId,
+      activeOrderId,
+      orders,
+      table?.capacity,
       addItemOptimistic,
       createOrderOptimistic,
       currentOrder,
+      isTableOccupied,
       lineByMenuItem,
       updateItemQtyOptimistic,
     ],
@@ -136,12 +148,13 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
 
   const handleRemove = useCallback(
     (item: MenuItem) => {
+      if (isTableOccupied) return;
       const line = lineByMenuItem.get(item.id);
       if (currentOrder && line) {
         updateItemQtyOptimistic(currentOrder.id, line.id, -1);
       }
     },
-    [currentOrder, lineByMenuItem, updateItemQtyOptimistic],
+    [currentOrder, isTableOccupied, lineByMenuItem, updateItemQtyOptimistic],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -156,58 +169,13 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   const renderItem = ({ item }: { item: MenuItem }) => {
     const qty = lineByMenuItem.get(item.id)?.qty ?? 0;
     return (
-      <View
-        className={`flex-row items-center p-3.5 mb-2.5 rounded-2xl border ${
-          qty > 0 ? 'bg-primary/5 border-primary/40' : 'bg-surface border-border'
-        }`}
-      >
-        <View className="h-12 w-12 rounded-xl bg-background border border-border items-center justify-center mr-3.5">
-          <AppText className="text-xl">{item.station === 'bar' ? '🍸' : '🍲'}</AppText>
-        </View>
-
-        <View className="flex-1 mr-2">
-          <AppText variant="label" className="font-bold text-text" numberOfLines={1}>
-            {item.name}
-          </AppText>
-          <AppText variant="caption" className="text-text-secondary">
-            {item.station === 'bar' ? 'Bar' : 'Kitchen'}
-          </AppText>
-          <AppText variant="label" className="text-primary font-bold mt-1">
-            UGX {item.price.toLocaleString()}
-          </AppText>
-        </View>
-
-        {qty > 0 ? (
-          <View className="flex-row items-center bg-background border border-border rounded-xl p-0.5">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Decrease ${item.name}`}
-              onPress={() => handleRemove(item)}
-              className="h-9 w-9 items-center justify-center rounded-lg bg-surface active:bg-primary/10"
-            >
-              <MinusIcon color={colors.onSurface} size={16} />
-            </Pressable>
-            <AppText className="w-8 text-center font-bold text-sm text-text">{qty}</AppText>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Increase ${item.name}`}
-              onPress={() => handleAdd(item)}
-              className="h-9 w-9 items-center justify-center rounded-lg bg-primary active:opacity-80"
-            >
-              <PlusIcon color={colors.onPrimary} size={16} />
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Add ${item.name}`}
-            onPress={() => handleAdd(item)}
-            className="h-10 w-10 rounded-xl bg-primary items-center justify-center active:opacity-80"
-          >
-            <PlusIcon color={colors.onPrimary} size={20} />
-          </Pressable>
-        )}
-      </View>
+      <MenuItemCard
+        item={item}
+        quantity={qty}
+        disabled={isTableOccupied}
+        onAdd={handleAdd}
+        onRemove={handleRemove}
+      />
     );
   };
 
@@ -229,7 +197,9 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
       {table ? (
         <View className="flex-row items-center justify-between px-4 py-2 bg-surface/70 border-b border-border/40">
           <AppText variant="caption" className="text-text-secondary font-semibold">
-            {currentOrder ? `Order ${currentOrder.order_number}` : 'No open order yet'}
+            {currentOrder
+              ? `Order ${currentOrder.order_number}`
+              : 'Add items to order'}
           </AppText>
           <Badge
             label={table.status.toUpperCase()}

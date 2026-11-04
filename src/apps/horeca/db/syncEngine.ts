@@ -70,8 +70,8 @@ class SyncEngine {
               const res = await horecaApi.createOrder({
                 orderType,
                 tableId,
-                partySize,
-                tabName,
+                ...(partySize !== undefined ? { partySize } : {}),
+                ...(tabName ? { tabName } : {}),
               });
               if (res?.id && clientTempId) {
                 this.idMap.set(clientTempId, res.id);

@@ -3,50 +3,53 @@ import { useQuery } from '@tanstack/react-query';
 import { horecaApi } from '../../../api/horecaApiClient';
 import type { Order } from '../../../api/schemas';
 import { useHorecaStore } from '../../../db/offlineStore';
-import { useHorecaAuthStore } from '../../auth/store/horecaAuthStore';
 
-export const HORECA_OPEN_ORDERS_QUERY_KEY = ['horeca', 'orders', 'open'] as const;
+export const HORECA_OPEN_ORDERS_QUERY_KEY = ['horeca', 'orders', 'active', 'mine'] as const;
 
 /**
- * Fetches open orders from GET /v1/orders with:
- * - status: 'open'
- * - limit: 50
- * - mine: true (when the signed-in user's role is not manager)
+ * Fetches the current user's active orders (status: 'open' and 'billed') from GET /orders?mine=true.
+ * Always refetches on mount so the Order screens have the latest server-assigned order IDs and statuses.
  */
 export function useOpenOrders() {
-  const me = useHorecaAuthStore(state => state.me);
-  const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const orders = useHorecaStore(state => state.orders);
   const setOrders = useHorecaStore(state => state.setOrders);
   const upsertOrder = useHorecaStore(state => state.upsertOrder);
 
-  const role = (me?.role ?? activeStaff?.access ?? activeStaff?.role ?? '').toLowerCase();
-  const isManager = role === 'manager';
-
-  const { data, isLoading, isError, refetch: queryRefetch } = useQuery<Order[], Error>({
-    queryKey: [...HORECA_OPEN_ORDERS_QUERY_KEY, isManager ? 'all' : 'mine'],
+  const { data, isLoading, isFetching, isError, refetch: queryRefetch } = useQuery<Order[], Error>({
+    queryKey: HORECA_OPEN_ORDERS_QUERY_KEY,
     queryFn: async () => {
-      const res = await horecaApi.getOrders({
-        status: 'open',
-        limit: 50,
-        ...(isManager ? {} : { mine: true }),
-      });
-      const list = Array.isArray(res) ? res : (res?.items ?? []);
+      // Fetch open and billed orders in parallel to support both status tabs
+      const [openRes, billedRes] = await Promise.all([
+        horecaApi.getOrders({ mine: true, status: 'open' }).catch(() => []),
+        horecaApi.getOrders({ mine: true, status: 'billed' }).catch(() => []),
+      ]);
 
-      // Hydrate line items for open orders if the list endpoint omitted `items`
+      const openList = Array.isArray(openRes) ? openRes : (openRes?.items ?? []);
+      const billedList = Array.isArray(billedRes) ? billedRes : (billedRes?.items ?? []);
+
+      const combinedMap = new Map<string, Order>();
+      [...openList, ...billedList].forEach(ord => {
+        if (ord?.id) {
+          combinedMap.set(ord.id, ord);
+        }
+      });
+      const list = Array.from(combinedMap.values());
+
+      // Hydrate line items for orders if the list endpoint omitted `items`
       const hydrated = await Promise.all(
         list.map(async ord => {
-          if (Array.isArray(ord.items)) return ord;
+          if (Array.isArray(ord.items) && ord.items.length > 0) return ord;
           try {
             return await horecaApi.getOrder(ord.id);
           } catch {
-            return { ...ord, items: [] };
+            return { ...ord, items: ord.items ?? [] };
           }
         }),
       );
       return hydrated;
     },
-    staleTime: 15_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
     networkMode: 'offlineFirst',
   });
 
@@ -56,17 +59,23 @@ export function useOpenOrders() {
     }
   }, [data, setOrders]);
 
-  const refetch = useCallback(async () => {
+  const refetch = useCallback(async (): Promise<Order[]> => {
     try {
-      await queryRefetch();
+      const result = await queryRefetch();
+      if (Array.isArray(result.data)) {
+        setOrders(result.data);
+        return result.data;
+      }
     } catch {
       // Retain cached orders when offline
     }
-  }, [queryRefetch]);
+    return Object.values(useHorecaStore.getState().orders);
+  }, [queryRefetch, setOrders]);
 
   return {
     orders,
     isLoading,
+    isFetching,
     isError,
     refetch,
     upsertOrder,

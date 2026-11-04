@@ -6,6 +6,7 @@ import { setupHorecaMockAdapter } from '../mock/horecaMockAdapter';
 import type {
   AddItemDto,
   BillDto,
+  BillResponse,
   CloseShiftDto,
   CreateOrderDto,
   CreateTableDto,
@@ -14,7 +15,12 @@ import type {
   LoginDto,
   LoginResponse,
   MeResponse,
+  MenuAvailabilityMap,
+  MenuCategory,
+  MenuItem,
+  MenuItemsPage,
   MenuTree,
+  MenuVersion,
   OpenShiftDto,
   Order,
   PinLoginDto,
@@ -24,6 +30,7 @@ import type {
   Shift,
   StaffMember,
   StartPaymentDto,
+  StartPaymentResponse,
   Table,
   TableCategory,
   UpdateTableDto,
@@ -45,7 +52,17 @@ export interface CreateMenuItemDto {
   ageRestricted?: boolean;
 }
 
-export type UpdateMenuItemDto = Partial<CreateMenuItemDto>;
+export type UpdateMenuItemDto = Partial<CreateMenuItemDto> & {
+  isActive?: boolean;
+};
+
+export interface GetMenuItemsParams {
+  station?: 'kitchen' | 'bar';
+  category_id?: string;
+  includeInactive?: boolean;
+  limit?: number;
+  offset?: number;
+}
 
 export interface SetRoleDto {
   role: 'manager' | 'cashier' | 'waiter' | 'kitchen';
@@ -242,7 +259,78 @@ export const horecaApi = {
     return res.data;
   },
 
-  // Menu
+  // Menu (v2)
+  getMenuVersion: async (): Promise<MenuVersion> => {
+    const res = await horecaClient.get('/v1/menu/version');
+    return res.data;
+  },
+  getMenuCategories: async (
+    etag?: string,
+  ): Promise<{ notModified: boolean; data?: MenuCategory[]; etag?: string }> => {
+    const res = await horecaClient.get('/v1/menu/categories', {
+      headers: etag ? { 'If-None-Match': etag } : undefined,
+      validateStatus: status => status === 200 || status === 304,
+    });
+    const nextEtag = res.headers?.etag ?? res.headers?.ETag;
+    if (res.status === 304) {
+      return { notModified: true, etag: nextEtag ?? etag };
+    }
+    return { notModified: false, data: res.data, etag: nextEtag };
+  },
+  getMenuItems: async (
+    params?: GetMenuItemsParams,
+    etag?: string,
+  ): Promise<{ notModified: boolean; data?: MenuItemsPage; etag?: string }> => {
+    const query = params
+      ? {
+          station: params.station,
+          category_id: params.category_id,
+          includeInactive: params.includeInactive ? 'true' : undefined,
+          limit: params.limit,
+          offset: params.offset,
+        }
+      : undefined;
+    const res = await horecaClient.get('/v1/menu/items', {
+      params: query,
+      headers: etag ? { 'If-None-Match': etag } : undefined,
+      validateStatus: status => status === 200 || status === 304,
+    });
+    const nextEtag = res.headers?.etag ?? res.headers?.ETag;
+    if (res.status === 304) {
+      return { notModified: true, etag: nextEtag ?? etag };
+    }
+    return { notModified: false, data: res.data, etag: nextEtag };
+  },
+  getAllMenuItems: async (
+    params?: Omit<GetMenuItemsParams, 'limit' | 'offset'>,
+  ): Promise<MenuItem[]> => {
+    const pageSize = 200;
+    let offset = 0;
+    const allItems: MenuItem[] = [];
+
+    while (true) {
+      const { data } = await horecaApi.getMenuItems({
+        ...params,
+        limit: pageSize,
+        offset,
+      });
+      if (!data || !Array.isArray(data.items)) break;
+      allItems.push(...data.items);
+      offset += data.limit || pageSize;
+      if (offset >= data.total || data.items.length === 0) break;
+    }
+
+    return allItems;
+  },
+  getMenuAvailability: async (): Promise<MenuAvailabilityMap> => {
+    const res = await horecaClient.get('/v1/menu/items/availability');
+    return res.data;
+  },
+  getMenuItem: async (id: string): Promise<MenuItem> => {
+    const res = await horecaClient.get(`/v1/menu/items/${id}`);
+    return res.data;
+  },
+  /** @deprecated Legacy nested menu endpoint; use Menu API v2 methods above. */
   getMenu: async (includeInactive = false): Promise<MenuTree> => {
     const res = await horecaClient.get('/v1/menu', { params: { includeInactive: includeInactive ? '1' : undefined } });
     return res.data;
@@ -268,16 +356,32 @@ export const horecaApi = {
     offset?: number;
     mine?: boolean | string;
   }): Promise<{ items: Order[]; total: number } | Order[]> => {
-    const res = await horecaClient.get('/v1/orders', { params });
-    return res.data;
+    try {
+      const res = await horecaClient.get('/v1/orders', { params });
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.get('/orders', { params });
+        return res.data;
+      }
+      throw err;
+    }
   },
   createOrder: async (dto: CreateOrderDto): Promise<Order> => {
     const res = await horecaClient.post('/v1/orders', dto);
     return res.data;
   },
   getOrder: async (id: string): Promise<Order> => {
-    const res = await horecaClient.get(`/v1/orders/${id}`);
-    return res.data;
+    try {
+      const res = await horecaClient.get(`/v1/orders/${id}`);
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.get(`/orders/${id}`);
+        return res.data;
+      }
+      throw err;
+    }
   },
   addItemToOrder: async (orderId: string, dto: AddItemDto): Promise<{ item: any; orderTotal: number }> => {
     const res = await horecaClient.post(`/v1/orders/${orderId}/items`, dto);
@@ -303,21 +407,53 @@ export const horecaApi = {
   },
 
   // Billing & Payments
-  billCash: async (orderId: string, dto: BillDto): Promise<{ orderId: string; status: string; saleNumber: string; saleId: string }> => {
-    const res = await horecaClient.post(`/v1/orders/${orderId}/bill`, dto);
-    return res.data;
+  billCash: async (orderId: string, dto: BillDto): Promise<BillResponse> => {
+    try {
+      const res = await horecaClient.post(`/v1/orders/${orderId}/bill`, dto);
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.post(`/orders/${orderId}/bill`, dto);
+        return res.data;
+      }
+      throw err;
+    }
   },
-  startPayment: async (orderId: string, dto: StartPaymentDto): Promise<{ orderId: string; paymentId: string; state: string; amount: number }> => {
-    const res = await horecaClient.post(`/v1/orders/${orderId}/payments`, dto);
-    return res.data;
+  startPayment: async (orderId: string, dto: StartPaymentDto): Promise<StartPaymentResponse> => {
+    try {
+      const res = await horecaClient.post(`/v1/orders/${orderId}/payments`, dto);
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.post(`/orders/${orderId}/payments`, dto);
+        return res.data;
+      }
+      throw err;
+    }
   },
   getPaymentStatus: async (orderId: string, paymentId: string): Promise<PaymentStatus> => {
-    const res = await horecaClient.get(`/v1/orders/${orderId}/payments/${paymentId}`);
-    return res.data;
+    try {
+      const res = await horecaClient.get(`/v1/orders/${orderId}/payments/${paymentId}`);
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.get(`/orders/${orderId}/payments/${paymentId}`);
+        return res.data;
+      }
+      throw err;
+    }
   },
   getReceipt: async (orderId: string): Promise<Receipt> => {
-    const res = await horecaClient.get(`/v1/orders/${orderId}/receipt`);
-    return res.data;
+    try {
+      const res = await horecaClient.get(`/v1/orders/${orderId}/receipt`);
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.get(`/orders/${orderId}/receipt`);
+        return res.data;
+      }
+      throw err;
+    }
   },
 
   // Shifts

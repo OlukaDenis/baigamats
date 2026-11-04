@@ -5,6 +5,7 @@ import {
   mockCurrentShift,
   mockKitchenTickets,
   mockMenuCategories,
+  mockMenuItems,
   mockReceipt,
   mockStaffMembers,
   mockTables,
@@ -113,7 +114,46 @@ function getMockResponse(method: string, url: string, data?: any): any {
     return mockTables;
   }
 
-  // GET /v1/menu
+  // Menu API v2
+  if (url.includes('/v1/menu/version') && method === 'get') {
+    return {
+      hash: 'a1b2c3d4e5f6',
+      categories: mockMenuCategories.length,
+      items: mockMenuItems.length,
+    };
+  }
+
+  if (url.includes('/v1/menu/categories') && method === 'get') {
+    return mockMenuCategories.map(({ id, name, sort_order }) => ({
+      id,
+      name,
+      sort_order,
+    }));
+  }
+
+  if (url.includes('/v1/menu/items/availability') && method === 'get') {
+    const map: Record<string, boolean> = {};
+    mockMenuItems.forEach(item => {
+      map[item.id] = item.is_active;
+    });
+    return map;
+  }
+
+  if (url.match(/\/v1\/menu\/items\/[^/?]+$/) && method === 'get') {
+    const itemId = url.split('/').pop();
+    return mockMenuItems.find(it => it.id === itemId) ?? mockMenuItems[0];
+  }
+
+  if (url.includes('/v1/menu/items') && method === 'get') {
+    return {
+      items: mockMenuItems,
+      total: mockMenuItems.length,
+      limit: 200,
+      offset: 0,
+    };
+  }
+
+  // Legacy GET /v1/menu
   if (url.includes('/v1/menu') && method === 'get') {
     return {
       categories: mockMenuCategories,
@@ -121,41 +161,27 @@ function getMockResponse(method: string, url: string, data?: any): any {
     };
   }
 
-  // GET /v1/orders
-  if (url.includes('/v1/orders') && method === 'get') {
+  // GET /v1/orders/{id}/payments/{paymentId}
+  const paymentStatusMatch = url.match(/\/orders\/([^/?]+)\/payments\/([^/?]+)/);
+  if (paymentStatusMatch && method === 'get') {
+    const [, orderId, paymentId] = paymentStatusMatch;
     return {
-      items: [mockActiveOrder],
-      total: 1,
-      limit: 50,
-      offset: 0,
+      orderId,
+      paymentId,
+      state: 'paid',
+      message: null,
+      amount: mockActiveOrder.total_amount || 500,
+      saleId: `s-${Date.now()}`,
+      saleNumber: `SALE-${Math.floor(10000000 + Math.random() * 90000000)}`,
     };
-  }
-
-  // POST /v1/orders
-  if (url.endsWith('/v1/orders') && method === 'post') {
-    const body = typeof data === 'string' ? JSON.parse(data) : data;
-    return {
-      id: `ord-${Date.now()}`,
-      order_number: `#${Math.floor(1000 + Math.random() * 9000)}`,
-      table_id: body?.tableId || null,
-      order_type: body?.orderType || 'dine_in',
-      status: 'open',
-      tab_name: body?.tabName || null,
-      party_size: body?.partySize || 2,
-      total_amount: 0,
-      created_at: new Date().toISOString(),
-    };
-  }
-
-  // GET /v1/kitchen
-  if (url.includes('/v1/kitchen') && method === 'get') {
-    return mockKitchenTickets;
   }
 
   // POST /v1/orders/{id}/bill
-  if (url.includes('/bill') && method === 'post') {
+  const billMatch = url.match(/\/orders\/([^/?]+)\/bill/);
+  if (billMatch && method === 'post') {
+    const [, orderId] = billMatch;
     return {
-      orderId: 'ord-8429',
+      orderId,
       status: 'billed',
       paymentMethod: 'cash',
       saleId: `s-${Date.now()}`,
@@ -164,13 +190,17 @@ function getMockResponse(method: string, url: string, data?: any): any {
   }
 
   // POST /v1/orders/{id}/payments
-  if (url.includes('/payments') && method === 'post') {
+  const startPaymentMatch = url.match(/\/orders\/([^/?]+)\/payments$/);
+  if (startPaymentMatch && method === 'post') {
+    const [, orderId] = startPaymentMatch;
+    const amount = mockActiveOrder.total_amount || 500;
+    const feeAmount = 500;
     return {
-      orderId: 'ord-8429',
-      paymentId: `pay_${Math.random().toString(36).substring(2, 6)}`,
-      amount: 540_000,
-      chargeAmount: 540_000,
-      feeAmount: 0,
+      orderId,
+      paymentId: `pay-${Date.now()}`,
+      amount,
+      chargeAmount: amount + feeAmount,
+      feeAmount,
       method: 'mobile_money',
       paymentUrl: null,
       state: 'pending',
@@ -180,6 +210,43 @@ function getMockResponse(method: string, url: string, data?: any): any {
   // GET /v1/orders/{id}/receipt
   if (url.includes('/receipt') && method === 'get') {
     return mockReceipt;
+  }
+
+  // GET /v1/orders/{id}
+  const singleOrderMatch = url.match(/\/orders\/([^/?]+)$/);
+  if (singleOrderMatch && method === 'get') {
+    return mockActiveOrder;
+  }
+
+  // GET /v1/orders
+  if (url.includes('/orders') && method === 'get') {
+    return {
+      items: [mockActiveOrder],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    };
+  }
+
+  // POST /orders or /v1/orders
+  if (url.endsWith('/orders') && method === 'post') {
+    const body = typeof data === 'string' ? JSON.parse(data) : data;
+    return {
+      id: `ord-${Date.now()}`,
+      order_number: `MAG-ORD-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      table_id: body?.tableId || null,
+      order_type: body?.orderType || 'dine_in',
+      status: 'open',
+      tab_name: body?.tabName || null,
+      party_size: body?.partySize ?? null,
+      total_amount: 0,
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  // GET /v1/kitchen
+  if (url.includes('/v1/kitchen') && method === 'get') {
+    return mockKitchenTickets;
   }
 
   // GET /v1/shifts/current

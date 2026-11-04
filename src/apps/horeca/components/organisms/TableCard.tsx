@@ -73,12 +73,16 @@ export const TableCard: React.FC<TableCardProps> = ({
           ) : null}
         </View>
 
-        <Badge
-          label={table.status.toUpperCase()}
-          variant={statusBadgeVariant}
-          size="sm"
-          className="bg-white/70"
-        />
+        {/* {isOccupied && (
+          <View>
+            <AppText variant="caption" style={{ color: MUTED_TEXT }} className="text-[10px] uppercase font-semibold">
+              Current Tab
+            </AppText>
+            <AppText variant="label" style={{ color: DARK_TEXT }} className="font-bold">
+              {currentTabAmount}
+            </AppText>
+          </View>
+        )} */}
       </View>
 
       {/* Section & Guests */}
@@ -94,25 +98,14 @@ export const TableCard: React.FC<TableCardProps> = ({
         style={{ borderTopColor: cardTone.border }}
         className="pt-2 border-t flex-row items-center justify-between"
       >
-        {isOccupied ? (
-          <View>
-            <AppText variant="caption" style={{ color: MUTED_TEXT }} className="text-[10px] uppercase font-semibold">
-              Current Tab
-            </AppText>
-            <AppText variant="label" style={{ color: DARK_TEXT }} className="font-bold">
-              {currentTabAmount}
-            </AppText>
+        <View className="flex-row items-center justify-between w-full">
+          <AppText variant="caption" style={{ color: cardTone.accent }} className="font-semibold capitalize">
+            {table.status}
+          </AppText>
+          <View className="h-6 w-6 rounded-full bg-white/70 items-center justify-center">
+            <PlusIcon color={cardTone.accent} size={14} />
           </View>
-        ) : (
-          <View className="flex-row items-center justify-between w-full">
-            <AppText variant="caption" style={{ color: cardTone.accent }} className="font-semibold capitalize">
-              {table.status}
-            </AppText>
-            <View className="h-6 w-6 rounded-full bg-white/70 items-center justify-center">
-              <PlusIcon color={cardTone.accent} size={14} />
-            </View>
-          </View>
-        )}
+        </View>
       </View>
     </Pressable>
   );
