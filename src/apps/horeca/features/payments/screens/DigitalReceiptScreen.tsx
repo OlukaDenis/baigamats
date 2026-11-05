@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import {
   CheckCircleIcon,
   DocumentCheckIcon,
@@ -17,6 +17,7 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import type { CompletedPaymentResult } from './PaymentCheckoutScreen';
 
 interface DigitalReceiptScreenProps {
@@ -99,11 +100,11 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
   const vatAmount = Math.max(0, receipt.total - subtotal);
 
   const handlePrint = () => {
-    Alert.alert('Printing', 'Thermal receipt sent to Bluetooth ESC/POS printer.');
+    appModal.info('Printing', 'Thermal receipt sent to Bluetooth ESC/POS printer.');
   };
 
   const handleShare = () => {
-    Alert.alert(
+    appModal.success(
       'Digital Receipt',
       'Receipt link copied to clipboard and ready to share via WhatsApp / SMS.',
     );

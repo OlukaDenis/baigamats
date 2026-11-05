@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import {
   CheckIcon,
   MinusIcon,
@@ -12,6 +12,7 @@ import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 
 interface ItemCustomizerModalProps {
   item: MenuItem | null;
@@ -43,7 +44,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
 
   const handleAdd = () => {
     if (item.age_restricted && !ageVerified) {
-      Alert.alert(
+      appModal.warning(
         'Age Verification Required',
         'This item is age-restricted (18+). Please verify customer ID before adding.',
       );

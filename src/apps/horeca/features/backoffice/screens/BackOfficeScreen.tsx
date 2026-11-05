@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Modal, Pressable, Switch, View } from 'react-native';
+import { Modal, Pressable, Switch, View } from 'react-native';
 import {
   MoonIcon,
   PlusIcon,
@@ -16,6 +16,7 @@ import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../../auth/store/horecaAuthStore';
 
 interface BackOfficeScreenProps {
@@ -46,7 +47,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
 
   const handleCreateTable = () => {
     if (!newTableNumber.trim()) {
-      Alert.alert('Required', 'Please enter a table number (e.g. T-08).');
+      appModal.warning('Required', 'Please enter a table number (e.g. T-08).');
       return;
     }
 
@@ -61,11 +62,20 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
     setTables([...tables, newTable]);
     setIsNewTableModalOpen(false);
     setNewTableNumber('');
-    Alert.alert('Table Created', `Table ${newTable.table_number} added to floor plan.`);
+    appModal.success('Table Created', `Table ${newTable.table_number} added to floor plan.`);
   };
 
   const handleDeleteTable = (tableId: string) => {
-    setTables(tables.filter(t => t.id !== tableId));
+    const tbl = tables.find(t => t.id === tableId);
+    appModal.confirm({
+      title: 'Remove Table',
+      message: `Are you sure you want to remove Table ${tbl?.table_number ?? ''} from the floor plan?`,
+      confirmText: 'Remove',
+      isDestructive: true,
+      onConfirm: () => {
+        setTables(tables.filter(t => t.id !== tableId));
+      },
+    });
   };
 
   return (

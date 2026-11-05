@@ -11,9 +11,10 @@ import {
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { horecaApi } from '@horeca/api/horecaApiClient';
-import type { Table } from '@horeca/api/schemas';
+import type { Order, Table } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
 import { useHorecaColors } from '@horeca/theme/colors';
+import { formatUGX } from '@horeca/utils/currency';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
@@ -49,7 +50,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const [selectedTableForOrder, setSelectedTableForOrder] = useState<Table | null>(null);
 
-  // Fetch tables from /tables with offline fallback
+  // Fetch tables from /tables with offline fallback & SQLite observable
   const {
     tables,
     isLoading,
@@ -67,23 +68,34 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
   const createOrderOptimistic = useHorecaStore(state => state.createOrderOptimistic);
 
-  const handleTablePress = (tbl: Table) => {
-    setActiveTableId(tbl.id);
+  // Pre-index open orders by table_id for O(1) lookups during card rendering
+  const openOrdersByTable = useMemo(() => {
+    const map = new Map<string, Order>();
+    Object.values(orders).forEach(o => {
+      if (o.table_id && o.status === 'open') {
+        map.set(o.table_id, o);
+      }
+    });
+    return map;
+  }, [orders]);
 
-    // Check if table already has an active open order
-    const existingOrder = Object.values(orders).find(
-      o => o.table_id === tbl.id && o.status === 'open',
-    );
+  const handleTablePress = useCallback(
+    (tbl: Table) => {
+      setActiveTableId(tbl.id);
 
-    if (existingOrder) {
-      setActiveOrderId(existingOrder.id);
-      onOpenOrder(tbl);
-      return;
-    }
+      // Check if table already has an active open order in our pre-indexed map
+      const existingOrder = openOrdersByTable.get(tbl.id);
+      if (existingOrder) {
+        setActiveOrderId(existingOrder.id);
+        onOpenOrder(tbl);
+        return;
+      }
 
-    // Open bottom sheet modal to start an order (tables can receive orders even if occupied)
-    setSelectedTableForOrder(tbl);
-  };
+      // Open bottom sheet modal to start an order
+      setSelectedTableForOrder(tbl);
+    },
+    [openOrdersByTable, onOpenOrder, setActiveOrderId, setActiveTableId],
+  );
 
   const handleConfirmStartOrder = async (tbl: Table) => {
     try {
@@ -125,8 +137,6 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
     }
   }, [refetch, refetchCategories, refetchOrders]);
 
-  // Options come from GET /v1/tables/categories (cached offline); fall back to
-  // categories derived from the downloaded tables if none have been fetched yet.
   const sectionOptions = useMemo<SelectOption[]>(() => {
     const source =
       categories.length > 0
@@ -157,37 +167,42 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
     [tables],
   );
 
-  const filteredTables = tables.filter(tbl => {
-    const sectionOk =
-      selectedSection === 'All' ||
-      (tbl.section || '').toLowerCase() === selectedSection.toLowerCase();
-    const statusOk = selectedStatus === 'all' || tbl.status === selectedStatus;
-    return sectionOk && statusOk;
-  });
+  const filteredTables = useMemo(() => {
+    return tables.filter(tbl => {
+      const sectionOk =
+        selectedSection === 'All' ||
+        (tbl.section || '').toLowerCase() === selectedSection.toLowerCase();
+      const statusOk = selectedStatus === 'all' || tbl.status === selectedStatus;
+      return sectionOk && statusOk;
+    });
+  }, [tables, selectedSection, selectedStatus]);
 
-  const occupiedCount = tables.filter(t => t.status === 'occupied').length;
-  const totalCapacity = tables.reduce((sum, t) => sum + (t.capacity || 0), 0);
-  const occupancyPercent =
-    totalCapacity > 0 && tables.length > 0 ? Math.round((occupiedCount / tables.length) * 100) : 0;
+  const { occupiedCount, occupancyPercent } = useMemo(() => {
+    const occupied = tables.filter(t => t.status === 'occupied').length;
+    const percent =
+      tables.length > 0 ? Math.round((occupied / tables.length) * 100) : 0;
+    return { occupiedCount: occupied, occupancyPercent: percent };
+  }, [tables]);
 
-  const renderTableCard = ({ item }: { item: Table }) => {
-    const tableOrder = Object.values(orders).find(
-      o => o.table_id === item.id && o.status === 'open',
-    );
-    const tabAmount =
-      tableOrder && tableOrder.total_amount > 0
-        ? `UGX ${tableOrder.total_amount.toLocaleString()}`
-        : undefined;
+  const renderTableCard = useCallback(
+    ({ item }: { item: Table }) => {
+      const tableOrder = openOrdersByTable.get(item.id);
+      const tabAmount =
+        tableOrder && tableOrder.total_amount > 0
+          ? `UGX ${formatUGX(tableOrder.total_amount)}`
+          : undefined;
 
-    return (
-      <TableCard
-        table={item}
-        isSelected={item.id === activeTableId}
-        currentTabAmount={tabAmount}
-        onPress={handleTablePress}
-      />
-    );
-  };
+      return (
+        <TableCard
+          table={item}
+          isSelected={item.id === activeTableId}
+          currentTabAmount={tabAmount}
+          onPress={handleTablePress}
+        />
+      );
+    },
+    [openOrdersByTable, activeTableId, handleTablePress],
+  );
 
   return (
     <ScreenTemplate
@@ -292,6 +307,10 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
           keyExtractor={item => item.id}
           numColumns={2}
           renderItem={renderTableCard}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          initialNumToRender={8}
+          updateCellsBatchingPeriod={50}
           refreshControl={
             <RefreshControl
               refreshing={isPullRefreshing || isRefetching}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, BackHandler, View } from 'react-native';
+import { BackHandler, View } from 'react-native';
 import {
   ArrowLeftIcon,
   BuildingStorefrontIcon,
@@ -14,6 +14,7 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
 
 export const HorecaLoginScreen: React.FC = () => {
@@ -43,7 +44,7 @@ export const HorecaLoginScreen: React.FC = () => {
 
   const handleLogin = async () => {
     if (!loginId.trim() || !password.trim()) {
-      Alert.alert('Required', 'Please enter your email or staff username and password.');
+      appModal.warning('Required', 'Please enter your email or staff username and password.');
       return;
     }
 
@@ -83,7 +84,7 @@ export const HorecaLoginScreen: React.FC = () => {
       } else {
         const errorMsg =
           err?.response?.data?.message || err?.message || 'Invalid username or password';
-        Alert.alert('Sign In Failed', errorMsg);
+        appModal.error('Sign In Failed', errorMsg);
       }
     } finally {
       setIsLoading(false);
@@ -92,7 +93,7 @@ export const HorecaLoginScreen: React.FC = () => {
 
   const handleVerifyMfa = async () => {
     if (!mfaCode || mfaCode.length !== 6 || !mfaSession) {
-      Alert.alert('Invalid Code', 'Please enter the 6-digit verification code.');
+      appModal.warning('Invalid Code', 'Please enter the 6-digit verification code.');
       return;
     }
 
@@ -117,7 +118,7 @@ export const HorecaLoginScreen: React.FC = () => {
     } catch (err: any) {
       const errorMsg =
         err?.response?.data?.message || err?.message || 'Invalid or expired code.';
-      Alert.alert('Verification Failed', errorMsg);
+      appModal.error('Verification Failed', errorMsg);
     } finally {
       setIsLoading(false);
     }

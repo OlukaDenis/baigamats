@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, FlatList, Pressable, View } from 'react-native';
+import { FlatList, Pressable, View } from 'react-native';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -15,6 +15,7 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useKitchenTickets } from '../hooks/useKitchenTickets';
 
 interface KitchenDisplayScreenProps {
@@ -39,7 +40,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
   const handleUpdateStatus = (ticket: KitchenTicket, nextStatus: KotStatus) => {
     updateStatus(ticket.order.id, ticket.id, nextStatus);
     if (nextStatus === 'ready') {
-      Alert.alert('Ready Alert', `Item "${ticket.item_name}" marked READY. Waiter notified.`);
+      appModal.success('Item Ready', `Item "${ticket.item_name}" marked READY. Waiter notified.`);
     }
   };
 

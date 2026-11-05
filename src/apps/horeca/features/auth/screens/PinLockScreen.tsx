@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -27,6 +26,7 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
 import { NumPad } from '@horeca/components/organisms/NumPad';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
 
 const PIN_LENGTH = 4;
@@ -117,7 +117,7 @@ export const PinLockScreen: React.FC = () => {
         }
         loginSuccess(me, staffList.find(s => s.id === me.userId) ?? staffList[0]);
       } else {
-        Alert.alert('Sign In Failed', 'Unexpected response from server.');
+        appModal.error('Sign In Failed', 'Unexpected response from server.');
         setPin('');
       }
     } catch (err: any) {
@@ -127,7 +127,7 @@ export const PinLockScreen: React.FC = () => {
       } else {
         const message =
           err?.response?.data?.message || err?.message || 'Incorrect username or PIN.';
-        Alert.alert('Sign In Failed', String(message));
+        appModal.error('Sign In Failed', String(message));
         setPin('');
       }
     } finally {

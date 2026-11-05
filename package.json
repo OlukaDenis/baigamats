@@ -29,7 +29,7 @@
     "build:bundle:sacco:staging": "node scripts/build-android.js --app sacco --env staging --type bundle",
     "build:all:apk": "node scripts/build-android.js --app all --env prod --type apk",
     "build:all:bundle": "node scripts/build-android.js --app all --env prod --type bundle",
-    "postinstall": "node -e \"const fs=require('fs');const p='node_modules/react-native/index.d.ts';if(!fs.existsSync(p)&&fs.existsSync('node_modules/react-native/types_generated/index.d.ts')){fs.writeFileSync(p,'export * from \\\"./types_generated/index\\\";\\n');}\""
+    "postinstall": "node -e \"const fs=require('fs');const p='node_modules/react-native/index.d.ts';if(!fs.existsSync(p)&&fs.existsSync('node_modules/react-native/types_generated/index.d.ts')){fs.writeFileSync(p,'export * from \\\"./types_generated/index\\\";\\n');}\" && node scripts/patch-watermelondb.js"
   },
   "dependencies": {
     "@nozbe/watermelondb": "^0.28.0",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Pressable, Switch, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import {
   ArrowRightOnRectangleIcon,
   KeyIcon,
@@ -12,6 +12,7 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
 
 export interface ProfileScreenProps {
@@ -43,20 +44,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       .toUpperCase() || 'ST';
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to log out of this terminal?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: () => {
-            logout();
-          },
-        },
-      ],
-    );
+    appModal.confirm({
+      title: 'Sign Out',
+      message: 'Are you sure you want to log out of this terminal? Your active database session will be cleanly unmounted.',
+      confirmText: 'Log Out',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        await logout();
+      },
+    });
   };
 
   return (

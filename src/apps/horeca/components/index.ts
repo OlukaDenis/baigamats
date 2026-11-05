@@ -9,6 +9,8 @@ export * from './molecules/FormField';
 export * from './molecules/AlertBanner';
 export * from './molecules/SearchBar';
 export * from './molecules/Select';
+export * from './molecules/modal/appModalStore';
+export * from './molecules/modal/GlobalBottomSheetModal';
 
 // Organisms
 export * from './organisms/HorecaAppBar';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { KeyIcon } from 'react-native-heroicons/outline';
 import { horecaApi } from '@horeca/api/horecaApiClient';
 import { useHorecaColors } from '@horeca/theme/colors';
@@ -7,6 +7,7 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { NumPad } from '@horeca/components/organisms/NumPad';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
 
 interface SetPinScreenProps {
@@ -48,7 +49,7 @@ export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
 
   const finalizePin = async (initial: string, confirmed: string) => {
     if (initial !== confirmed) {
-      Alert.alert('Mismatch', 'PINs did not match. Please try again.');
+      appModal.warning('Mismatch', 'PINs did not match. Please try again.');
       setStep('enter');
       setFirstPin('');
       setPin('');
@@ -56,21 +57,17 @@ export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
     }
 
     if (!activeStaff) {
-      Alert.alert('Error', 'No active staff member selected.');
+      appModal.error('Error', 'No active staff member selected.');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await horecaApi.setStaffPin(activeStaff.id, { pin: confirmed });
-      Alert.alert('Success', 'Staff PIN updated successfully.', [
-        { text: 'OK', onPress: onBack },
-      ]);
+      appModal.success('Success', 'Staff PIN updated successfully.', onBack);
     } catch {
       // Offline / demo fallback
-      Alert.alert('Updated', 'PIN set locally for current session.', [
-        { text: 'OK', onPress: onBack },
-      ]);
+      appModal.success('Updated', 'PIN set locally for current session.', onBack);
     } finally {
       setIsSubmitting(false);
     }

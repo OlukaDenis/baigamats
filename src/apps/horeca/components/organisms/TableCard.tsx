@@ -30,71 +30,85 @@ export interface TableCardProps {
 
 /**
  * Organism representing an individual dining table card on the floor plan.
- * Displays table number, occupancy status badge, capacity & section, and active tab or availability.
+ * Memoized to avoid full floor plan re-renders on selection or status change.
  */
-export const TableCard: React.FC<TableCardProps> = ({
-  table,
-  isSelected = false,
-  onPress,
-  className = '',
-}) => {
-  const colors = useHorecaColors();
-  const cardTone = STATUS_TONES[table.status] ?? STATUS_TONES.available;
+export const TableCard = React.memo<TableCardProps>(
+  ({
+    table,
+    isSelected = false,
+    onPress,
+    currentTabAmount,
+    className = '',
+  }) => {
+    const colors = useHorecaColors();
+    const cardTone = STATUS_TONES[table.status] ?? STATUS_TONES.available;
 
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Table ${table.table_number}, ${table.status}`}
-      onPress={() => onPress(table)}
-      style={{ backgroundColor: cardTone.background, borderColor: cardTone.border }}
-      className={`flex-1 m-1.5 p-3.5 rounded-2xl border shadow-sm active:opacity-80 ${isSelected ? 'border-2' : ''} ${className}`.trim()}
-    >
-      {/* Top Card Row */}
-      <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-row items-center">
-          <AppText variant="title" style={{ color: DARK_TEXT }} className="text-xl font-bold mr-1.5">
-            {table.table_number}
-          </AppText>
-          {isSelected ? (
-            <CheckCircleIcon color={colors.primary} size={16} />
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Table ${table.table_number}, ${table.status}`}
+        onPress={() => onPress(table)}
+        style={{ backgroundColor: cardTone.background, borderColor: cardTone.border }}
+        className={`flex-1 m-1.5 p-3.5 rounded-2xl border shadow-sm active:opacity-80 ${isSelected ? 'border-2' : ''} ${className}`.trim()}
+      >
+        {/* Top Card Row */}
+        <View className="flex-row items-center justify-between mb-2">
+          <View className="flex-row items-center">
+            <AppText variant="title" style={{ color: DARK_TEXT }} className="text-xl font-bold mr-1.5">
+              {table.table_number}
+            </AppText>
+            {isSelected ? (
+              <CheckCircleIcon color={colors.primary} size={16} />
+            ) : null}
+          </View>
+
+          {currentTabAmount ? (
+            <View>
+              <AppText variant="caption" style={{ color: MUTED_TEXT }} className="text-[10px] uppercase font-semibold">
+                Tab
+              </AppText>
+              <AppText variant="label" style={{ color: DARK_TEXT }} className="font-bold text-xs">
+                {currentTabAmount}
+              </AppText>
+            </View>
           ) : null}
         </View>
 
-        {/* {isOccupied && (
-          <View>
-            <AppText variant="caption" style={{ color: MUTED_TEXT }} className="text-[10px] uppercase font-semibold">
-              Current Tab
-            </AppText>
-            <AppText variant="label" style={{ color: DARK_TEXT }} className="font-bold">
-              {currentTabAmount}
-            </AppText>
-          </View>
-        )} */}
-      </View>
-
-      {/* Section & Guests */}
-      <View className="flex-row items-center mb-3">
-        <UserGroupIcon color={MUTED_TEXT} size={14} />
-        <AppText variant="caption" style={{ color: MUTED_TEXT }} className="ml-1 font-medium">
-          {table.capacity} Guests • {table.section || 'General'}
-        </AppText>
-      </View>
-
-      {/* Current Tab / Available Action */}
-      <View
-        style={{ borderTopColor: cardTone.border }}
-        className="pt-2 border-t flex-row items-center justify-between"
-      >
-        <View className="flex-row items-center justify-between w-full">
-          <AppText variant="caption" style={{ color: cardTone.accent }} className="font-semibold capitalize">
-            {table.status}
+        {/* Section & Guests */}
+        <View className="flex-row items-center mb-3">
+          <UserGroupIcon color={MUTED_TEXT} size={14} />
+          <AppText variant="caption" style={{ color: MUTED_TEXT }} className="ml-1 font-medium">
+            {table.capacity} Guests • {table.section || 'General'}
           </AppText>
-          <View className="h-6 w-6 rounded-full bg-white/70 items-center justify-center">
-            <PlusIcon color={cardTone.accent} size={14} />
+        </View>
+
+        {/* Current Tab / Available Action */}
+        <View
+          style={{ borderTopColor: cardTone.border }}
+          className="pt-2 border-t flex-row items-center justify-between"
+        >
+          <View className="flex-row items-center justify-between w-full">
+            <AppText variant="caption" style={{ color: cardTone.accent }} className="font-semibold capitalize">
+              {table.status}
+            </AppText>
+            <View className="h-6 w-6 rounded-full bg-white/70 items-center justify-center">
+              <PlusIcon color={cardTone.accent} size={14} />
+            </View>
           </View>
         </View>
-      </View>
-    </Pressable>
-  );
-};
-
+      </Pressable>
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.table.id === next.table.id &&
+      prev.table.status === next.table.status &&
+      prev.table.table_number === next.table.table_number &&
+      prev.table.capacity === next.table.capacity &&
+      prev.table.section === next.table.section &&
+      prev.isSelected === next.isSelected &&
+      prev.currentTabAmount === next.currentTabAmount &&
+      prev.className === next.className
+    );
+  },
+);

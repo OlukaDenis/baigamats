@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -24,6 +23,7 @@ import { SearchBar } from '@horeca/components/molecules/SearchBar';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { OrderCard } from '@horeca/components/organisms/OrderCard';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useOpenOrders } from '../hooks/useOpenOrders';
 
 interface OrdersListScreenProps {
@@ -103,40 +103,42 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
     }, 0);
   }, [currentTabOrders]);
 
-  const handleCancelOrder = (ord: Order) => {
-    Alert.alert(
-      'Cancel Order',
-      `Are you sure you want to cancel Order ${ord.order_number}? This will remove it and free up the table.`,
-      [
-        { text: 'Keep Order', style: 'cancel' },
-        {
-          text: 'Cancel Order',
-          style: 'destructive',
-          onPress: async () => {
-            deleteOrderOptimistic(ord.id);
-            try {
-              await syncEngine.processOutbox();
-              await refetch();
-            } catch {
-              // Handled by sync engine
-            }
-          },
+  const handleCancelOrder = useCallback(
+    (ord: Order) => {
+      appModal.confirm({
+        title: 'Cancel Order',
+        message: `Are you sure you want to cancel Order ${ord.order_number}? This will remove it and free up the table.`,
+        confirmText: 'Cancel Order',
+        cancelText: 'Keep Order',
+        isDestructive: true,
+        onConfirm: async () => {
+          deleteOrderOptimistic(ord.id);
+          try {
+            await syncEngine.processOutbox();
+            await refetch();
+          } catch {
+            // Handled by sync engine
+          }
         },
-      ],
-    );
-  };
+      });
+    },
+    [deleteOrderOptimistic, refetch],
+  );
 
-  const renderOrderCard = ({ item }: { item: Order }) => {
-    const table = tables.find(t => t.id === item.table_id);
-    return (
-      <OrderCard
-        order={item}
-        table={table}
-        onPress={onSelectOrder}
-        onCancel={handleCancelOrder}
-      />
-    );
-  };
+  const renderOrderCard = useCallback(
+    ({ item }: { item: Order }) => {
+      const table = tables.find(t => t.id === item.table_id);
+      return (
+        <OrderCard
+          order={item}
+          table={table}
+          onPress={onSelectOrder}
+          onCancel={handleCancelOrder}
+        />
+      );
+    },
+    [tables, onSelectOrder, handleCancelOrder],
+  );
 
   return (
     <ScreenTemplate
@@ -269,6 +271,9 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
             paddingBottom: Math.max(insets.bottom, 12) + 80,
           }}
           showsVerticalScrollIndicator={false}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          initialNumToRender={8}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

@@ -23,6 +23,7 @@ import { SearchBar } from '@horeca/components/molecules/SearchBar';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { MenuItemCard } from '@horeca/components/organisms/MenuItemCard';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { formatUGX } from '@horeca/utils/currency';
 import { useMenu } from '../hooks/useMenu';
 import { useOpenOrders } from '../hooks/useOpenOrders';
 
@@ -65,7 +66,10 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const table = tables.find(t => t.id === activeTableId);
+  const table = useMemo(
+    () => tables.find(t => t.id === activeTableId),
+    [tables, activeTableId],
+  );
   // Tables can receive more orders/items even when occupied
   const isTableOccupied = false;
 
@@ -83,14 +87,17 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   }, [currentOrder?.id, setActiveOrderId]);
 
   const orderItems = useMemo(() => currentOrder?.items ?? [], [currentOrder?.items]);
-  const totalCount = orderItems.reduce((sum, it) => sum + it.qty, 0);
+  const totalCount = useMemo(
+    () => orderItems.reduce((sum, it) => sum + it.qty, 0),
+    [orderItems],
+  );
   const totalAmount = currentOrder?.total_amount ?? 0;
 
   // Quantity per menu item for plain (no modifiers / notes) lines
   const lineByMenuItem = useMemo(() => {
     const map = new Map<string, { id: string; qty: number }>();
     orderItems.forEach(it => {
-      if (!(it.modifiers?.length) && !it.notes) {
+      if (!it.modifiers?.length && !it.notes) {
         map.set(it.menu_item_id, { id: it.id, qty: it.qty });
       }
     });
@@ -165,20 +172,26 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
     }
   }, [refetch, refetchOrders]);
 
-  const renderItem = ({ item }: { item: MenuItem }) => {
-    const qty = lineByMenuItem.get(item.id)?.qty ?? 0;
-    return (
-      <MenuItemCard
-        item={item}
-        quantity={qty}
-        disabled={isTableOccupied}
-        onAdd={handleAdd}
-        onRemove={handleRemove}
-      />
-    );
-  };
+  const renderItem = useCallback(
+    ({ item }: { item: MenuItem }) => {
+      const qty = lineByMenuItem.get(item.id)?.qty ?? 0;
+      return (
+        <MenuItemCard
+          item={item}
+          quantity={qty}
+          disabled={isTableOccupied}
+          onAdd={handleAdd}
+          onRemove={handleRemove}
+        />
+      );
+    },
+    [lineByMenuItem, isTableOccupied, handleAdd, handleRemove],
+  );
 
-  const categoryTabs = [{ id: ALL, name: 'All' }, ...categories.map(c => ({ id: c.id, name: c.name }))];
+  const categoryTabs = useMemo(
+    () => [{ id: ALL, name: 'All' }, ...categories.map(c => ({ id: c.id, name: c.name }))],
+    [categories],
+  );
 
   return (
     <ScreenTemplate
@@ -271,6 +284,11 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
           keyExtractor={item => item.id}
           renderItem={renderItem}
           keyboardShouldPersistTaps="handled"
+          windowSize={7}
+          maxToRenderPerBatch={10}
+          initialNumToRender={8}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={true}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -299,7 +317,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
       {totalCount > 0 ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`View order, ${totalCount} items, UGX ${totalAmount.toLocaleString()}`}
+          accessibilityLabel={`View order, ${totalCount} items, UGX ${formatUGX(totalAmount)}`}
           onPress={onViewOrder}
           style={{ bottom: Math.max(insets.bottom, 12) + 8 }}
           className="absolute left-4 right-4 rounded-2xl bg-primary p-3.5 shadow-xl flex-row items-center justify-between active:opacity-90"
@@ -313,7 +331,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
                 {totalCount} {totalCount === 1 ? 'item' : 'items'} • View order
               </AppText>
               <AppText variant="caption" className="text-on-primary/80">
-                UGX {totalAmount.toLocaleString()}
+                UGX {formatUGX(totalAmount)}
               </AppText>
             </View>
           </View>

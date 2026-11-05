@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import {
   CreditCardIcon,
   MinusIcon,
@@ -16,6 +16,7 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useOpenOrders } from '../hooks/useOpenOrders';
 
 /** Placeholder shown when the table has no open order yet. */
@@ -60,11 +61,10 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
   const updateItemQtyOptimistic = useHorecaStore(state => state.updateItemQtyOptimistic);
   const deleteOrderOptimistic = useHorecaStore(state => state.deleteOrderOptimistic);
 
-  // Always call GET /orders?mine=true&status=open when entering the order screen
+  // Always refresh open orders when entering the order screen
   useEffect(() => {
     let mounted = true;
     (async () => {
-      await syncEngine.processOutbox();
       if (mounted) {
         await refetch();
       }
@@ -143,33 +143,30 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
 
   const handleDeleteEntireOrder = () => {
     if (!currentOrder.id) return;
-    Alert.alert(
-      'Cancel Order',
-      `Are you sure you want to cancel Order ${currentOrder.order_number}? This will remove all items and make Table ${activeTable?.table_number ?? ''} available.`,
-      [
-        { text: 'Keep Order', style: 'cancel' },
-        {
-          text: 'Cancel Order',
-          style: 'destructive',
-          onPress: async () => {
-            deleteOrderOptimistic(currentOrder.id);
-            try {
-              await syncEngine.processOutbox();
-              await refetch();
-            } catch {
-              // Synced in background
-            }
-            Alert.alert('Order Cancelled', `Order ${currentOrder.order_number} has been cancelled.`);
-            onBack?.();
-          },
-        },
-      ],
-    );
+    appModal.confirm({
+      title: 'Cancel Order',
+      message: `Are you sure you want to cancel Order ${currentOrder.order_number}? This will remove all items and make Table ${activeTable?.table_number ?? ''} available.`,
+      confirmText: 'Cancel Order',
+      cancelText: 'Keep Order',
+      isDestructive: true,
+      onConfirm: async () => {
+        deleteOrderOptimistic(currentOrder.id);
+        try {
+          await syncEngine.processOutbox();
+          await refetch();
+        } catch {
+          // Synced in background
+        }
+        appModal.success('Order Cancelled', `Order ${currentOrder.order_number} has been cancelled.`, () => {
+          onBack?.();
+        });
+      },
+    });
   };
 
   const handlePay = async () => {
     if (orderItems.length === 0 && totalAmount <= 0) {
-      Alert.alert('Empty Order', 'Please add items to the order before proceeding to checkout.');
+      appModal.warning('Empty Order', 'Please add items to the order before proceeding to checkout.');
       return;
     }
 
@@ -201,7 +198,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
     }
 
     if (!resolvedOrderId) {
-      Alert.alert(
+      appModal.error(
         'Order Not Ready',
         'Could not find an active open order ID. Please refresh and try again.',
       );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import {
   BanknotesIcon,
   LockClosedIcon,
@@ -14,6 +14,7 @@ import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 
 interface ShiftManagementScreenProps {
   onLockTerminal: () => void;
@@ -50,18 +51,21 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
   const handleOpenShift = () => {
     const floatVal = parseInt(openingFloatInput.replace(/\D/g, '') || '0', 10);
     if (floatVal < 0) {
-      Alert.alert('Invalid Float', 'Please enter a valid cash float.');
+      appModal.warning('Invalid Float', 'Please enter a valid cash float.');
       return;
     }
     openShiftOptimistic(floatVal);
     setIsOpenModalVisible(false);
-    Alert.alert('Shift Opened', `Cash drawer shift opened with UGX ${floatVal.toLocaleString()} float.`);
+    appModal.success('Shift Opened', `Cash drawer shift opened with UGX ${floatVal.toLocaleString()} float.`);
   };
 
   const handleCloseShift = () => {
     closeShiftOptimistic(countedCash, closingNote.trim() ? closingNote.trim() : undefined);
     setIsCloseModalVisible(false);
-    Alert.alert('Shift Closed', `Shift closed successfully. Variance recorded: ${variance >= 0 ? '+' : ''}${variance.toLocaleString()} UGX.`);
+    appModal.success(
+      'Shift Closed',
+      `Shift closed successfully. Variance recorded: ${variance >= 0 ? '+' : ''}${variance.toLocaleString()} UGX.`
+    );
   };
 
   return (

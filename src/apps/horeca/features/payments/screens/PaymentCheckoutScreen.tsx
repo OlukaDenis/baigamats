@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Easing,
   Pressable,
@@ -32,6 +31,7 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { AlertBanner } from '@horeca/components/molecules/AlertBanner';
+import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import {
@@ -230,7 +230,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
     setCashError(null);
 
     if (!resolvedOrderId || resolvedOrderId.startsWith('temp-ord-')) {
-      Alert.alert(
+      appModal.error(
         'Order ID Required',
         'Unable to resolve the open order ID for this payment. Please return to the Order screen to sync.',
       );
@@ -238,7 +238,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
     }
 
     if (cashTendered < resolvedTotal) {
-      Alert.alert(
+      appModal.warning(
         'Insufficient Cash',
         `Tendered amount (UGX ${cashTendered.toLocaleString()}) is less than the order total (UGX ${resolvedTotal.toLocaleString()}).`,
       );
@@ -279,7 +279,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
     setMomoError(null);
 
     if (!resolvedOrderId || resolvedOrderId.startsWith('temp-ord-')) {
-      Alert.alert(
+      appModal.error(
         'Order ID Required',
         'Unable to resolve the open order ID for this payment. Please return to the Order screen to sync.',
       );
@@ -288,7 +288,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
 
     const normalizedPhone = normalizeUgandaPhone(phoneNumber);
     if (!/^0\d{9}$/.test(normalizedPhone)) {
-      Alert.alert(
+      appModal.warning(
         'Invalid Phone Number',
         'Please enter a valid 10-digit mobile number.',
       );
@@ -297,7 +297,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
 
     const provider = detectTelecomProvider(normalizedPhone);
     if (provider === 'unknown') {
-      Alert.alert(
+      appModal.warning(
         'Unsupported Telecom Provider',
         'The entered number does not match a supported MTN or Airtel prefix.\n\nMTN: 077, 078, 079, 076, 039\nAirtel: 070, 074, 073, 075, 072',
       );
