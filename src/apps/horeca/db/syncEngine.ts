@@ -1,16 +1,21 @@
 import NetInfo from '@react-native-community/netinfo';
+import type { Subscription } from 'rxjs';
 import { horecaApi } from '../api/horecaApiClient';
 import { useHorecaStore } from './offlineStore';
+import { orderRepository } from './repositories/orderRepository';
+import { outboxRepository } from './repositories/outboxRepository';
 
 class SyncEngine {
   private isProcessing = false;
   private unsubscribeNetInfo: (() => void) | null = null;
   private unsubscribeStore: (() => void) | null = null;
+  private outboxSubscription: Subscription | null = null;
   private idMap: Map<string, string> = new Map();
 
   start() {
     this.stop();
 
+    // 1. Connectivity Listener
     this.unsubscribeNetInfo = NetInfo.addEventListener(state => {
       const isOnline = !!(state.isConnected && state.isInternetReachable !== false);
       useHorecaStore.getState().setOnlineStatus(isOnline);
@@ -20,7 +25,16 @@ class SyncEngine {
       }
     });
 
-    // Subscribe to outbox changes so mutations flush immediately when online
+    // 2. Reactive SQLite Outbox Observer
+    let prevCount = 0;
+    this.outboxSubscription = outboxRepository.observePendingCount().subscribe(count => {
+      if (count > prevCount && useHorecaStore.getState().isOnline) {
+        this.processOutbox();
+      }
+      prevCount = count;
+    });
+
+    // 3. Fallback store subscription
     let prevOutboxLength = useHorecaStore.getState().outbox.length;
     this.unsubscribeStore = useHorecaStore.subscribe(state => {
       const nextLength = state.outbox.length;
@@ -30,7 +44,7 @@ class SyncEngine {
       prevOutboxLength = nextLength;
     });
 
-    // Initial check
+    // 4. Initial check
     NetInfo.fetch().then(state => {
       const isOnline = !!(state.isConnected && state.isInternetReachable !== false);
       useHorecaStore.getState().setOnlineStatus(isOnline);
@@ -49,18 +63,36 @@ class SyncEngine {
       this.unsubscribeStore();
       this.unsubscribeStore = null;
     }
+    if (this.outboxSubscription) {
+      this.outboxSubscription.unsubscribe();
+      this.outboxSubscription = null;
+    }
   }
 
+  /**
+   * Processes the durable SQLite outbox in strict FIFO order when online.
+   */
   async processOutbox() {
     if (this.isProcessing) return;
     this.isProcessing = true;
 
     try {
-      while (
-        useHorecaStore.getState().isOnline &&
-        useHorecaStore.getState().outbox.length > 0
-      ) {
-        const mutation = useHorecaStore.getState().outbox[0];
+      while (useHorecaStore.getState().isOnline) {
+        // Fetch oldest pending mutation from SQLite
+        const dbMutation = await outboxRepository.getNextPendingMutation();
+
+        // Check in-memory fallback if SQLite had none
+        const inMemoryMutation = useHorecaStore.getState().outbox[0];
+        const mutation = dbMutation
+          ? {
+              id: dbMutation.id,
+              type: dbMutation.mutationType as any,
+              payload: dbMutation.payload,
+              attempts: dbMutation.attempts,
+              createdAt: dbMutation.createdAt.toISOString(),
+            }
+          : inMemoryMutation;
+
         if (!mutation) break;
 
         try {
@@ -75,6 +107,7 @@ class SyncEngine {
               });
               if (res?.id && clientTempId) {
                 this.idMap.set(clientTempId, res.id);
+                await orderRepository.reconcileCreatedOrder(clientTempId, res);
                 useHorecaStore.getState().upsertOrder(res, clientTempId);
               }
               break;
@@ -94,6 +127,7 @@ class SyncEngine {
               });
               if (addRes?.item?.id && mutation.payload.clientTempItemId) {
                 this.idMap.set(mutation.payload.clientTempItemId, addRes.item.id);
+                await orderRepository.reconcileCreatedItem(mutation.payload.clientTempItemId, addRes.item);
                 useHorecaStore
                   .getState()
                   .replaceOrderItemId(
@@ -163,12 +197,17 @@ class SyncEngine {
             }
           }
 
-          // Dequeue successfully synced mutation
+          // Dequeue from both SQLite and in-memory store
+          if (dbMutation) {
+            await outboxRepository.dequeueMutation(dbMutation.id);
+          }
           useHorecaStore.getState().dequeueMutation(mutation.id);
         } catch (err: any) {
           console.warn(`[SyncEngine] Mutation ${mutation.id} error:`, err?.message);
-          mutation.attempts += 1;
-          break; // Pause outbox processing until next trigger
+          if (dbMutation) {
+            await outboxRepository.markMutationFailed(dbMutation.id, err?.message);
+          }
+          break; // Pause outbox processing until next network event
         }
       }
     } finally {

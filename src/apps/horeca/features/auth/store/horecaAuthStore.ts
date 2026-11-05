@@ -4,6 +4,8 @@ import { env } from '@shared/config/env';
 import { tokenStorage } from '@shared/services/tokenStorage';
 import { horecaApi } from '../../../api/horecaApiClient';
 import type { MeResponse, StaffMember } from '../../../api/schemas';
+import { databaseManager } from '../../../db/DatabaseManager';
+import { useHorecaStore } from '../../../db/offlineStore';
 import { mockStaffMembers } from '../../../mock/horecaMockData';
 
 const LAST_USERNAME_SERVICE = 'com.baigamats.horeca.auth.last_username';
@@ -92,14 +94,25 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
       // We have a stored token: fetch real user & staff from the live API
       const me = await horecaApi.me();
       const staff = await horecaApi.getStaff();
+      const active = staff[0] ?? (env.ENABLE_MOCK ? mockStaffMembers[0] : null);
+      const activeId = active?.id || me.userId;
+
+      // Mount isolated SQLite database for authenticated staff
+      databaseManager.setCurrentUser(activeId);
+      useHorecaStore.getState().hydrateTables();
+      useHorecaStore.getState().hydrateMenu();
+
       set({
         me,
         staffList: staff.length > 0 ? staff : (env.ENABLE_MOCK ? mockStaffMembers : []),
-        activeStaff: staff[0] ?? (env.ENABLE_MOCK ? mockStaffMembers[0] : null),
+        activeStaff: active,
         status: 'locked', // Prompt PIN on app launch
       });
     } catch {
       if (env.ENABLE_MOCK) {
+        databaseManager.setCurrentUser(mockStaffMembers[0].id);
+        useHorecaStore.getState().hydrateTables();
+        useHorecaStore.getState().hydrateMenu();
         set({
           status: 'locked',
           staffList: mockStaffMembers,
@@ -107,6 +120,8 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
         });
       } else {
         // If live API token verification fails, prompt full sign in with password
+        databaseManager.clearAll();
+        useHorecaStore.getState().resetStore();
         set({
           status: 'unauthenticated',
           staffList: [],
@@ -134,6 +149,14 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
 
   loginSuccess: (me, initialStaff) => {
     const staff = initialStaff ?? get().staffList[0] ?? (env.ENABLE_MOCK ? mockStaffMembers[0] : null);
+    const activeId = staff?.id || me.userId;
+
+    // Switch to the staff member's isolated SQLite database
+    databaseManager.setCurrentUser(activeId);
+    useHorecaStore.getState().resetStore();
+    useHorecaStore.getState().hydrateTables();
+    useHorecaStore.getState().hydrateMenu();
+
     set({
       me,
       activeStaff: staff,
@@ -154,6 +177,15 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
   },
 
   unlockWithStaff: staff => {
+    const previousStaffId = get().activeStaff?.id;
+    if (previousStaffId !== staff.id) {
+      // Switch staff user: mount the new staff's isolated SQLite database
+      databaseManager.setCurrentUser(staff.id);
+      useHorecaStore.getState().resetStore();
+      useHorecaStore.getState().hydrateTables();
+      useHorecaStore.getState().hydrateMenu();
+    }
+
     set({
       activeStaff: staff,
       status: 'authenticated',
@@ -167,6 +199,11 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
       // Ignore network errors during logout
     }
     await tokenStorage.clearTokens();
+
+    // Cleanly unmount SQLite database and purge store memory
+    databaseManager.clearAll();
+    useHorecaStore.getState().resetStore();
+
     set({
       status: 'unauthenticated',
       me: null,

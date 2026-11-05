@@ -1,5 +1,7 @@
 import * as Keychain from 'react-native-keychain';
 import type { MenuCategory, MenuItem, MenuTree, Table, TableCategory } from '../api/schemas';
+import { menuRepository } from './repositories/menuRepository';
+import { tableRepository } from './repositories/tableRepository';
 
 export interface CachedMenuCatalogue {
   hash: string | null;
@@ -9,121 +11,92 @@ export interface CachedMenuCatalogue {
 }
 
 const TABLE_STORAGE_SERVICE = 'com.baigamats.horeca.tables.offline';
-const TABLE_STORAGE_ACCOUNT = 'horeca_tables';
 const CATEGORY_STORAGE_SERVICE = 'com.baigamats.horeca.table-categories.offline';
-const CATEGORY_STORAGE_ACCOUNT = 'horeca_table_categories';
 const MENU_STORAGE_SERVICE = 'com.baigamats.horeca.menu.offline';
-const MENU_STORAGE_ACCOUNT = 'horeca_menu';
 
 let inMemoryTables: Table[] | null = null;
 let inMemoryCategories: TableCategory[] | null = null;
 let inMemoryMenuCatalogue: CachedMenuCatalogue | null = null;
 
+/**
+ * Storage adapter backed by high-performance SQLite via WatermelonDB repositories.
+ * Replaces slow Keychain JSON serialization with direct native SQLite reads & batch writes.
+ */
 export const tableStorage = {
   /**
-   * Persist the latest fetched or updated tables locally for offline availability.
+   * Persist tables into SQLite for offline availability.
    */
   async saveTables(tables: Table[]): Promise<void> {
     inMemoryTables = tables;
     try {
-      await Keychain.setGenericPassword(
-        TABLE_STORAGE_ACCOUNT,
-        JSON.stringify(tables),
-        {
-          service: TABLE_STORAGE_SERVICE,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        },
-      );
-    } catch {
-      // Retain in-memory copy if keychain is not accessible
+      await tableRepository.syncTables(tables);
+    } catch (err) {
+      console.warn('[tableStorage] Failed to save tables in SQLite:', err);
     }
   },
 
   /**
-   * Retrieve cached tables when offline or during app cold boot.
+   * Retrieve cached tables from SQLite.
    */
   async getTables(): Promise<Table[] | null> {
     try {
-      const credentials = await Keychain.getGenericPassword({
-        service: TABLE_STORAGE_SERVICE,
-      });
-      if (credentials && credentials.password) {
-        const parsed = JSON.parse(credentials.password);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          inMemoryTables = parsed;
-          return parsed;
-        }
+      const records = await tableRepository.getTables();
+      if (records && records.length > 0) {
+        inMemoryTables = records;
+        return records;
       }
     } catch {
-      // Fallback to in-memory copy
+      // Fallback to in-memory
     }
     return inMemoryTables;
   },
 
   /**
-   * Persist table categories for offline filtering.
+   * Persist table categories in SQLite.
    */
   async saveCategories(categories: TableCategory[]): Promise<void> {
     inMemoryCategories = categories;
     try {
-      await Keychain.setGenericPassword(
-        CATEGORY_STORAGE_ACCOUNT,
-        JSON.stringify(categories),
-        {
-          service: CATEGORY_STORAGE_SERVICE,
-          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        },
-      );
-    } catch {
-      // Retain in-memory copy if keychain is not accessible
+      await tableRepository.syncCategories(categories);
+    } catch (err) {
+      console.warn('[tableStorage] Failed to save categories in SQLite:', err);
     }
   },
 
   async getCategories(): Promise<TableCategory[] | null> {
     try {
-      const credentials = await Keychain.getGenericPassword({
-        service: CATEGORY_STORAGE_SERVICE,
-      });
-      if (credentials && credentials.password) {
-        const parsed = JSON.parse(credentials.password);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          inMemoryCategories = parsed;
-          return parsed;
-        }
+      const records = await tableRepository.getCategories();
+      if (records && records.length > 0) {
+        inMemoryCategories = records;
+        return records;
       }
     } catch {
-      // Fallback to in-memory copy
+      // Fallback
     }
     return inMemoryCategories;
   },
 
   /**
-   * Persist Menu API v2 catalogue (hash, flat categories, flat items, ETag) for offline ordering.
+   * Persist Menu Catalogue into SQLite.
    */
   async saveMenuCatalogue(catalogue: CachedMenuCatalogue): Promise<void> {
     inMemoryMenuCatalogue = catalogue;
     try {
-      await Keychain.setGenericPassword(MENU_STORAGE_ACCOUNT, JSON.stringify(catalogue), {
-        service: MENU_STORAGE_SERVICE,
-        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      });
-    } catch {
-      // Retain in-memory copy if keychain is not accessible
+      await menuRepository.syncMenuCatalogue(catalogue);
+    } catch (err) {
+      console.warn('[tableStorage] Failed to save menu catalogue in SQLite:', err);
     }
   },
 
   async getMenuCatalogue(): Promise<CachedMenuCatalogue | null> {
     try {
-      const credentials = await Keychain.getGenericPassword({ service: MENU_STORAGE_SERVICE });
-      if (credentials && credentials.password) {
-        const parsed = JSON.parse(credentials.password);
-        if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.items)) {
-          inMemoryMenuCatalogue = parsed;
-          return parsed;
-        }
+      const res = await menuRepository.getMenuCatalogue();
+      if (res && res.items.length > 0) {
+        inMemoryMenuCatalogue = res;
+        return res;
       }
     } catch {
-      // Fallback to in-memory copy
+      // Fallback
     }
     return inMemoryMenuCatalogue;
   },
@@ -142,7 +115,7 @@ export const tableStorage = {
   },
 
   /**
-   * Clear cached tables, categories and menu.
+   * Clear cached tables, categories and menu, including cleaning any legacy Keychain keys.
    */
   async clear(): Promise<void> {
     inMemoryTables = null;

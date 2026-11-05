@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-        "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "build:apk:horeca": "node scripts/build-android.js --app horeca --env prod --type apk",
     "build:apk:horeca:staging": "node scripts/build-android.js --app horeca --env staging --type apk",
     "build:apk:horeca:dev": "node scripts/build-android.js --app horeca --env dev --type apk",
@@ -32,6 +32,8 @@
     "postinstall": "node -e \"const fs=require('fs');const p='node_modules/react-native/index.d.ts';if(!fs.existsSync(p)&&fs.existsSync('node_modules/react-native/types_generated/index.d.ts')){fs.writeFileSync(p,'export * from \\\"./types_generated/index\\\";\\n');}\""
   },
   "dependencies": {
+    "@nozbe/watermelondb": "^0.28.0",
+    "@nozbe/with-observables": "^1.6.0",
     "@react-native-community/netinfo": "^12.0.1",
     "@react-navigation/bottom-tabs": "^7.21.0",
     "@react-navigation/native": "^7.5.1",
@@ -48,11 +50,13 @@
     "react-native-screens": "^4.30.0",
     "react-native-svg": "^15.16.0",
     "react-native-worklets": "~0.13.0",
+    "rxjs": "^7.8.2",
     "zod": "^4.6.7",
     "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@babel/plugin-proposal-decorators": "^8.0.2",
     "@babel/plugin-transform-export-namespace-from": "^8.0.1",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",

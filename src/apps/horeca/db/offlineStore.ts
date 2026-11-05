@@ -11,14 +11,11 @@ import type {
   Table,
   TableCategory,
 } from '../api/schemas';
-import {
-  mockActiveOrder,
-  mockCurrentShift,
-  mockKitchenTickets,
-  mockMenuCategories,
-  mockMenuItems,
-  mockTables,
-} from '../mock/horecaMockData';
+import { mockActiveOrder, mockCurrentShift, mockKitchenTickets, mockMenuCategories, mockMenuItems, mockTables } from '../mock/horecaMockData';
+import { menuRepository } from './repositories/menuRepository';
+import { orderRepository } from './repositories/orderRepository';
+import { outboxRepository } from './repositories/outboxRepository';
+import { tableRepository } from './repositories/tableRepository';
 import { tableStorage } from './tableStorage';
 
 export interface OutboxMutation {
@@ -98,6 +95,7 @@ interface HorecaState {
   enqueueMutation: (mutation: Omit<OutboxMutation, 'id' | 'createdAt' | 'attempts'>) => void;
   dequeueMutation: (id: string) => void;
   clearOutbox: () => void;
+  resetStore: () => void;
 }
 
 /** Converts the API menu tree into the flat/sorted shape held in the store. */
@@ -179,14 +177,16 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       .catch(() => { });
   },
 
-  applyMenuAvailability: availability =>
+  applyMenuAvailability: availability => {
     set(state => ({
       menuItems: state.menuItems.map(item =>
         Object.prototype.hasOwnProperty.call(availability, item.id)
           ? { ...item, is_active: Boolean(availability[item.id]) }
           : item,
       ),
-    })),
+    }));
+    menuRepository.applyAvailability(availability).catch(() => {});
+  },
 
   hydrateTableCategories: async () => {
     const cached = await tableStorage.getCategories();
@@ -212,10 +212,12 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
     tableStorage.saveTables(tables).catch(() => { });
   },
 
-  setTableStatus: (tableId, status) =>
+  setTableStatus: (tableId, status) => {
     set(state => ({
       tables: state.tables.map(t => (t.id === tableId ? { ...t, status } : t)),
-    })),
+    }));
+    tableRepository.updateTableStatus(tableId, status).catch(() => {});
+  },
 
   setActiveTableId: id => set({ activeTableId: id }),
   setActiveOrderId: id => set({ activeOrderId: id }),
@@ -279,6 +281,9 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
         const firstOpen = incomingOrders.find(o => o.status === 'open');
         nextActiveOrderId = openForActiveTable?.id ?? firstOpen?.id ?? nextActiveOrderId;
       }
+
+      // Sync to SQLite in the background
+      orderRepository.syncServerOrders(incomingOrders).catch(() => {});
 
       return {
         orders: nextOrders,
@@ -676,6 +681,7 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       attempts: 0,
     };
     set(state => ({ outbox: [...state.outbox, item] }));
+    outboxRepository.enqueueMutation({ type: mutation.type, payload: mutation.payload }).catch(() => {});
   },
 
   dequeueMutation: id => {
@@ -683,4 +689,21 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   },
 
   clearOutbox: () => set({ outbox: [] }),
+
+  resetStore: () => {
+    set({
+      tables: env.ENABLE_MOCK ? mockTables : [],
+      tableCategories: [],
+      categories: env.ENABLE_MOCK ? mockMenuCategories : [],
+      menuItems: env.ENABLE_MOCK ? mockMenuItems : [],
+      menuHash: null,
+      categoriesEtag: undefined,
+      orders: env.ENABLE_MOCK ? { [mockActiveOrder.id]: mockActiveOrder } : {},
+      kitchenTickets: env.ENABLE_MOCK ? mockKitchenTickets : [],
+      currentShift: env.ENABLE_MOCK ? mockCurrentShift : null,
+      activeTableId: env.ENABLE_MOCK ? (mockTables[0]?.id ?? null) : null,
+      activeOrderId: env.ENABLE_MOCK ? 'ord-8429' : null,
+      outbox: [],
+    });
+  },
 }));

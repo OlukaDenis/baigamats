@@ -15,6 +15,7 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import { useKitchenTickets } from '../hooks/useKitchenTickets';
 
 interface KitchenDisplayScreenProps {
   onLockTerminal: () => void;
@@ -30,19 +31,13 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
 
-  const kitchenTickets = useHorecaStore(state => state.kitchenTickets);
-  const updateKotStatusOptimistic = useHorecaStore(state => state.updateKotStatusOptimistic);
   const isOnline = useHorecaStore(state => state.isOnline);
-
   const [selectedStation, setSelectedStation] = useState<'all' | 'kitchen' | 'bar'>('all');
 
-  const filteredTickets = kitchenTickets.filter(kt => {
-    if (selectedStation === 'all') return true;
-    return kt.station === selectedStation;
-  });
+  const { tickets, updateStatus } = useKitchenTickets(selectedStation);
 
   const handleUpdateStatus = (ticket: KitchenTicket, nextStatus: KotStatus) => {
-    updateKotStatusOptimistic(ticket.order.id, ticket.id, nextStatus);
+    updateStatus(ticket.order.id, ticket.id, nextStatus);
     if (nextStatus === 'ready') {
       Alert.alert('Ready Alert', `Item "${ticket.item_name}" marked READY. Waiter notified.`);
     }
@@ -164,7 +159,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
       header={
         <HorecaAppBar
           title="Kitchen Display (KDS)"
-          subtitle={`KDS • ${filteredTickets.length} ACTIVE TICKETS`}
+          subtitle={`KDS • ${tickets.length} ACTIVE TICKETS`}
           isOnline={isOnline}
           onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
@@ -208,7 +203,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
 
       {/* Tickets List */}
       <FlatList
-        data={filteredTickets}
+        data={tickets}
         keyExtractor={item => item.id}
         renderItem={renderTicketCard}
         contentContainerStyle={{

@@ -96,6 +96,7 @@ module.exports = {
     'nativewind/babel',
   ],
   plugins: [
+    ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
     '@babel/plugin-transform-export-namespace-from',
     inlineEnvPlugin,
     pathAliasPlugin,
