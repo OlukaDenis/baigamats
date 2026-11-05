@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
+  BackHandler,
   Pressable,
   StatusBar,
   View,
@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Table } from '../api/schemas';
 import { syncEngine } from '../db/syncEngine';
 import { HorecaLoginScreen } from '../features/auth/screens/HorecaLoginScreen';
+import { HorecaSplashScreen } from '../features/auth/screens/HorecaSplashScreen';
 import { PinLockScreen } from '../features/auth/screens/PinLockScreen';
 import { ProfileScreen } from '../features/auth/screens/ProfileScreen';
 import { SetPinScreen } from '../features/auth/screens/SetPinScreen';
@@ -37,7 +38,7 @@ import { useHorecaStore } from '../db/offlineStore';
 import { useHorecaTheme } from '../theme/colors';
 import { AppText } from '../components/atoms/AppText';
 
-type MainTab =
+export type MainTab =
   | 'tables'
   | 'table'
   | 'orders_list'
@@ -48,6 +49,8 @@ type MainTab =
   | 'reports'
   | 'backoffice'
   | 'profile';
+
+const BOTTOM_NAV_TABS: MainTab[] = ['tables', 'kitchen', 'shift', 'reports', 'backoffice'];
 
 export const HorecaNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -61,20 +64,42 @@ export const HorecaNavigator: React.FC = () => {
   const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
   const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
 
-  const [currentTab, setCurrentTab] = useState<MainTab>('tables');
-  const [previousTab, setPreviousTab] = useState<MainTab>('tables');
+  // Screen stack for device back button and hierarchical navigation
+  const [navStack, setNavStack] = useState<MainTab[]>(['tables']);
   const [isReceiptActive, setIsReceiptActive] = useState<boolean>(false);
   const [isSettingPin, setIsSettingPin] = useState<boolean>(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [activePaymentOrderId, setActivePaymentOrderId] = useState<string | null>(null);
   const [activePaymentTotal, setActivePaymentTotal] = useState<number>(0);
   const [completedSale, setCompletedSale] = useState<CompletedPaymentResult | null>(null);
+  const [isSplashDone, setIsSplashDone] = useState<boolean>(false);
 
-  // Auto-lock when inactive for 6 minutes (360 seconds)
+  const currentTab = navStack[navStack.length - 1] ?? 'tables';
+
+  // Minimum splash duration and auth hydration
+  useEffect(() => {
+    let isMounted = true;
+    const initApp = async () => {
+      const minDuration = new Promise<void>(resolve => setTimeout(() => resolve(), 1200));
+      await Promise.all([hydrate(), minDuration]);
+      if (isMounted) {
+        setIsSplashDone(true);
+      }
+    };
+
+    initApp();
+    syncEngine.start();
+    return () => {
+      isMounted = false;
+      syncEngine.stop();
+    };
+  }, [hydrate]);
+
+  // Auto-lock when inactive for configured seconds
   useEffect(() => {
     if (status !== 'authenticated') return;
 
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
 
     const resetInactivityTimer = () => {
       clearTimeout(timer);
@@ -88,19 +113,139 @@ export const HorecaNavigator: React.FC = () => {
     return () => clearTimeout(timer);
   }, [status, autoLockSeconds, lockTerminal]);
 
-  useEffect(() => {
-    hydrate();
-    syncEngine.start();
-    return () => syncEngine.stop();
-  }, [hydrate]);
+  // Navigate to screen
+  const navigateTo = useCallback((screen: MainTab) => {
+    setNavStack(prev => {
+      const active = prev[prev.length - 1];
+      if (active === screen) return prev;
 
-  // Auth gate
-  if (status === 'hydrating') {
+      // When switching to a bottom tab:
+      if (BOTTOM_NAV_TABS.includes(screen)) {
+        if (screen === 'tables') {
+          return ['tables'];
+        }
+        return ['tables', screen];
+      }
+
+      // For non-main screens: push onto history stack
+      return [...prev, screen];
+    });
+  }, []);
+
+  const handleDoneReceipt = useCallback(() => {
+    setIsReceiptActive(false);
+    setCompletedSale(null);
+    setActivePaymentOrderId(null);
+    setNavStack(['tables']);
+  }, []);
+
+  /**
+   * Device back button and on-screen back navigation handler.
+   * Returns true if back action was handled within the app,
+   * or false to permit default Android behavior (exiting app) when at root.
+   */
+  const handleBack = useCallback((): boolean => {
+    // 1. If currently in the Set PIN modal screen, close it and stay on Profile
+    if (isSettingPin) {
+      setIsSettingPin(false);
+      return true;
+    }
+
+    // 2. If viewing a digital receipt, finish receipt and return to tables
+    if (isReceiptActive) {
+      handleDoneReceipt();
+      return true;
+    }
+
+    // 3. If there is navigation history to go back to (non-main screens or secondary tabs)
+    if (navStack.length > 1) {
+      const activeScreen = navStack[navStack.length - 1];
+
+      // Clean up screen-specific state before popping
+      if (activeScreen === 'order') {
+        setSelectedOrderId(null);
+      } else if (activeScreen === 'pay') {
+        setActivePaymentOrderId(null);
+        setCompletedSale(null);
+      }
+
+      setNavStack(prev => (prev.length > 1 ? prev.slice(0, -1) : prev));
+      return true;
+    }
+
+    // 4. On root screen ('tables') with no sub-screens open:
+    // Return false to allow Android system to handle back (exiting/backgrounding app)
+    return false;
+  }, [isSettingPin, isReceiptActive, navStack, handleDoneReceipt]);
+
+  // Register device hardware back press listener
+  const handleBackRef = useRef(handleBack);
+  useEffect(() => {
+    handleBackRef.current = handleBack;
+  }, [handleBack]);
+
+  useEffect(() => {
+    const onHardwareBackPress = () => {
+      return handleBackRef.current();
+    };
+
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onHardwareBackPress
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Screen navigation actions
+  const handleOpenOrder = (_table: Table) => {
+    navigateTo('table');
+  };
+
+  const handleOpenOrdersScreen = () => {
+    navigateTo('orders_list');
+  };
+
+  const handleViewTableOrder = () => {
+    navigateTo('order');
+  };
+
+  const handleSelectOrderFromList = (order: { id: string; table_id?: string | null }) => {
+    setSelectedOrderId(order.id);
+    setActiveOrderId(order.id);
+    if (order.table_id) {
+      setActiveTableId(order.table_id);
+    }
+    navigateTo('order');
+  };
+
+  const handleOpenProfile = () => {
+    navigateTo('profile');
+  };
+
+  const handlePayNow = (orderId: string, total: number) => {
+    setActivePaymentOrderId(orderId);
+    setActiveOrderId(orderId);
+    setActivePaymentTotal(total);
+    setCompletedSale(null);
+    setIsReceiptActive(false);
+    navigateTo('pay');
+  };
+
+  const handlePaymentSuccess = (result: CompletedPaymentResult) => {
+    setCompletedSale(result);
+    setIsReceiptActive(true);
+  };
+
+  // Auth & splash gates
+  if (status === 'hydrating' || !isSplashDone) {
     return (
-      <View className="flex-1 bg-background items-center justify-center">
+      <>
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+        <HorecaSplashScreen />
+      </>
     );
   }
 
@@ -121,71 +266,6 @@ export const HorecaNavigator: React.FC = () => {
       </>
     );
   }
-
-  const handleOpenOrder = (_table: Table) => {
-    setCurrentTab('table');
-  };
-
-  /**
-   * Navigates to the Orders List screen when the AppBar cart/orders icon is tapped.
-   */
-  const handleOpenOrdersScreen = () => {
-    if (currentTab !== 'orders_list') {
-      setPreviousTab(currentTab);
-    }
-    setCurrentTab('orders_list');
-  };
-
-  /**
-   * When ordering for a table, tapping "View order" navigates directly to Order Details.
-   */
-  const handleViewTableOrder = () => {
-    if (currentTab !== 'order') {
-      setPreviousTab('table');
-    }
-    setCurrentTab('order');
-  };
-
-  /**
-   * When an order is tapped from the Orders List screen, open Order Details for that order.
-   */
-  const handleSelectOrderFromList = (order: { id: string; table_id?: string | null }) => {
-    setSelectedOrderId(order.id);
-    setActiveOrderId(order.id);
-    if (order.table_id) {
-      setActiveTableId(order.table_id);
-    }
-    setPreviousTab('orders_list');
-    setCurrentTab('order');
-  };
-
-  const handleOpenProfile = () => {
-    if (currentTab !== 'profile') {
-      setPreviousTab(currentTab);
-    }
-    setCurrentTab('profile');
-  };
-
-  const handlePayNow = (orderId: string, total: number) => {
-    setActivePaymentOrderId(orderId);
-    setActiveOrderId(orderId);
-    setActivePaymentTotal(total);
-    setCompletedSale(null);
-    setIsReceiptActive(false);
-    setCurrentTab('pay');
-  };
-
-  const handlePaymentSuccess = (result: CompletedPaymentResult) => {
-    setCompletedSale(result);
-    setIsReceiptActive(true);
-  };
-
-  const handleDoneReceipt = () => {
-    setIsReceiptActive(false);
-    setCompletedSale(null);
-    setActivePaymentOrderId(null);
-    setCurrentTab('tables');
-  };
 
   const isManager =
     activeStaff?.access === 'manager' ||
@@ -212,7 +292,7 @@ export const HorecaNavigator: React.FC = () => {
         return (
           <TableDetailsScreen
             onViewOrder={handleViewTableOrder}
-            onBack={() => setCurrentTab('tables')}
+            onBack={handleBack}
             onLockTerminal={lockTerminal}
             onProfilePress={handleOpenProfile}
           />
@@ -223,7 +303,8 @@ export const HorecaNavigator: React.FC = () => {
             onSelectOrder={handleSelectOrderFromList}
             onLockTerminal={lockTerminal}
             onProfilePress={handleOpenProfile}
-            onNewOrderPress={() => setCurrentTab('tables')}
+            onNewOrderPress={() => navigateTo('tables')}
+            onBack={handleBack}
           />
         );
       case 'order':
@@ -231,13 +312,10 @@ export const HorecaNavigator: React.FC = () => {
           <OrderEntryScreen
             orderId={selectedOrderId}
             onPayNow={handlePayNow}
-            onKitchenFire={() => setCurrentTab('kitchen')}
+            onKitchenFire={() => navigateTo('kitchen')}
             onLockTerminal={lockTerminal}
             onProfilePress={handleOpenProfile}
-            onBack={() => {
-              setSelectedOrderId(null);
-              setCurrentTab(previousTab === 'order' ? 'tables' : previousTab);
-            }}
+            onBack={handleBack}
           />
         );
       case 'kitchen':
@@ -263,7 +341,7 @@ export const HorecaNavigator: React.FC = () => {
             orderId={activePaymentOrderId}
             totalAmount={activePaymentTotal}
             onPaymentSuccess={handlePaymentSuccess}
-            onCancel={() => setCurrentTab('order')}
+            onCancel={handleBack}
             onLockTerminal={lockTerminal}
           />
         );
@@ -294,7 +372,7 @@ export const HorecaNavigator: React.FC = () => {
       case 'profile':
         return (
           <ProfileScreen
-            onBack={() => setCurrentTab(previousTab === 'profile' ? 'tables' : previousTab)}
+            onBack={handleBack}
             onOrdersPress={handleOpenOrdersScreen}
             onChangePin={() => setIsSettingPin(true)}
           />
@@ -316,7 +394,8 @@ export const HorecaNavigator: React.FC = () => {
     currentTab !== 'table' &&
     currentTab !== 'order' &&
     currentTab !== 'pay' &&
-    currentTab !== 'profile';
+    currentTab !== 'profile' &&
+    currentTab !== 'orders_list';
 
   return (
     <View className="flex-1 bg-background">
@@ -336,7 +415,7 @@ export const HorecaNavigator: React.FC = () => {
                 key={item.id}
                 accessibilityRole="button"
                 accessibilityLabel={`Navigate to ${item.label}`}
-                onPress={() => setCurrentTab(item.id as MainTab)}
+                onPress={() => navigateTo(item.id as MainTab)}
                 className="flex-1 items-center justify-center py-1 active:opacity-70"
               >
                 <ItemIcon

@@ -6,11 +6,7 @@ import {
   View,
 } from 'react-native';
 import {
-  BanknotesIcon,
   CheckCircleIcon,
-  InformationCircleIcon,
-  KeyIcon,
-  ShieldCheckIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 
@@ -24,7 +20,6 @@ import {
   formatUGX,
   parseCurrencyInput,
 } from '@shared/utils/currency';
-import { useAuthStore } from '@sacco/features/auth/store/authStore';
 import { useMemberMeQuery } from '@sacco/features/memberAccount/hooks/useMemberAccountQueries';
 import {
   useRepayLoanMutation,
@@ -42,7 +37,6 @@ export type RepayLoanModalProps = {
 
 export function RepayLoanModal({ loan, visible, onClose }: RepayLoanModalProps) {
   const { colors } = useTheme();
-  const member = useAuthStore(state => state.member);
 
   const { data: memberMeData } = useMemberMeQuery();
   const savingsBalance = memberMeData?.balances?.savings ?? 0;

@@ -17,6 +17,6 @@ export function generateIdempotencyKey(prefix = 'bmg'): string {
  */
 export function isValidIdempotencyKey(key: string): boolean {
   if (typeof key !== 'string') return false;
-  return /^[a-zA-Z0-9_\-\.:]{8,64}$/.test(key);
+  return /^[a-zA-Z0-9_\-.:]{8,64}$/.test(key);
 }
 

@@ -1,27 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
   Pressable,
   View,
 } from 'react-native';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
-  ArrowPathIcon,
   ArrowUpRightIcon,
   CheckCircleIcon,
   CircleStackIcon,
   ClockIcon,
-  HeartIcon,
-  InformationCircleIcon,
   KeyIcon,
-  ShieldCheckIcon,
   UserIcon,
   XCircleIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 
-import type { MainTabParamList } from '@sacco/navigation/types';
 import { AppText } from '@sacco/components/atoms/AppText';
 import { Button } from '@sacco/components/atoms/Button';
 import { AlertBanner } from '@sacco/components/molecules/AlertBanner';
@@ -34,7 +29,6 @@ import {
   formatUGX,
   parseCurrencyInput,
 } from '@shared/utils/currency';
-import { useAuthStore } from '@sacco/features/auth/store/authStore';
 import { useMemberMeQuery } from '@sacco/features/memberAccount/hooks/useMemberAccountQueries';
 import { BeneficiarySelector } from '../components/BeneficiarySelector';
 import {
@@ -92,7 +86,7 @@ export function TransferScreen() {
   const sendOtpMutation = useSendTransferOtpMutation();
   const submitMutation = useSubmitTransferMutation();
 
-  const { requestStatus, isSettled } = useRequestStatusPolling(activeRequestId);
+  const { requestStatus } = useRequestStatusPolling(activeRequestId);
 
   const handleSendOtp = async () => {
     setErrorMessage(null);

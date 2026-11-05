@@ -8,7 +8,6 @@ import {
 } from 'react-native-heroicons/outline';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
-import { Badge } from '@horeca/components/atoms/Badge';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 

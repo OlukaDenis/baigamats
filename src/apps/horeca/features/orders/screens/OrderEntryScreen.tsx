@@ -43,7 +43,7 @@ interface OrderEntryScreenProps {
 export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
   orderId: propOrderId,
   onPayNow,
-  onKitchenFire,
+  onKitchenFire: _onKitchenFire,
   onBack,
 }) => {
   const insets = useSafeAreaInsets();
@@ -56,7 +56,6 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
   const orders = useHorecaStore(state => state.orders);
   const activeOrderId = useHorecaStore(state => state.activeOrderId);
   const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
-  const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
   const removeItemOptimistic = useHorecaStore(state => state.removeItemOptimistic);
   const updateItemQtyOptimistic = useHorecaStore(state => state.updateItemQtyOptimistic);
   const deleteOrderOptimistic = useHorecaStore(state => state.deleteOrderOptimistic);

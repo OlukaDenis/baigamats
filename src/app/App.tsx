@@ -12,7 +12,7 @@ interface AppProps {
 
 export function App(props?: AppProps) {
   const initialVariant = props?.appVariant ?? env.APP_VARIANT;
-  const [activeVariant, setActiveVariant] = useState<'sacco' | 'horeca'>(initialVariant);
+  const [activeVariant] = useState<'sacco' | 'horeca'>(initialVariant);
 
   return (
     <View style={styles.container}>

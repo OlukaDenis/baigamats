@@ -2,7 +2,6 @@ import axios, {
   type AxiosAdapter,
   AxiosError,
   type AxiosInstance,
-  type AxiosRequestConfig,
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios';

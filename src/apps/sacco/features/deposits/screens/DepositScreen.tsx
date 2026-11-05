@@ -10,7 +10,6 @@ import {
   ArrowDownLeftIcon,
   CheckCircleIcon,
   DevicePhoneMobileIcon,
-  ExclamationCircleIcon,
   InformationCircleIcon,
   ShieldCheckIcon,
   XCircleIcon,
@@ -58,7 +57,7 @@ export function DepositScreen() {
 
   const initiateMutation = useInitiateDepositMutation();
 
-  const { depositStatus, resultMessage, isSettled } = useDepositStatusPolling(
+  const { depositStatus, resultMessage } = useDepositStatusPolling(
     activeDepositId,
   );
 

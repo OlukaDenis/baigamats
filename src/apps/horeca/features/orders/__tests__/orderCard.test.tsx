@@ -21,6 +21,7 @@ const mockOpenOrder: Order = {
   tab_name: null,
   party_size: 3,
   total_amount: 85000,
+  service_charge_amount: 0,
   created_at: new Date().toISOString(),
   items: [
     {

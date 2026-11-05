@@ -6,9 +6,7 @@ import {
   ArrowTopRightOnSquareIcon,
   BuildingOffice2Icon,
   CheckBadgeIcon,
-  DocumentTextIcon,
   ScaleIcon,
-  SparklesIcon,
   UserCircleIcon,
 } from 'react-native-heroicons/outline';
 

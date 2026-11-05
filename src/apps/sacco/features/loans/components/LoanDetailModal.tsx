@@ -6,11 +6,6 @@ import {
   View,
 } from 'react-native';
 import {
-  CalendarDaysIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ExclamationCircleIcon,
-  ReceiptPercentIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 

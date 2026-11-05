@@ -2,11 +2,8 @@ import React from 'react';
 import { Alert, Pressable, Switch, View } from 'react-native';
 import {
   ArrowRightOnRectangleIcon,
-  BuildingOffice2Icon,
-  IdentificationIcon,
   KeyIcon,
   MoonIcon,
-  ShieldCheckIcon,
   SunIcon,
 } from 'react-native-heroicons/outline';
 import { useHorecaTheme } from '@horeca/theme/colors';
@@ -35,9 +32,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const displayName = me?.name ?? activeStaff?.name ?? 'Staff Member';
   const displayRole = (me?.role ?? activeStaff?.role ?? 'staff').toUpperCase();
-  const userId = me?.userId ?? activeStaff?.id ?? '—';
-  const organizationId = me?.organizationId ?? '—';
-  const permissions = me?.permissions ?? activeStaff?.permissions ?? [];
 
   const initials =
     displayName
@@ -93,70 +87,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         <View className="mt-2">
           <Badge label={displayRole} variant="primary" size="md" />
-        </View>
-      </View>
-
-      {/* Account Details Section */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-5 shadow-sm">
-        <AppText variant="label" className="text-xs font-bold uppercase text-text-secondary mb-3">
-          Account Details
-        </AppText>
-
-        <View className="flex-row items-center py-2.5 border-b border-border/50">
-          <View className="h-9 w-9 rounded-xl bg-background border border-border items-center justify-center mr-3">
-            <IdentificationIcon color={colors.primary} size={18} />
-          </View>
-          <View className="flex-1">
-            <AppText variant="caption" className="text-text-secondary">
-              User ID
-            </AppText>
-            <AppText variant="label" className="font-semibold text-text" numberOfLines={1}>
-              {userId}
-            </AppText>
-          </View>
-        </View>
-
-        <View className="flex-row items-center py-2.5 border-b border-border/50">
-          <View className="h-9 w-9 rounded-xl bg-background border border-border items-center justify-center mr-3">
-            <BuildingOffice2Icon color={colors.primary} size={18} />
-          </View>
-          <View className="flex-1">
-            <AppText variant="caption" className="text-text-secondary">
-              Organization ID
-            </AppText>
-            <AppText variant="label" className="font-semibold text-text" numberOfLines={1}>
-              {organizationId}
-            </AppText>
-          </View>
-        </View>
-
-        <View className="pt-2.5">
-          <View className="flex-row items-center mb-2">
-            <View className="h-9 w-9 rounded-xl bg-background border border-border items-center justify-center mr-3">
-              <ShieldCheckIcon color={colors.primary} size={18} />
-            </View>
-            <AppText variant="caption" className="text-text-secondary">
-              Permissions
-            </AppText>
-          </View>
-          {permissions.length > 0 ? (
-            <View className="flex-row flex-wrap mt-1">
-              {permissions.map(perm => (
-                <View
-                  key={perm}
-                  className="mr-1.5 mb-1.5 px-2.5 py-1 rounded-lg bg-background border border-border"
-                >
-                  <AppText variant="caption" className="text-xs font-medium text-text">
-                    {perm}
-                  </AppText>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <AppText variant="caption" className="text-text-secondary">
-              Standard staff access
-            </AppText>
-          )}
         </View>
       </View>
 

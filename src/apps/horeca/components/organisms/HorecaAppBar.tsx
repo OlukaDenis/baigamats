@@ -64,16 +64,18 @@ export function HorecaAppBar({
       <View className="flex-row items-center justify-between">
         {/* Left: Icon & Screen Name */}
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mr-3">
-            {leftIcon ?? (
+          {leftIcon ? (
+            <View className="mr-3">{leftIcon}</View>
+          ) : (
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mr-3">
               <ComputerDesktopIcon
                 color={colors.primary}
                 size={20}
                 accessibilityElementsHidden
                 importantForAccessibility="no"
               />
-            )}
-          </View>
+            </View>
+          )}
           <AppText variant="title" numberOfLines={1} className="text-text font-bold flex-1">
             {title}
           </AppText>

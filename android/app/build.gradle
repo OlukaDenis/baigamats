@@ -1,3 +1,19 @@
+import groovy.json.JsonSlurper
+
+def loadFlavorVersion(String appFlavor, String envFlavor) {
+    def versionsFile = rootProject.file('../app.versions.json')
+    if (versionsFile.exists()) {
+        try {
+            def parsed = new JsonSlurper().parse(versionsFile)
+            if (parsed[appFlavor] && parsed[appFlavor][envFlavor]) {
+                return parsed[appFlavor][envFlavor]
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to parse app.versions.json: " + e.message)
+        }
+    }
+    return [versionCode: 1, versionName: "1.0.0"]
+}
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -128,6 +144,17 @@ android {
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+    applicationVariants.all { variant ->
+        def appFlavor = variant.productFlavors.find { it.dimension == "app" }?.name
+        def envFlavor = variant.productFlavors.find { it.dimension == "env" }?.name
+        if (appFlavor && envFlavor) {
+            def ver = loadFlavorVersion(appFlavor, envFlavor)
+            variant.outputs.all { output ->
+                output.versionCodeOverride = ver.versionCode as Integer
+                output.versionNameOverride = ver.versionName as String
+            }
         }
     }
 }

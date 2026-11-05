@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import {
+  ArrowLeftIcon,
   ClockIcon,
   DocumentCheckIcon,
   ShoppingBagIcon,
@@ -18,7 +19,6 @@ import { useHorecaStore } from '@horeca/db/offlineStore';
 import { syncEngine } from '@horeca/db/syncEngine';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
-import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { SearchBar } from '@horeca/components/molecules/SearchBar';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
@@ -31,6 +31,7 @@ interface OrdersListScreenProps {
   onLockTerminal: () => void;
   onProfilePress?: () => void;
   onNewOrderPress?: () => void;
+  onBack?: () => void;
 }
 
 type StatusTab = 'open' | 'billed';
@@ -40,6 +41,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
   onLockTerminal,
   onProfilePress,
   onNewOrderPress,
+  onBack,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
@@ -142,6 +144,19 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
       header={
         <HorecaAppBar
           title="Orders"
+          leftIcon={
+            onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Go Back"
+                onPress={onBack}
+                className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border active:opacity-70"
+                hitSlop={6}
+              >
+                <ArrowLeftIcon color={colors.onSurface} size={18} />
+              </Pressable>
+            ) : undefined
+          }
           onLockPress={onLockTerminal}
           onProfilePress={onProfilePress}
         />

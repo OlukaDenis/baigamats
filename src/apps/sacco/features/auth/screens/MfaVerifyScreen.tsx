@@ -3,7 +3,6 @@ import { View } from 'react-native';
 import {
   ArrowLeftIcon,
   KeyIcon,
-  ShieldCheckIcon,
   ShieldExclamationIcon,
 } from 'react-native-heroicons/outline';
 

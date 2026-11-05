@@ -34,6 +34,14 @@ import { Button } from '@horeca/components/atoms/Button';
 import { AlertBanner } from '@horeca/components/molecules/AlertBanner';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
+import {
+  detectTelecomProvider,
+  MobileMoneyInput,
+  type TelecomProvider,
+} from '../components/MobileMoneyInput';
+import { MobileMoneyProcessingView } from '../components/MobileMoneyProcessingView';
+
+export { detectTelecomProvider, MobileMoneyInput, type TelecomProvider };
 
 export interface CompletedPaymentResult {
   orderId: string;
@@ -53,7 +61,7 @@ interface PaymentCheckoutScreenProps {
 }
 
 /**
- * Normalizes a Ugandan phone input into standard 10-digit format (e.g. "0773047940").
+ * Normalizes a Ugandan phone input into standard 10-digit format.
  */
 export function normalizeUgandaPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -176,8 +184,8 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
   }, [resolvedTotal]);
 
   // Mobile Money state
-  const [selectedNetwork, setSelectedNetwork] = useState<'mtn' | 'airtel'>('mtn');
-  const [phoneNumber, setPhoneNumber] = useState<string>('0773047940');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const detectedProvider = useMemo(() => detectTelecomProvider(phoneNumber), [phoneNumber]);
   const [isInitiatingMomo, setIsInitiatingMomo] = useState<boolean>(false);
   const [momoError, setMomoError] = useState<string | null>(null);
   const [momoSession, setMomoSession] = useState<StartPaymentResponse | null>(null);
@@ -185,36 +193,11 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
   const [isCheckingStatus, setIsCheckingStatus] = useState<boolean>(false);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
-  // Pulse animation for the sleek waiting UI
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   const hasFinalizedRef = useRef<boolean>(false);
 
-  const currentMomoState = paymentStatus?.state ?? momoSession?.state ?? null;
-
-  useEffect(() => {
-    if (currentMomoState === 'pending') {
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.16,
-            duration: 900,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 900,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-      loop.start();
-      return () => loop.stop();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [currentMomoState, pulseAnim]);
+  const currentMomoState = isInitiatingMomo
+    ? 'submitting'
+    : (paymentStatus?.state ?? momoSession?.state ?? null);
 
   // Elapsed timer while waiting for Mobile Money payment
   useEffect(() => {
@@ -233,8 +216,8 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
       if (hasFinalizedRef.current) return;
       hasFinalizedRef.current = true;
       completeOrderSettlement(result.orderId, status);
-      queryClient.invalidateQueries({ queryKey: HORECA_OPEN_ORDERS_QUERY_KEY }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: HORECA_TABLES_QUERY_KEY }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: HORECA_OPEN_ORDERS_QUERY_KEY }).catch(() => { });
+      queryClient.invalidateQueries({ queryKey: HORECA_TABLES_QUERY_KEY }).catch(() => { });
       onPaymentSuccess(result);
     },
     [completeOrderSettlement, onPaymentSuccess, queryClient],
@@ -307,7 +290,16 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
     if (!/^0\d{9}$/.test(normalizedPhone)) {
       Alert.alert(
         'Invalid Phone Number',
-        'Please enter a valid 10-digit mobile number (e.g. 0773047940).',
+        'Please enter a valid 10-digit mobile number.',
+      );
+      return;
+    }
+
+    const provider = detectTelecomProvider(normalizedPhone);
+    if (provider === 'unknown') {
+      Alert.alert(
+        'Unsupported Telecom Provider',
+        'The entered number does not match a supported MTN or Airtel prefix.\n\nMTN: 077, 078, 079, 076, 039\nAirtel: 070, 074, 073, 075, 072',
       );
       return;
     }
@@ -348,6 +340,13 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
         err?.message ||
         'Failed to initiate Mobile Money payment. Please verify the number and try again.';
       setMomoError(apiMsg);
+      setPaymentStatus({
+        orderId: resolvedOrderId || '',
+        paymentId: '',
+        state: 'failed',
+        message: apiMsg,
+        amount: resolvedTotal,
+      });
     } finally {
       setIsInitiatingMomo(false);
     }
@@ -418,6 +417,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
   }, [momoSession?.paymentId, currentMomoState, checkMomoPaymentStatus]);
 
   const handleResetMomoSession = () => {
+    setIsInitiatingMomo(false);
     setMomoSession(null);
     setPaymentStatus(null);
     setMomoError(null);
@@ -589,278 +589,45 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
             disabled={isFetchingOrderId}
           />
         </View>
-      ) : momoSession ? (
+      ) : isInitiatingMomo || momoSession || paymentStatus ? (
         /* SLEEK MOBILE MONEY WAITING & STATUS UI */
-        <View className="rounded-3xl bg-surface border border-border p-5 mb-5 shadow-sm">
-          {/* Status Header with Animated Pulse */}
-          <View className="items-center pt-2 pb-5 border-b border-border/50">
-            <View className="items-center justify-center mb-3.5">
-              {currentMomoState === 'pending' ? (
-                <View className="items-center justify-center">
-                  <Animated.View
-                    style={{
-                      transform: [{ scale: pulseAnim }],
-                      backgroundColor: `${colors.primary}20`,
-                    }}
-                    className="absolute h-20 w-20 rounded-full"
-                  />
-                  <View className="h-16 w-16 rounded-full bg-primary/15 border-2 border-primary items-center justify-center">
-                    <DevicePhoneMobileIcon color={colors.primary} size={30} />
-                  </View>
-                </View>
-              ) : currentMomoState === 'paid' ? (
-                <View className="h-16 w-16 rounded-full bg-status-available/15 border-2 border-status-available items-center justify-center">
-                  <CheckCircleIcon color={colors.statusAvailable} size={34} />
-                </View>
-              ) : (
-                <View className="h-16 w-16 rounded-full bg-error/15 border-2 border-error items-center justify-center">
-                  <XCircleIcon color={colors.error} size={34} />
-                </View>
-              )}
-            </View>
-
-            {/* Status Pill & Timer */}
-            <View className="flex-row items-center mb-2">
-              {currentMomoState === 'pending' ? (
-                <View className="flex-row items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/25">
-                  <ClockIcon color={colors.primary} size={14} />
-                  <AppText variant="caption" className="text-primary font-bold ml-1.5 text-xs">
-                    AWAITING PIN • {formatElapsed(elapsedSeconds)}
-                  </AppText>
-                </View>
-              ) : currentMomoState === 'paid' ? (
-                <View className="flex-row items-center px-3 py-1 rounded-full bg-status-available/15 border border-status-available/30">
-                  <ShieldCheckIcon color={colors.statusAvailable} size={14} />
-                  <AppText variant="caption" className="text-status-available font-bold ml-1.5 text-xs">
-                    PAYMENT CONFIRMED
-                  </AppText>
-                </View>
-              ) : (
-                <View className="flex-row items-center px-3 py-1 rounded-full bg-error/15 border border-error/30">
-                  <ExclamationTriangleIcon color={colors.error} size={14} />
-                  <AppText variant="caption" className="text-error font-bold ml-1.5 text-xs">
-                    PAYMENT {currentMomoState?.toUpperCase()}
-                  </AppText>
-                </View>
-              )}
-            </View>
-
-            <AppText variant="title" className="text-xl font-extrabold text-text text-center">
-              {currentMomoState === 'pending'
-                ? 'Waiting for Customer Approval'
-                : currentMomoState === 'paid'
-                  ? 'Mobile Money Received!'
-                  : 'Payment Could Not Complete'}
-            </AppText>
-
-            <AppText
-              variant="caption"
-              className="text-text-secondary text-center mt-1 max-w-xs"
-            >
-              {currentMomoState === 'pending'
-                ? `An STK prompt has been sent to ${phoneNumber}. Ask the customer to enter their Mobile Money PIN.`
-                : currentMomoState === 'paid'
-                  ? paymentStatus?.saleNumber
-                    ? `Sale ${paymentStatus.saleNumber} has been recorded.`
-                    : 'Transaction verified and order settled.'
-                  : paymentStatus?.message ||
-                    'The prompt was declined, timed out, or failed on the network.'}
-            </AppText>
-          </View>
-
-          {/* Charge & Fee Breakdown Card */}
-          <View className="my-4 p-4 rounded-2xl bg-background border border-border">
-            <View className="flex-row items-center justify-between mb-2">
-              <AppText variant="caption" className="text-text-secondary">
-                Customer Number
-              </AppText>
-              <View className="flex-row items-center">
-                <PhoneIcon color={colors.primary} size={13} />
-                <AppText variant="label" className="font-bold text-text ml-1">
-                  {phoneNumber}
-                </AppText>
-              </View>
-            </View>
-
-            <View className="flex-row items-center justify-between mb-2">
-              <AppText variant="caption" className="text-text-secondary">
-                Order Amount
-              </AppText>
-              <AppText variant="label" className="font-semibold text-text">
-                UGX {(momoSession.amount ?? resolvedTotal).toLocaleString()}
-              </AppText>
-            </View>
-
-            {typeof momoSession.feeAmount === 'number' ? (
-              <View className="flex-row items-center justify-between mb-2">
-                <AppText variant="caption" className="text-text-secondary">
-                  Mobile Money Fee
-                </AppText>
-                <AppText variant="label" className="font-semibold text-text">
-                  UGX {momoSession.feeAmount.toLocaleString()}
-                </AppText>
-              </View>
-            ) : null}
-
-            <View className="flex-row items-center justify-between pt-2.5 mt-1 border-t border-border/60">
-              <AppText variant="label" className="font-bold text-text">
-                Total Charge on Phone
-              </AppText>
-              <AppText variant="title" className="font-extrabold text-primary text-lg">
-                UGX{' '}
-                {(
-                  momoSession.chargeAmount ??
-                  momoSession.amount ??
-                  resolvedTotal
-                ).toLocaleString()}
-              </AppText>
-            </View>
-          </View>
-
-          {/* 3-Step Live Progress Stepper */}
-          <View className="mb-5 px-1">
-            {/* Step 1 */}
-            <View className="flex-row items-center mb-3">
-              <View className="h-6 w-6 rounded-full bg-status-available items-center justify-center mr-3">
-                <CheckCircleIcon color="#ffffff" size={15} />
-              </View>
-              <View className="flex-1">
-                <AppText variant="label" className="text-text font-bold text-xs">
-                  1. Payment Request Initiated
-                </AppText>
-                <AppText variant="caption" className="text-text-secondary text-[11px]">
-                  Ref: {momoSession.paymentId.slice(0, 12)}...
-                </AppText>
-              </View>
-            </View>
-
-            {/* Step 2 */}
-            <View className="flex-row items-center mb-3">
-              {currentMomoState === 'pending' ? (
-                <View className="h-6 w-6 rounded-full bg-primary/15 border border-primary items-center justify-center mr-3">
-                  <ActivityIndicator size="small" color={colors.primary} style={{ transform: [{ scale: 0.65 }] }} />
-                </View>
-              ) : currentMomoState === 'paid' ? (
-                <View className="h-6 w-6 rounded-full bg-status-available items-center justify-center mr-3">
-                  <CheckCircleIcon color="#ffffff" size={15} />
-                </View>
-              ) : (
-                <View className="h-6 w-6 rounded-full bg-error items-center justify-center mr-3">
-                  <XCircleIcon color="#ffffff" size={15} />
-                </View>
-              )}
-              <View className="flex-1">
-                <AppText variant="label" className="text-text font-bold text-xs">
-                  2. Customer PIN Authorization
-                </AppText>
-                <AppText variant="caption" className="text-text-secondary text-[11px]">
-                  {currentMomoState === 'pending'
-                    ? 'Auto-checking payment status every 3s...'
-                    : currentMomoState === 'paid'
-                      ? 'Authorized by customer'
-                      : paymentStatus?.message || 'Authorization failed or cancelled'}
-                </AppText>
-              </View>
-            </View>
-
-            {/* Step 3 */}
-            <View className="flex-row items-center">
-              {currentMomoState === 'paid' ? (
-                <View className="h-6 w-6 rounded-full bg-status-available items-center justify-center mr-3">
-                  <CheckCircleIcon color="#ffffff" size={15} />
-                </View>
-              ) : (
-                <View className="h-6 w-6 rounded-full bg-background border border-border items-center justify-center mr-3">
-                  <AppText variant="caption" className="text-text-secondary font-bold text-[10px]">
-                    3
-                  </AppText>
-                </View>
-              )}
-              <View className="flex-1">
-                <AppText
-                  variant="label"
-                  className={`font-bold text-xs ${
-                    currentMomoState === 'paid' ? 'text-text' : 'text-text-secondary'
-                  }`}
-                >
-                  3. Sale Confirmed & Receipt Ready
-                </AppText>
-                <AppText variant="caption" className="text-text-secondary text-[11px]">
-                  {paymentStatus?.saleNumber
-                    ? `Sale Number: ${paymentStatus.saleNumber}`
-                    : 'Generates sale number upon completion'}
-                </AppText>
-              </View>
-            </View>
-          </View>
-
-          {momoError ? (
-            <AlertBanner severity="error" message={momoError} className="mb-4" />
-          ) : null}
-
-          {/* Actions based on current state */}
-          {currentMomoState === 'pending' ? (
-            <View>
-              <Button
-                label="Check Payment Status Now"
-                variant="primary"
-                size="lg"
-                onPress={() => checkMomoPaymentStatus(true)}
-                loading={isCheckingStatus}
-                leftIcon={<ArrowPathIcon color={colors.onPrimary} size={18} />}
-              />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Change Phone Number"
-                onPress={handleResetMomoSession}
-                className="mt-3 py-2.5 items-center justify-center"
-              >
-                <AppText variant="caption" className="text-text-secondary font-semibold">
-                  Wrong phone number? Cancel & Edit Number
-                </AppText>
-              </Pressable>
-            </View>
-          ) : currentMomoState === 'paid' ? (
-            <Button
-              label={`View Receipt${paymentStatus?.saleNumber ? ` • ${paymentStatus.saleNumber}` : ''}`}
-              variant="primary"
-              size="lg"
-              onPress={() =>
-                finalizeOrderSuccess(
-                  {
-                    orderId: paymentStatus?.orderId || momoSession.orderId || resolvedOrderId || '',
-                    method: 'mobile_money',
-                    amount: paymentStatus?.amount || momoSession.amount || resolvedTotal,
-                    saleId: paymentStatus?.saleId,
-                    saleNumber: paymentStatus?.saleNumber,
-                    paymentId: momoSession.paymentId,
-                  },
-                  'paid',
-                )
-              }
-            />
-          ) : (
-            <View className="flex-row">
-              <View className="flex-1 mr-2">
-                <Button
-                  label="Switch to Cash"
-                  variant="secondary"
-                  onPress={() => {
-                    handleResetMomoSession();
-                    setSelectedMethod('cash');
-                  }}
-                />
-              </View>
-              <View className="flex-1">
-                <Button
-                  label="Try Again"
-                  variant="primary"
-                  onPress={handleResetMomoSession}
-                />
-              </View>
-            </View>
-          )}
-        </View>
+        <MobileMoneyProcessingView
+          phoneNumber={phoneNumber}
+          provider={detectedProvider}
+          orderId={momoSession?.orderId || resolvedOrderId || ''}
+          paymentId={momoSession?.paymentId || ''}
+          amount={momoSession?.amount ?? resolvedTotal}
+          feeAmount={momoSession?.feeAmount}
+          chargeAmount={momoSession?.chargeAmount}
+          state={currentMomoState}
+          saleNumber={paymentStatus?.saleNumber}
+          errorMessage={paymentStatus?.message || momoError}
+          elapsedSeconds={elapsedSeconds}
+          isCheckingStatus={isCheckingStatus}
+          onCheckStatus={() => checkMomoPaymentStatus(true)}
+          onCancelOrEdit={handleResetMomoSession}
+          onSwitchToCash={() => {
+            handleResetMomoSession();
+            setSelectedMethod('cash');
+          }}
+          onRetry={() => {
+            handleResetMomoSession();
+            handleInitiateMoMo();
+          }}
+          onViewReceipt={() =>
+            finalizeOrderSuccess(
+              {
+                orderId: paymentStatus?.orderId || momoSession?.orderId || resolvedOrderId || '',
+                method: 'mobile_money',
+                amount: paymentStatus?.amount || momoSession?.amount || resolvedTotal,
+                saleId: paymentStatus?.saleId,
+                saleNumber: paymentStatus?.saleNumber,
+                paymentId: paymentStatus?.paymentId || momoSession?.paymentId,
+              },
+              'paid',
+            )
+          }
+        />
       ) : (
         /* MOMO INITIATION FORM VIEW */
         <View className="rounded-3xl bg-surface border border-border p-5 mb-5">
@@ -868,94 +635,36 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
             <AlertBanner severity="error" message={momoError} className="mb-4" />
           ) : null}
 
-          <AppText variant="label" className="font-bold text-text mb-3">
-            Choose Telecom Provider
-          </AppText>
-
-          {/* Telecom Network Selector */}
-          <View className="flex-row justify-between mb-4">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="MTN Mobile Money"
-              onPress={() => setSelectedNetwork('mtn')}
-              style={{
-                borderColor: selectedNetwork === 'mtn' ? '#eab308' : colors.outlineVariant,
-                backgroundColor:
-                  selectedNetwork === 'mtn' ? 'rgba(234, 179, 8, 0.15)' : colors.background,
-              }}
-              className="w-[48%] p-3.5 rounded-2xl border flex-row items-center"
-            >
-              <View className="h-9 w-9 rounded-xl bg-yellow-500 items-center justify-center mr-2.5">
-                <AppText className="text-xs font-black text-black">MTN</AppText>
-              </View>
-              <View className="flex-1">
-                <AppText variant="label" className="font-bold text-text text-sm">
-                  MTN MoMo
-                </AppText>
-                <AppText variant="caption" className="text-[10px] text-text-secondary">
-                  Direct STK Push
-                </AppText>
-              </View>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Airtel Money"
-              onPress={() => setSelectedNetwork('airtel')}
-              style={{
-                borderColor: selectedNetwork === 'airtel' ? '#ef4444' : colors.outlineVariant,
-                backgroundColor:
-                  selectedNetwork === 'airtel' ? 'rgba(239, 68, 68, 0.15)' : colors.background,
-              }}
-              className="w-[48%] p-3.5 rounded-2xl border flex-row items-center"
-            >
-              <View className="h-9 w-9 rounded-xl bg-red-600 items-center justify-center mr-2.5">
-                <AppText className="text-xs font-black text-white">airtel</AppText>
-              </View>
-              <View className="flex-1">
-                <AppText variant="label" className="font-bold text-text text-sm">
-                  Airtel Money
-                </AppText>
-                <AppText variant="caption" className="text-[10px] text-text-secondary">
-                  Direct Prompt
-                </AppText>
-              </View>
-            </Pressable>
-          </View>
-
-          {/* Customer Phone */}
-          <View className="mb-4">
-            <AppText variant="caption" className="text-text-secondary font-semibold uppercase text-[11px] mb-1.5">
-              Customer Mobile Phone (e.g. 0773047940)
-            </AppText>
-            <View className="flex-row items-center rounded-xl bg-background border border-border px-3.5 py-1.5">
-              <View className="flex-row items-center mr-2 pr-2 border-r border-border">
-                <AppText className="text-sm mr-1">🇺🇬</AppText>
-                <AppText variant="label" className="font-bold text-text">
-                  UG
-                </AppText>
-              </View>
-              <TextInput
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-                placeholder="0773047940"
-                placeholderTextColor={colors.onSurfaceVariant}
-                style={{ color: colors.onSurface }}
-                className="flex-1 text-base font-bold py-1.5"
-              />
-            </View>
-          </View>
+          {/* Custom Mobile Money Input with Auto-Detected ISP & Dynamic Logo */}
+          <MobileMoneyInput
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            label="Customer Mobile Phone"
+            editable={!isInitiatingMomo}
+            className="mb-4"
+          />
 
           <AlertBanner
             severity="info"
-            message="An STK push prompt will be sent to the customer's phone for PIN authorization. Status updates automatically."
+            message={
+              detectedProvider === 'mtn'
+                ? "An MTN MoMo STK prompt will be pushed to the customer's handset. Ask them to confirm with their MoMo PIN."
+                : detectedProvider === 'airtel'
+                  ? "An Airtel Money prompt will be pushed to the customer's handset. Ask them to confirm with their PIN."
+                  : "An STK push prompt will be sent to the customer's phone for PIN authorization. Status updates automatically."
+            }
             className="mb-4"
           />
 
           {/* Initiate MoMo CTA */}
           <Button
-            label={`Initiate ${selectedNetwork.toUpperCase()} Payment • UGX ${resolvedTotal.toLocaleString()}`}
+            label={
+              detectedProvider === 'mtn'
+                ? `Initiate MTN MoMo • UGX ${resolvedTotal.toLocaleString()}`
+                : detectedProvider === 'airtel'
+                  ? `Initiate Airtel Money • UGX ${resolvedTotal.toLocaleString()}`
+                  : `Initiate Mobile Money • UGX ${resolvedTotal.toLocaleString()}`
+            }
             variant="primary"
             size="lg"
             onPress={handleInitiateMoMo}

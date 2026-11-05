@@ -8,7 +8,6 @@ import {
 import type { Table } from '../../api/schemas';
 import { useHorecaColors } from '../../theme/colors';
 import { AppText } from '../atoms/AppText';
-import { Badge } from '../atoms/Badge';
 
 const DARK_TEXT = '#1F2937';
 const MUTED_TEXT = '#4B5563';
@@ -37,21 +36,9 @@ export const TableCard: React.FC<TableCardProps> = ({
   table,
   isSelected = false,
   onPress,
-  currentTabAmount = '',
   className = '',
 }) => {
   const colors = useHorecaColors();
-  const isOccupied = table.status === 'occupied';
-
-  const statusBadgeVariant =
-    table.status === 'occupied'
-      ? 'occupied'
-      : table.status === 'reserved'
-        ? 'reserved'
-        : table.status === 'dirty'
-          ? 'dirty'
-          : 'available';
-
   const cardTone = STATUS_TONES[table.status] ?? STATUS_TONES.available;
 
   return (

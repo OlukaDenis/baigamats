@@ -239,7 +239,7 @@ describe('Floor Plan Tables & Offline Support', () => {
       const onOpenOrder = jest.fn();
       const onLockTerminal = jest.fn();
 
-      const { UNSAFE_getByType } = render(
+      const result = await render(
         <QueryClientProvider client={queryClient}>
           <HorecaThemeProvider>
             <FloorPlanScreen
@@ -254,7 +254,7 @@ describe('Floor Plan Tables & Offline Support', () => {
 
       // Trigger pull to refresh
       const { RefreshControl } = require('react-native');
-      const refreshControl = UNSAFE_getByType(RefreshControl);
+      const refreshControl = (result as any).UNSAFE_getByType(RefreshControl);
       await act(async () => {
         refreshControl.props.onRefresh();
       });

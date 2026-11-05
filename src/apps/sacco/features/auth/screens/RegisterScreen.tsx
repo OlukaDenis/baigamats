@@ -5,7 +5,6 @@ import {
   EnvelopeIcon,
   LockClosedIcon,
   ShieldCheckIcon,
-  UserPlusIcon,
 } from 'react-native-heroicons/outline';
 
 import type { AuthStackScreenProps } from '@sacco/navigation/types';

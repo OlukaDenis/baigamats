@@ -8,8 +8,6 @@ import {
 } from 'react-native';
 import {
   ArrowPathIcon,
-  BanknotesIcon,
-  CalendarDaysIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ScaleIcon,
@@ -24,7 +22,7 @@ import { formatUGX } from '@shared/utils/currency';
 import { LoanDetailModal } from '../components/LoanDetailModal';
 import { RepayLoanModal } from '../components/RepayLoanModal';
 import { useLoansQuery } from '../hooks/useLoans';
-import type { LoanItem, LoanStatus } from '../types/loanTypes';
+import type { LoanItem } from '../types/loanTypes';
 
 type FilterTab = 'all' | 'active' | 'overdue' | 'closed';
 
@@ -37,7 +35,7 @@ export function LoansScreen() {
 
   const { data: loans, isLoading, isRefetching, refetch } = useLoansQuery();
 
-  const allLoans = loans || [];
+  const allLoans = useMemo(() => loans || [], [loans]);
 
   const summary = useMemo(() => {
     let totalDue = 0;

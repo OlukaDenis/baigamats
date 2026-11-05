@@ -4,7 +4,6 @@ import { KeyIcon } from 'react-native-heroicons/outline';
 import { horecaApi } from '@horeca/api/horecaApiClient';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
-import { Button } from '@horeca/components/atoms/Button';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { NumPad } from '@horeca/components/organisms/NumPad';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
@@ -24,7 +23,7 @@ export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const handleDigitPress = (digit: string) => {
-    if (pin.length < 6) {
+    if (!isSubmitting && pin.length < 4) {
       const nextPin = pin + digit;
       setPin(nextPin);
       if (nextPin.length === 4) {

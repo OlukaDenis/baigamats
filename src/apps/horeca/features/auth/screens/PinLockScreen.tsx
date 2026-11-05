@@ -190,17 +190,15 @@ export const PinLockScreen: React.FC = () => {
         {/* Center Section: Live Clock, Title, Centered Custom Username Field, Circular Action & PIN Dots */}
         <View className="items-center justify-center my-3 mt-7">
           {/* Bigger Digital Clock with Seconds */}
-          <View className="items-center mb-5">
-            <View className="px-5 py-2.5 rounded-full bg-surface border border-border/80 shadow-md flex-row items-center">
-              <View className="h-2.5 w-2.5 rounded-full bg-status-available mr-2.5" />
-              {/* <AppText variant="caption" className="font-mono text-xs font-bold text-text-secondary tracking-widest mr-1.5">
-                {currentDate}
-              </AppText> */}
-              <AppText variant="display" className="font-mono text-3xl font-black text-primary tracking-wider">
-                {currentTime || '00:00:00'}
-              </AppText>
-            </View>
-          </View>
+          {/* <View className="items-center justify-center my-2 py-3 px-4">
+            <AppText
+              variant="display"
+              className="font-mono text-5xl font-black text-primary tracking-wider text-center leading-[60px]"
+              style={{ lineHeight: 62, includeFontPadding: false }}
+            >
+              {currentTime || '00:00:00'}
+            </AppText>
+          </View> */}
 
           {/* Screen Title */}
           <AppText variant="title" className="text-2xl font-black text-text text-center tracking-tight">

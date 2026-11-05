@@ -3,7 +3,6 @@ import {
   memberLoginRequestSchema,
   memberLoginResponseSchema,
   memberPinSchema,
-  persistedMemberAuthSessionSchema,
 } from '../schemas/memberAuthSchemas';
 import { persistedAuthSessionSchema } from '../schemas/authSchemas';
 

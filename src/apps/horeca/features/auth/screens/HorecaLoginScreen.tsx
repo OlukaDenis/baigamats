@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, BackHandler, View } from 'react-native';
 import {
   ArrowLeftIcon,
   BuildingStorefrontIcon,
@@ -30,6 +30,16 @@ export const HorecaLoginScreen: React.FC = () => {
   const [mfaCode, setMfaCode] = useState<string>('');
   const [factorId, setFactorId] = useState<string>('');
   const [mfaSession, setMfaSession] = useState<{ accessToken: string; refreshToken: string } | null>(null);
+
+  // Return to username/password form on hardware back press when on MFA step
+  useEffect(() => {
+    if (!isMfaStep) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setIsMfaStep(false);
+      return true;
+    });
+    return () => sub.remove();
+  }, [isMfaStep]);
 
   const handleLogin = async () => {
     if (!loginId.trim() || !password.trim()) {

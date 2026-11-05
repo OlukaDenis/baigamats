@@ -4,6 +4,71 @@ Bare React Native (0.88) mobile application supporting two application variants 
 
 ---
 
+---
+
+## Flavor Version Tracking (pp.versions.json)
+
+App versions for each flavor and environment are centrally tracked in [pp.versions.json](file:///d:/Projects/MobileProjects/baigamats/app.versions.json). Gradle automatically reads this file on every build and stamps the exact ersionCode and ersionName onto the resulting APKs and AAB bundles.
+
+`json
+{
+  "sacco": {
+    "dev":     { "versionCode": 100, "versionName": "1.0.0-dev.1" },
+    "staging": { "versionCode": 101, "versionName": "1.0.0-rc.1" },
+    "prod":    { "versionCode": 102, "versionName": "1.0.0" }
+  },
+  "horeca": {
+    "dev":     { "versionCode": 200, "versionName": "1.0.0-dev.1" },
+    "staging": { "versionCode": 201, "versionName": "1.0.0-rc.1" },
+    "prod":    { "versionCode": 202, "versionName": "1.0.0" }
+  }
+}
+`
+
+To bump the version for any flavor/environment before release, edit pp.versions.json.
+
+---
+
+## Swift Build Scripts
+
+Use the preconfigured build scripts to rapidly build APKs and bundles without needing to memorize Gradle commands:
+
+### Using pnpm run build:*
+`ash
+# Build HORECA Release APK
+pnpm run build:apk:horeca
+
+# Build HORECA Release App Bundle (.aab for Play Store)
+pnpm run build:bundle:horeca
+
+# Build SACCO Release APK
+pnpm run build:apk:sacco
+
+# Build SACCO Release App Bundle (.aab for Play Store)
+pnpm run build:bundle:sacco
+
+# Build Staging or Dev APKs
+pnpm run build:apk:horeca:staging
+pnpm run build:apk:horeca:dev
+pnpm run build:apk:sacco:staging
+pnpm run build:apk:sacco:dev
+
+# Build All Variants in One Step
+pnpm run build:all:apk
+pnpm run build:all:bundle
+`
+
+### Direct Script Usage
+`ash
+# Using Node cross-platform CLI runner:
+node scripts/build-android.js --app horeca --env prod --type apk
+node scripts/build-android.js --app sacco --env prod --type bundle --clean
+
+# Using PowerShell (Windows):
+.\scripts\build.ps1 -App horeca -Env prod -Type apk
+.\scripts\build.ps1 -App sacco -Env prod -Type bundle -Clean
+`
+
 ## Technology Stack
 
 - **Platform:** Bare React Native `0.88.0` (New Architecture / Fabric & Hermes enabled)

@@ -43,8 +43,8 @@ const DEFAULT_PARTY_SIZE = 2;
 export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   onViewOrder,
   onBack,
-  onLockTerminal,
-  onProfilePress,
+  onLockTerminal: _onLockTerminal,
+  onProfilePress: _onProfilePress,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
@@ -56,7 +56,6 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   const orders = useHorecaStore(state => state.orders);
   const activeTableId = useHorecaStore(state => state.activeTableId);
   const activeOrderId = useHorecaStore(state => state.activeOrderId);
-  const isOnline = useHorecaStore(state => state.isOnline);
   const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
   const createOrderOptimistic = useHorecaStore(state => state.createOrderOptimistic);
   const addItemOptimistic = useHorecaStore(state => state.addItemOptimistic);
@@ -83,7 +82,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
     setActiveOrderId(currentOrder?.id ?? null);
   }, [currentOrder?.id, setActiveOrderId]);
 
-  const orderItems = currentOrder?.items ?? [];
+  const orderItems = useMemo(() => currentOrder?.items ?? [], [currentOrder?.items]);
   const totalCount = orderItems.reduce((sum, it) => sum + it.qty, 0);
   const totalAmount = currentOrder?.total_amount ?? 0;
 

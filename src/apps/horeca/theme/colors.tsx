@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 import { useColorScheme, View } from 'react-native';
 import { vars } from 'nativewind';
 import { usePreferencesStore } from '@shared/preferences/preferencesStore';
@@ -192,14 +192,14 @@ export const HorecaThemeProvider: React.FC<{ children: ReactNode }> = ({ childre
   const isDark = scheme === 'dark';
   const colors = isDark ? horecaDarkColors : horecaLightColors;
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const next = scheme === 'dark' ? 'light' : 'dark';
     usePreferencesStore.getState().setThemePreference(next);
-  };
+  }, [scheme]);
 
   const value = useMemo(
     () => ({ isDark, scheme, colors, toggleTheme }),
-    [isDark, scheme, colors],
+    [isDark, scheme, colors, toggleTheme],
   );
 
   return (

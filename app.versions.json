@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Centralized version tracking for Baigamats multi-flavor applications across environments",
+  "sacco": {
+    "dev": {
+      "versionCode": 100,
+      "versionName": "1.0.0-dev.1",
+      "releaseNotes": "Development build for SACCO with mock & dev API integration"
+    },
+    "staging": {
+      "versionCode": 102,
+      "versionName": "1.0.2-rc.1",
+      "releaseNotes": "Staging Release Candidate for SACCO user acceptance testing"
+    },
+    "prod": {
+      "versionCode": 102,
+      "versionName": "1.0.0",
+      "releaseNotes": "Production release of Baigamats SACCO Mobile App"
+    }
+  },
+  "horeca": {
+    "dev": {
+      "versionCode": 200,
+      "versionName": "1.0.0-dev.1",
+      "releaseNotes": "Development build for HORECA POS with mock & dev API integration"
+    },
+    "staging": {
+      "versionCode": 202,
+      "versionName": "1.0.2-rc.1",
+      "releaseNotes": "Staging Release Candidate for HORECA POS user acceptance testing"
+    },
+    "prod": {
+      "versionCode": 202,
+      "versionName": "1.0.0",
+      "releaseNotes": "Production release of Baigamats HORECA POS Mobile App"
+    }
+  }
+}

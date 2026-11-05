@@ -14,6 +14,12 @@ const variantClasses: Record<AppTextVariant, string> = {
 const CUSTOM_TEXT_COLOR_PATTERN =
   /\btext-(primary|secondary|tertiary|background|surface|border|on-primary|on-secondary|content|text-primary|text-secondary|error|success)\b/;
 
+const CUSTOM_FONT_SIZE_PATTERN =
+  /\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl|7xl|8xl|9xl|\[\S+\])\b/;
+
+const CUSTOM_LEADING_PATTERN =
+  /\bleading-(none|tight|snug|normal|relaxed|loose|\d+|\[\S+\])\b/;
+
 export type AppTextProps = TextProps & {
   variant?: AppTextVariant;
   className?: string;
@@ -34,10 +40,20 @@ export function AppText({
     ? ''
     : 'text-text';
 
+  let variantClass = variantClasses[variant];
+  if (variant === 'body') {
+    if (CUSTOM_FONT_SIZE_PATTERN.test(className)) {
+      variantClass = variantClass.replace(/\btext-base\b/, '');
+    }
+    if (CUSTOM_LEADING_PATTERN.test(className)) {
+      variantClass = variantClass.replace(/\bleading-6\b/, '');
+    }
+  }
+
   return (
     <Text
       accessibilityRole={accessibilityRole ?? (isHeading ? 'header' : 'text')}
-      className={`${defaultColorClass} ${variantClasses[variant]} ${className}`.trim()}
+      className={`${defaultColorClass} ${variantClass} ${className}`.trim()}
       {...rest}
     />
   );

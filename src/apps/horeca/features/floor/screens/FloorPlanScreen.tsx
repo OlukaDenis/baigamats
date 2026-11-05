@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   View,
@@ -11,6 +10,7 @@ import {
   ExclamationTriangleIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { horecaApi } from '@horeca/api/horecaApiClient';
 import type { Table } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
 import { useHorecaColors } from '@horeca/theme/colors';

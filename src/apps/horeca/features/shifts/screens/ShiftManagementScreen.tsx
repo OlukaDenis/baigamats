@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Alert, Modal, Pressable, View } from 'react-native';
 import {
   BanknotesIcon,
-  CalculatorIcon,
-  ClockIcon,
   LockClosedIcon,
   LockOpenIcon,
   XMarkIcon,

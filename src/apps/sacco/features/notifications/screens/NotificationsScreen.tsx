@@ -10,7 +10,6 @@ import {
 } from 'react-native-heroicons/outline';
 
 import { AppText } from '@sacco/components/atoms/AppText';
-import { Button } from '@sacco/components/atoms/Button';
 import { AppBar } from '@sacco/components/organisms/AppBar';
 import { ScreenTemplate } from '@sacco/components/templates/ScreenTemplate';
 import { useTheme } from '@sacco/theme/ThemeProvider';
