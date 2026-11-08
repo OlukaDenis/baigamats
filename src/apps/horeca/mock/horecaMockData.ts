@@ -1,4 +1,7 @@
 import type {
+  BusinessProfile,
+  HorecaDashboardData,
+  HorecaDashboardSettings,
   KitchenTicket,
   MenuCategory,
   MenuItem,
@@ -8,6 +11,29 @@ import type {
   StaffMember,
   Table,
 } from '../api/schemas';
+
+export const mockBusinessProfile: BusinessProfile = {
+  name: 'Magave Bar & Grill',
+  legal_name: 'Magave Enterprises Ltd',
+  institution_code: 'MAG001',
+  phone: '0700000000',
+  email: 'info@example.com',
+  address: 'Plot 1, Main Street, Kampala',
+  logo_url: null,
+  currency: 'UGX',
+  tin: '1000000000',
+  receipt: {
+    header_note: 'Open daily 8am to 11pm',
+    footer: 'Thank you for dining with us!',
+    show_tin: true,
+  },
+  vat: {
+    enabled: true,
+    name: 'VAT',
+    rate_pct: 18,
+    inclusive: true,
+  },
+};
 
 export const mockStaffMembers: StaffMember[] = [
   {
@@ -274,7 +300,7 @@ export const mockActiveOrder: Order = {
 };
 
 export const mockReceipt: Receipt = {
-  business: 'HORECA BISTRO & BAR',
+  business: 'Magave Bar & Grill',
   orderNumber: '#8429',
   status: 'paid',
   orderType: 'dine_in',
@@ -291,11 +317,11 @@ export const mockReceipt: Receipt = {
   ],
   itemsTotal: 500_000,
   serviceCharge: 0,
-  total: 540_000,
-  tin: '1002948192',
-  efrisInvoiceNumber: 'EFRIS-UG-2026-88192',
-  fdn: 'EFRIS-UG-2026-88192',
-  qrVerificationUrl: 'https://efris.ura.go.ug/verify/88192',
+  total: 500_000,
+  tin: null,
+  efrisInvoiceNumber: null,
+  fdn: null,
+  qrVerificationUrl: null,
 };
 
 export const mockKitchenTickets: KitchenTicket[] = [
@@ -367,3 +393,24 @@ export const mockCurrentShift: Shift = {
   note: null,
   status: 'open',
 };
+
+export const mockDashboardSettings: HorecaDashboardSettings = {
+  target_check: 45_000,
+  optimal_turn: 50,
+};
+
+export const mockDashboardData: HorecaDashboardData = {
+  from: '2026-11-01',
+  to: '2026-11-07',
+  revenue: { total: 106_350, change_pct: 490.8 },
+  checks: { count: 22, guests: 8 },
+  avg_check: { value: 4_834, target: 45_000 },
+  avg_turn_minutes: { value: 252, optimal: 50 },
+  departments: [
+    { key: 'soft', label: 'Non-Alcoholic Beverages', amount: 59_350, pct: 56 },
+    { key: 'kitchen', label: 'Kitchen / Food', amount: 47_000, pct: 44 },
+    { key: 'bar', label: 'Bar / Alcoholic', amount: 0, pct: 0 },
+  ],
+  servers: [],
+};
+

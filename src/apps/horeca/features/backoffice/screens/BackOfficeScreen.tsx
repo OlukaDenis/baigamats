@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, Switch, View } from 'react-native';
 import {
   MoonIcon,
   PlusIcon,
+  PrinterIcon,
   SunIcon,
   TrashIcon,
   XMarkIcon,
 } from 'react-native-heroicons/outline';
 import type { Table } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
+import { printerService } from '@horeca/services/printerService';
+import { usePrinterStore } from '@horeca/services/printerStore';
 import { useHorecaTheme } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
+import { BluetoothPrinterModal } from '@horeca/components/organisms/BluetoothPrinterModal';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
@@ -36,8 +40,15 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
   const setTables = useHorecaStore(state => state.setTables);
   const menuItems = useHorecaStore(state => state.menuItems);
   const staffList = useHorecaAuthStore(state => state.staffList);
+  const savedPrinter = usePrinterStore(state => state.savedPrinter);
 
   const [activeTab, setActiveTab] = useState<'tables' | 'menu' | 'staff' | 'theme'>('tables');
+  const [isPrinterModalOpen, setIsPrinterModalOpen] = useState(false);
+  const [isTestingPrinter, setIsTestingPrinter] = useState(false);
+
+  useEffect(() => {
+    usePrinterStore.getState().hydrate().catch(() => {});
+  }, []);
 
   // New Table Modal
   const [isNewTableModalOpen, setIsNewTableModalOpen] = useState(false);
@@ -237,41 +248,120 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
 
       {/* TAB 4: THEME & DISPLAY */}
       {activeTab === 'theme' && (
-        <View className="rounded-3xl bg-surface border border-border p-5 shadow-sm">
-          <AppText variant="title" className="text-lg font-bold text-text mb-1">
-            Display & Appearance
-          </AppText>
-          <AppText variant="caption" className="text-text-secondary mb-4">
-            Configure POS interface theme and high-contrast night mode.
-          </AppText>
+        <View>
+          <View className="rounded-3xl bg-surface border border-border p-5 shadow-sm mb-4">
+            <AppText variant="title" className="text-lg font-bold text-text mb-1">
+              Display & Appearance
+            </AppText>
+            <AppText variant="caption" className="text-text-secondary mb-4">
+              Configure POS interface theme and high-contrast night mode.
+            </AppText>
 
-          <View className="flex-row items-center justify-between py-3 border-t border-border/40">
-            <View className="flex-row items-center flex-1 mr-2">
-              <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mr-3">
-                {isDark ? (
-                  <MoonIcon color={colors.primary} size={20} />
-                ) : (
-                  <SunIcon color={colors.statusReserved} size={20} />
-                )}
+            <View className="flex-row items-center justify-between py-3 border-t border-border/40">
+              <View className="flex-row items-center flex-1 mr-2">
+                <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mr-3">
+                  {isDark ? (
+                    <MoonIcon color={colors.primary} size={20} />
+                  ) : (
+                    <SunIcon color={colors.statusReserved} size={20} />
+                  )}
+                </View>
+                <View className="flex-1">
+                  <AppText variant="label" className="font-bold text-text">
+                    Dark Mode Interface
+                  </AppText>
+                  <AppText variant="caption" className="text-text-secondary text-xs">
+                    {isDark ? 'High-contrast dark palette active' : 'Bright daylight palette active'}
+                  </AppText>
+                </View>
               </View>
-              <View className="flex-1">
-                <AppText variant="label" className="font-bold text-text">
-                  Dark Mode Interface
-                </AppText>
-                <AppText variant="caption" className="text-text-secondary text-xs">
-                  {isDark ? 'High-contrast dark palette active' : 'Bright daylight palette active'}
-                </AppText>
+              <Switch
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: colors.surfaceDim, true: colors.primary }}
+                thumbColor={colors.onPrimary}
+              />
+            </View>
+          </View>
+
+          <View className="rounded-3xl bg-surface border border-border p-5 shadow-sm">
+            <View className="flex-row items-center justify-between mb-1">
+              <AppText variant="title" className="text-lg font-bold text-text">
+                Bluetooth Thermal Printer
+              </AppText>
+              <Badge
+                label={savedPrinter ? `${savedPrinter.paperWidth}MM READY` : 'NOT CONFIGURED'}
+                variant={savedPrinter ? 'available' : 'neutral'}
+                size="sm"
+              />
+            </View>
+            <AppText variant="caption" className="text-text-secondary mb-4">
+              Configure paired ESC/POS Bluetooth thermal receipt and KOT printer.
+            </AppText>
+
+            <View className="flex-row items-center justify-between py-3 border-t border-border/40 mb-3">
+              <View className="flex-row items-center flex-1 mr-2">
+                <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mr-3">
+                  <PrinterIcon color={colors.primary} size={20} />
+                </View>
+                <View className="flex-1">
+                  <AppText variant="label" className="font-bold text-text">
+                    {savedPrinter ? savedPrinter.name : 'No Default Printer Selected'}
+                  </AppText>
+                  <AppText variant="caption" className="text-text-secondary text-xs">
+                    {savedPrinter
+                      ? `MAC: ${savedPrinter.address} • Roll: ${savedPrinter.paperWidth}mm`
+                      : 'Tap Configure Printer to select a paired Bluetooth printer'}
+                  </AppText>
+                </View>
               </View>
             </View>
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: colors.surfaceDim, true: colors.primary }}
-              thumbColor={colors.onPrimary}
-            />
+
+            <View className="flex-row">
+              <View className="flex-1 mr-2">
+                <Button
+                  label={savedPrinter ? 'Change Printer' : 'Select Printer'}
+                  variant="primary"
+                  size="sm"
+                  onPress={() => setIsPrinterModalOpen(true)}
+                />
+              </View>
+              {savedPrinter ? (
+                <View className="flex-1">
+                  <Button
+                    label="Test Print"
+                    variant="secondary"
+                    size="sm"
+                    loading={isTestingPrinter}
+                    onPress={async () => {
+                      setIsTestingPrinter(true);
+                      try {
+                        await printerService.printTestSlip(savedPrinter.address);
+                        appModal.success(
+                          'Test Print Sent',
+                          `Test slip printed on ${savedPrinter.name}.`,
+                        );
+                      } catch (err: any) {
+                        appModal.error(
+                          'Test Print Failed',
+                          err?.message || 'Unable to print test slip.',
+                        );
+                      } finally {
+                        setIsTestingPrinter(false);
+                      }
+                    }}
+                  />
+                </View>
+              ) : null}
+            </View>
           </View>
         </View>
       )}
+
+      <BluetoothPrinterModal
+        visible={isPrinterModalOpen}
+        onClose={() => setIsPrinterModalOpen(false)}
+      />
 
       {/* CREATE TABLE MODAL */}
       <Modal

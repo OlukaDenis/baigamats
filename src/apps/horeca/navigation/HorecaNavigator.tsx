@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   FireIcon,
+  ShoppingBagIcon,
   TableCellsIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import { HorecaSplashScreen } from '../features/auth/screens/HorecaSplashScreen'
 import { PinLockScreen } from '../features/auth/screens/PinLockScreen';
 import { ProfileScreen } from '../features/auth/screens/ProfileScreen';
 import { SetPinScreen } from '../features/auth/screens/SetPinScreen';
+import { useBusinessProfile } from '../features/auth/hooks/useBusinessProfile';
 import { useHorecaAuthStore } from '../features/auth/store/horecaAuthStore';
 import { BackOfficeScreen } from '../features/backoffice/screens/BackOfficeScreen';
 import { FloorPlanScreen } from '../features/floor/screens/FloorPlanScreen';
@@ -50,7 +52,14 @@ export type MainTab =
   | 'backoffice'
   | 'profile';
 
-const BOTTOM_NAV_TABS: MainTab[] = ['tables', 'kitchen', 'shift', 'reports', 'backoffice'];
+const BOTTOM_NAV_TABS: MainTab[] = [
+  'tables',
+  'orders_list',
+  'kitchen',
+  'shift',
+  'reports',
+  'backoffice',
+];
 
 export const HorecaNavigator: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -58,11 +67,15 @@ export const HorecaNavigator: React.FC = () => {
 
   const status = useHorecaAuthStore(state => state.status);
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
+  const me = useHorecaAuthStore(state => state.me);
   const lockTerminal = useHorecaAuthStore(state => state.lockTerminal);
   const autoLockSeconds = useHorecaAuthStore(state => state.autoLockSeconds);
   const hydrate = useHorecaAuthStore(state => state.hydrate);
   const setActiveOrderId = useHorecaStore(state => state.setActiveOrderId);
   const setActiveTableId = useHorecaStore(state => state.setActiveTableId);
+
+  // Fetch & periodically refresh business profile after login
+  useBusinessProfile(status === 'authenticated');
 
   // Screen stack for device back button and hierarchical navigation
   const [navStack, setNavStack] = useState<MainTab[]>(['tables']);
@@ -136,6 +149,7 @@ export const HorecaNavigator: React.FC = () => {
     setIsReceiptActive(false);
     setCompletedSale(null);
     setActivePaymentOrderId(null);
+    setSelectedOrderId(null);
     setNavStack(['tables']);
   }, []);
 
@@ -208,7 +222,11 @@ export const HorecaNavigator: React.FC = () => {
     navigateTo('orders_list');
   };
 
-  const handleViewTableOrder = () => {
+  const handleViewTableOrder = (orderId?: string) => {
+    if (orderId) {
+      setSelectedOrderId(orderId);
+      setActiveOrderId(orderId);
+    }
     navigateTo('order');
   };
 
@@ -270,7 +288,13 @@ export const HorecaNavigator: React.FC = () => {
   const isManager =
     activeStaff?.access === 'manager' ||
     activeStaff?.role === 'manager' ||
-    activeStaff?.role === 'admin';
+    activeStaff?.role === 'admin' ||
+    (!activeStaff && (me?.role === 'manager' || me?.role === 'admin'));
+
+  const effectiveTab: MainTab =
+    !isManager && (currentTab === 'reports' || currentTab === 'backoffice')
+      ? 'tables'
+      : currentTab;
 
   // Main screen routing
   const renderCurrentScreen = () => {
@@ -278,7 +302,7 @@ export const HorecaNavigator: React.FC = () => {
       return <SetPinScreen onBack={() => setIsSettingPin(false)} />;
     }
 
-    switch (currentTab) {
+    switch (effectiveTab) {
       case 'tables':
         return (
           <FloorPlanScreen
@@ -292,6 +316,7 @@ export const HorecaNavigator: React.FC = () => {
         return (
           <TableDetailsScreen
             onViewOrder={handleViewTableOrder}
+            onOrdersPress={handleOpenOrdersScreen}
             onBack={handleBack}
             onLockTerminal={lockTerminal}
             onProfilePress={handleOpenProfile}
@@ -382,20 +407,24 @@ export const HorecaNavigator: React.FC = () => {
 
   const navItems = [
     { id: 'tables', label: 'Home', Icon: TableCellsIcon },
+    { id: 'orders_list', label: 'Orders', Icon: ShoppingBagIcon },
     { id: 'kitchen', label: 'Kitchen', Icon: FireIcon },
     { id: 'shift', label: 'Shift', Icon: BanknotesIcon },
-    { id: 'reports', label: 'Reports', Icon: ChartBarIcon },
-    ...(isManager ? [{ id: 'backoffice', label: 'Admin', Icon: Cog6ToothIcon }] : []),
+    ...(isManager
+      ? [
+          { id: 'reports', label: 'Reports', Icon: ChartBarIcon },
+          { id: 'backoffice', label: 'Admin', Icon: Cog6ToothIcon },
+        ]
+      : []),
   ];
 
   const isBottomNavVisible =
     !isSettingPin &&
     !isReceiptActive &&
-    currentTab !== 'table' &&
-    currentTab !== 'order' &&
-    currentTab !== 'pay' &&
-    currentTab !== 'profile' &&
-    currentTab !== 'orders_list';
+    effectiveTab !== 'table' &&
+    effectiveTab !== 'order' &&
+    effectiveTab !== 'pay' &&
+    effectiveTab !== 'profile';
 
   return (
     <View className="flex-1 bg-background">
@@ -408,7 +437,7 @@ export const HorecaNavigator: React.FC = () => {
           className="flex-row items-center justify-around bg-surface border-t border-border pt-1.5 min-h-[58px]"
         >
           {navItems.map(item => {
-            const isActive = currentTab === item.id;
+            const isActive = effectiveTab === item.id;
             const ItemIcon = item.Icon;
             return (
               <Pressable

@@ -2,7 +2,10 @@ import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { env } from '@shared/config/env';
 import {
   mockActiveOrder,
+  mockBusinessProfile,
   mockCurrentShift,
+  mockDashboardData,
+  mockDashboardSettings,
   mockKitchenTickets,
   mockMenuCategories,
   mockMenuItems,
@@ -10,6 +13,8 @@ import {
   mockStaffMembers,
   mockTables,
 } from './horecaMockData';
+
+let currentMockDashboardSettings = { ...mockDashboardSettings };
 
 /**
  * Attaches mock interceptor to HORECA Axios instance when ENABLE_MOCK is active.
@@ -25,7 +30,7 @@ export function setupHorecaMockAdapter(client: AxiosInstance) {
     const method = (config.method || 'get').toLowerCase();
 
     // Check if mock handler exists for this route
-    const mockResponse = getMockResponse(method, url, config.data);
+    const mockResponse = getMockResponse(method, url, config.data, config.params);
     if (mockResponse !== undefined) {
       // Simulate slight network latency (150ms)
       await new Promise(resolve => setTimeout(() => resolve(undefined), 150));
@@ -49,10 +54,107 @@ export function setupHorecaMockAdapter(client: AxiosInstance) {
   });
 }
 
-function getMockResponse(method: string, url: string, data?: any): any {
+function getMockResponse(method: string, url: string, data?: any, params?: any): any {
   // GET /v1/health
   if (url.includes('/v1/health')) {
     return { service: 'horeca-api', status: 'up', database: 'up' };
+  }
+
+  // GET /business or /api/v1/business
+  if (url.endsWith('/business') && method === 'get') {
+    return mockBusinessProfile;
+  }
+
+  // GET / PUT /horeca/dashboard/settings
+  if (url.includes('/horeca/dashboard/settings')) {
+    if (method === 'put') {
+      const body = typeof data === 'string' ? JSON.parse(data) : data;
+      const targetCheck = Number(body?.target_check);
+      const optimalTurn = Math.round(Number(body?.optimal_turn));
+      if (!targetCheck || targetCheck <= 0 || !optimalTurn || optimalTurn <= 0) {
+        return {
+          data: null,
+          error: 'Enter an average check target and a table-turn time above zero.',
+        };
+      }
+      currentMockDashboardSettings = {
+        target_check: targetCheck,
+        optimal_turn: optimalTurn,
+      };
+    }
+    return { data: { ...currentMockDashboardSettings } };
+  }
+
+  // GET /horeca/dashboard
+  if (url.includes('/horeca/dashboard') && method === 'get') {
+    const from = params?.from;
+    const to = params?.to;
+    const date = params?.date;
+
+    if ((from && !to) || (!from && to)) {
+      return {
+        data: null,
+        error: 'Send both from and to as YYYY-MM-DD.',
+      };
+    }
+
+    if (from && to) {
+      const fromTime = Date.parse(`${from}T00:00:00Z`);
+      const toTime = Date.parse(`${to}T00:00:00Z`);
+      if (Number.isNaN(fromTime) || Number.isNaN(toTime)) {
+        return {
+          data: null,
+          error: 'Send both from and to as YYYY-MM-DD.',
+        };
+      }
+      if (fromTime > toTime) {
+        return {
+          data: null,
+          error: 'The from day must not be after the to day.',
+        };
+      }
+      const diffDays = Math.round((toTime - fromTime) / (1000 * 60 * 60 * 24));
+      if (diffDays > 92) {
+        return {
+          data: null,
+          error: 'A range can cover at most 92 days.',
+        };
+      }
+      return {
+        data: {
+          ...mockDashboardData,
+          from,
+          to,
+          avg_check: {
+            ...mockDashboardData.avg_check,
+            target: currentMockDashboardSettings.target_check,
+          },
+          avg_turn_minutes: {
+            ...mockDashboardData.avg_turn_minutes,
+            optimal: currentMockDashboardSettings.optimal_turn,
+          },
+        },
+      };
+    }
+
+    const resolvedDay = date || new Date().toISOString().slice(0, 10);
+    return {
+      data: {
+        day: resolvedDay,
+        revenue: mockDashboardData.revenue,
+        checks: mockDashboardData.checks,
+        avg_check: {
+          ...mockDashboardData.avg_check,
+          target: currentMockDashboardSettings.target_check,
+        },
+        avg_turn_minutes: {
+          ...mockDashboardData.avg_turn_minutes,
+          optimal: currentMockDashboardSettings.optimal_turn,
+        },
+        departments: mockDashboardData.departments,
+        servers: mockDashboardData.servers,
+      },
+    };
   }
 
   // GET /v1/me
@@ -231,6 +333,30 @@ function getMockResponse(method: string, url: string, data?: any): any {
   // POST /orders or /v1/orders
   if (url.endsWith('/orders') && method === 'post') {
     const body = typeof data === 'string' ? JSON.parse(data) : data;
+    const rawItems = Array.isArray(body?.items) ? body.items : [];
+    const nowIso = new Date().toISOString();
+    const mappedItems = rawItems.map((line: any, idx: number) => {
+      const matchedMenu = mockMenuItems.find(m => m.id === line.menuItemId);
+      const unitPrice = matchedMenu?.price ?? 25_000;
+      const qty = Number(line.qty) || 1;
+      return {
+        id: `oi-${Date.now()}-${idx}`,
+        menu_item_id: line.menuItemId,
+        item_name: matchedMenu?.name ?? 'Menu Item',
+        unit_price: unitPrice,
+        qty,
+        station: matchedMenu?.station ?? 'kitchen',
+        kot_status: 'new' as const,
+        modifiers: Array.isArray(line.modifiers) ? line.modifiers : [],
+        notes: line.notes ?? null,
+        discount_amount: 0,
+        created_at: nowIso,
+      };
+    });
+    const totalAmount = mappedItems.reduce(
+      (sum: number, it: any) => sum + it.unit_price * it.qty - (it.discount_amount || 0),
+      0,
+    );
     return {
       id: `ord-${Date.now()}`,
       order_number: `MAG-ORD-${Math.floor(10000000 + Math.random() * 90000000)}`,
@@ -239,8 +365,11 @@ function getMockResponse(method: string, url: string, data?: any): any {
       status: 'open',
       tab_name: body?.tabName || null,
       party_size: body?.partySize ?? null,
-      total_amount: 0,
-      created_at: new Date().toISOString(),
+      total_amount: totalAmount,
+      service_charge_amount: 0,
+      created_at: nowIso,
+      items: mappedItems,
+      warnings: [],
     };
   }
 

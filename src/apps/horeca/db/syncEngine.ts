@@ -98,12 +98,14 @@ class SyncEngine {
         try {
           switch (mutation.type) {
             case 'create_order': {
-              const { tableId, orderType, partySize, tabName, clientTempId } = mutation.payload;
+              const { tableId, orderType, partySize, tabName, items, clientTempId } =
+                mutation.payload;
               const res = await horecaApi.createOrder({
                 orderType,
                 tableId,
                 ...(partySize !== undefined ? { partySize } : {}),
                 ...(tabName ? { tabName } : {}),
+                ...(Array.isArray(items) && items.length > 0 ? { items } : {}),
               });
               if (res?.id && clientTempId) {
                 this.idMap.set(clientTempId, res.id);

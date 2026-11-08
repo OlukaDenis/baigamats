@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { env } from '@shared/config/env';
 import type {
+  BusinessProfile,
+  CreateOrderItemInput,
   KitchenTicket,
   MenuCategory,
   MenuItem,
@@ -11,12 +13,41 @@ import type {
   Table,
   TableCategory,
 } from '../api/schemas';
-import { mockActiveOrder, mockCurrentShift, mockKitchenTickets, mockMenuCategories, mockMenuItems, mockTables } from '../mock/horecaMockData';
+import {
+  mockActiveOrder,
+  mockBusinessProfile,
+  mockCurrentShift,
+  mockKitchenTickets,
+  mockMenuCategories,
+  mockMenuItems,
+  mockTables,
+} from '../mock/horecaMockData';
 import { menuRepository } from './repositories/menuRepository';
 import { orderRepository } from './repositories/orderRepository';
 import { outboxRepository } from './repositories/outboxRepository';
 import { tableRepository } from './repositories/tableRepository';
 import { tableStorage } from './tableStorage';
+
+export interface DraftOrderItem {
+  id: string;
+  menu_item_id: string;
+  item_name: string;
+  unit_price: number;
+  qty: number;
+  station: MenuItem['station'];
+  modifiers: string[];
+  notes: string | null;
+  age_restricted: boolean;
+  age_verified_by: string | null;
+}
+
+export interface TableDraftOrder {
+  tableId: string;
+  orderType: Order['order_type'];
+  partySize: number;
+  tabName?: string | null;
+  items: DraftOrderItem[];
+}
 
 export interface OutboxMutation {
   id: string;
@@ -36,6 +67,7 @@ export interface OutboxMutation {
 
 interface HorecaState {
   // Master data
+  businessProfile: BusinessProfile | null;
   tables: Table[];
   tableCategories: TableCategory[];
   categories: MenuCategory[];
@@ -43,6 +75,7 @@ interface HorecaState {
   menuHash: string | null;
   categoriesEtag?: string;
   orders: Record<string, Order>;
+  draftOrdersByTable: Record<string, TableDraftOrder>;
   kitchenTickets: KitchenTicket[];
   currentShift: Shift | null;
 
@@ -56,6 +89,8 @@ interface HorecaState {
 
   // Actions
   setOnlineStatus: (isOnline: boolean) => void;
+  hydrateBusinessProfile: () => Promise<void>;
+  setBusinessProfile: (profile: BusinessProfile | null) => void;
   hydrateTables: () => Promise<void>;
   setTables: (tables: Table[]) => void;
   hydrateTableCategories: () => Promise<void>;
@@ -76,8 +111,41 @@ interface HorecaState {
   upsertOrder: (order: Order, replaceTempId?: string) => void;
   replaceOrderItemId: (orderId: string, tempItemId: string, serverItem: Partial<OrderItem> & { id: string }, orderTotal?: number) => void;
 
+  // Draft Order actions (local cart before single-call submission)
+  addDraftItem: (
+    tableId: string,
+    item: MenuItem,
+    qty?: number,
+    options?: {
+      modifiers?: string[];
+      notes?: string | null;
+      ageVerifiedBy?: string | null;
+      partySize?: number;
+    },
+  ) => DraftOrderItem;
+  updateDraftItemQty: (tableId: string, draftItemId: string, delta: number) => void;
+  updateDraftItemDetails: (
+    tableId: string,
+    draftItemId: string,
+    details: {
+      modifiers?: string[];
+      notes?: string | null;
+      ageVerifiedBy?: string | null;
+    },
+  ) => void;
+  removeDraftItem: (tableId: string, draftItemId: string) => void;
+  setDraftPartySize: (tableId: string, partySize: number) => void;
+  clearTableDraft: (tableId: string) => void;
+
   // Order actions
-  createOrderOptimistic: (params: { tableId?: string; orderType: Order['order_type']; partySize?: number; tabName?: string }) => Order;
+  createOrderOptimistic: (params: {
+    tableId?: string;
+    orderType: Order['order_type'];
+    partySize?: number;
+    tabName?: string;
+    items?: CreateOrderItemInput[];
+    draftItems?: DraftOrderItem[];
+  }) => Order;
   addItemOptimistic: (orderId: string, item: MenuItem, qty: number, modifiers?: string[], notes?: string, ageVerifiedBy?: string) => OrderItem;
   removeItemOptimistic: (orderId: string, itemId: string) => void;
   updateItemQtyOptimistic: (orderId: string, itemId: string, delta: number) => void;
@@ -106,6 +174,7 @@ function menuTreeToState(menu: MenuTree): { categories: MenuCategory[]; menuItem
 }
 
 export const useHorecaStore = create<HorecaState>((set, get) => ({
+  businessProfile: env.ENABLE_MOCK ? mockBusinessProfile : null,
   tables: env.ENABLE_MOCK ? mockTables : [],
   tableCategories: [],
   categories: env.ENABLE_MOCK ? mockMenuCategories : [],
@@ -113,6 +182,7 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   menuHash: null,
   categoriesEtag: undefined,
   orders: env.ENABLE_MOCK ? { [mockActiveOrder.id]: mockActiveOrder } : {},
+  draftOrdersByTable: {},
   kitchenTickets: env.ENABLE_MOCK ? mockKitchenTickets : [],
   currentShift: env.ENABLE_MOCK ? mockCurrentShift : null,
 
@@ -123,6 +193,22 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
   outbox: [],
 
   setOnlineStatus: isOnline => set({ isOnline }),
+
+  hydrateBusinessProfile: async () => {
+    const cached = await tableStorage.getBusinessProfile();
+    if (cached) {
+      set(state => ({
+        businessProfile: state.businessProfile ?? cached,
+      }));
+    }
+  },
+
+  setBusinessProfile: profile => {
+    set({ businessProfile: profile });
+    if (profile) {
+      tableStorage.saveBusinessProfile(profile).catch(() => {});
+    }
+  },
 
   hydrateTables: async () => {
     const cached = await tableStorage.getTables();
@@ -228,26 +314,35 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       const incomingTableMap = new Map<string, Order>();
 
       incomingOrders.forEach(ord => {
-        if (ord.table_id && ord.status === 'open') {
-          incomingTableMap.set(ord.table_id, ord);
+        if (ord.table_id) {
+          const current = incomingTableMap.get(ord.table_id);
+          if (!current || ord.status === 'open') {
+            incomingTableMap.set(ord.table_id, ord);
+          }
         }
       });
 
       let nextActiveOrderId = state.activeOrderId;
 
-      // Preserve unsynced optimistic orders unless a server open order for the same table arrived
+      // Preserve unsynced optimistic orders unless a server order for the same table arrived,
+      // and preserve locally settled ('paid' / 'billed') orders for receipt fallback
       Object.values(state.orders).forEach(ord => {
-        if (ord.id.startsWith('temp-ord-')) {
+        if (ord.id.startsWith('temp-ord-') && ord.status === 'open') {
           const matchingServerOrder = ord.table_id
             ? incomingTableMap.get(ord.table_id)
             : undefined;
           if (matchingServerOrder) {
             if (nextActiveOrderId === ord.id) {
-              nextActiveOrderId = matchingServerOrder.id;
+              nextActiveOrderId =
+                matchingServerOrder.status === 'open' ? matchingServerOrder.id : null;
             }
           } else {
             nextOrders[ord.id] = ord;
           }
+        } else if (ord.status === 'paid' || ord.status === 'billed') {
+          nextOrders[ord.id] = ord;
+        } else if (state.activeOrderId && ord.id === state.activeOrderId && ord.status === 'open') {
+          nextOrders[ord.id] = ord;
         }
       });
 
@@ -265,21 +360,32 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
             : (existing?.total_amount ??
               items.reduce((sum, it) => sum + it.unit_price * it.qty, 0));
 
+        // Do not revert a locally settled/cancelled order back to 'open' if a stale response arrives
+        const resolvedStatus =
+          existing && existing.status !== 'open' && ord.status === 'open'
+            ? existing.status
+            : ord.status;
+
         nextOrders[ord.id] = {
           ...existing,
           ...ord,
+          status: resolvedStatus,
           items,
           total_amount,
         };
       });
 
-      // Ensure activeOrderId points to a valid server open order when available
-      if (!nextActiveOrderId || !nextOrders[nextActiveOrderId]) {
-        const openForActiveTable = incomingOrders.find(
+      // Ensure activeOrderId points to a valid open order when available, or null when none are open
+      if (
+        !nextActiveOrderId ||
+        !nextOrders[nextActiveOrderId] ||
+        nextOrders[nextActiveOrderId].status !== 'open'
+      ) {
+        const openForActiveTable = Object.values(nextOrders).find(
           o => o.table_id === state.activeTableId && o.status === 'open',
         );
-        const firstOpen = incomingOrders.find(o => o.status === 'open');
-        nextActiveOrderId = openForActiveTable?.id ?? firstOpen?.id ?? nextActiveOrderId;
+        const firstOpen = Object.values(nextOrders).find(o => o.status === 'open');
+        nextActiveOrderId = openForActiveTable?.id ?? firstOpen?.id ?? null;
       }
 
       // Sync to SQLite in the background
@@ -339,9 +445,202 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       };
     }),
 
-  createOrderOptimistic: ({ tableId, orderType, partySize, tabName }) => {
+  addDraftItem: (tableId, menuItem, qty = 1, options) => {
+    const cleanMods = (options?.modifiers ?? []).map(m => m.trim()).filter(Boolean).slice(0, 20);
+    const cleanNotes = options?.notes?.trim() ? options.notes.trim().slice(0, 300) : null;
+    const verifiedBy = options?.ageVerifiedBy?.trim() || null;
+
+    let resultItem!: DraftOrderItem;
+
+    set(state => {
+      const table = state.tables.find(t => t.id === tableId);
+      const existingDraft = state.draftOrdersByTable[tableId] ?? {
+        tableId,
+        orderType: 'dine_in' as const,
+        partySize: options?.partySize ?? table?.capacity ?? 2,
+        tabName: null,
+        items: [],
+      };
+
+      // Merge identical plain or matching lines
+      const matchIndex = existingDraft.items.findIndex(
+        it =>
+          it.menu_item_id === menuItem.id &&
+          (it.notes ?? null) === cleanNotes &&
+          it.modifiers.length === cleanMods.length &&
+          it.modifiers.every((m, idx) => m === cleanMods[idx]),
+      );
+
+      let nextItems: DraftOrderItem[];
+      if (matchIndex >= 0) {
+        nextItems = existingDraft.items.map((it, idx) => {
+          if (idx !== matchIndex) return it;
+          const updated: DraftOrderItem = {
+            ...it,
+            qty: Math.min(500, it.qty + qty),
+            age_verified_by: verifiedBy ?? it.age_verified_by,
+          };
+          resultItem = updated;
+          return updated;
+        });
+      } else {
+        const newDraftItem: DraftOrderItem = {
+          id: `draft-item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          menu_item_id: menuItem.id,
+          item_name: menuItem.name,
+          unit_price: menuItem.price,
+          qty: Math.min(500, Math.max(1, qty)),
+          station: menuItem.station,
+          modifiers: cleanMods,
+          notes: cleanNotes,
+          age_restricted: Boolean(menuItem.age_restricted),
+          age_verified_by: verifiedBy,
+        };
+        resultItem = newDraftItem;
+        nextItems = [...existingDraft.items, newDraftItem];
+      }
+
+      return {
+        draftOrdersByTable: {
+          ...state.draftOrdersByTable,
+          [tableId]: {
+            ...existingDraft,
+            partySize: options?.partySize ?? existingDraft.partySize,
+            items: nextItems,
+          },
+        },
+      };
+    });
+
+    return resultItem;
+  },
+
+  updateDraftItemQty: (tableId, draftItemId, delta) => {
+    set(state => {
+      const draft = state.draftOrdersByTable[tableId];
+      if (!draft) return state;
+
+      const nextItems = draft.items
+        .map(it => {
+          if (it.id !== draftItemId) return it;
+          const nextQty = Math.min(500, it.qty + delta);
+          return nextQty > 0 ? { ...it, qty: nextQty } : null;
+        })
+        .filter(Boolean) as DraftOrderItem[];
+
+      const nextDrafts = { ...state.draftOrdersByTable };
+      if (nextItems.length === 0) {
+        delete nextDrafts[tableId];
+      } else {
+        nextDrafts[tableId] = { ...draft, items: nextItems };
+      }
+
+      return { draftOrdersByTable: nextDrafts };
+    });
+  },
+
+  updateDraftItemDetails: (tableId, draftItemId, details) => {
+    set(state => {
+      const draft = state.draftOrdersByTable[tableId];
+      if (!draft) return state;
+
+      const nextItems = draft.items.map(it => {
+        if (it.id !== draftItemId) return it;
+        return {
+          ...it,
+          modifiers:
+            details.modifiers !== undefined
+              ? details.modifiers.map(m => m.trim()).filter(Boolean).slice(0, 20)
+              : it.modifiers,
+          notes:
+            details.notes !== undefined
+              ? (details.notes?.trim() ? details.notes.trim().slice(0, 300) : null)
+              : it.notes,
+          age_verified_by:
+            details.ageVerifiedBy !== undefined
+              ? (details.ageVerifiedBy?.trim() || null)
+              : it.age_verified_by,
+        };
+      });
+
+      return {
+        draftOrdersByTable: {
+          ...state.draftOrdersByTable,
+          [tableId]: { ...draft, items: nextItems },
+        },
+      };
+    });
+  },
+
+  removeDraftItem: (tableId, draftItemId) => {
+    set(state => {
+      const draft = state.draftOrdersByTable[tableId];
+      if (!draft) return state;
+
+      const nextItems = draft.items.filter(it => it.id !== draftItemId);
+      const nextDrafts = { ...state.draftOrdersByTable };
+      if (nextItems.length === 0) {
+        delete nextDrafts[tableId];
+      } else {
+        nextDrafts[tableId] = { ...draft, items: nextItems };
+      }
+
+      return { draftOrdersByTable: nextDrafts };
+    });
+  },
+
+  setDraftPartySize: (tableId, partySize) => {
+    const clamped = Math.min(500, Math.max(1, Math.round(partySize) || 1));
+    set(state => {
+      const existing = state.draftOrdersByTable[tableId] ?? {
+        tableId,
+        orderType: 'dine_in' as const,
+        partySize: clamped,
+        tabName: null,
+        items: [],
+      };
+      return {
+        draftOrdersByTable: {
+          ...state.draftOrdersByTable,
+          [tableId]: { ...existing, partySize: clamped },
+        },
+      };
+    });
+  },
+
+  clearTableDraft: tableId => {
+    set(state => {
+      if (!state.draftOrdersByTable[tableId]) return state;
+      const nextDrafts = { ...state.draftOrdersByTable };
+      delete nextDrafts[tableId];
+      return { draftOrdersByTable: nextDrafts };
+    });
+  },
+
+  createOrderOptimistic: ({ tableId, orderType, partySize, tabName, items, draftItems }) => {
     const tempId = `temp-ord-${Date.now()}`;
     const orderNumber = `MAG-ORD-${Math.floor(10000000 + Math.random() * 90000000)}`;
+    const nowIso = new Date().toISOString();
+
+    const mappedOrderItems: OrderItem[] = (draftItems ?? []).map((d, idx) => ({
+      id: `temp-item-${Date.now()}-${idx}`,
+      menu_item_id: d.menu_item_id,
+      item_name: d.item_name,
+      unit_price: d.unit_price,
+      qty: d.qty,
+      station: d.station,
+      kot_status: 'new',
+      modifiers: d.modifiers,
+      notes: d.notes,
+      discount_amount: 0,
+      created_at: nowIso,
+    }));
+
+    const totalAmount = mappedOrderItems.reduce(
+      (sum, it) => sum + it.unit_price * it.qty - (it.discount_amount ?? 0),
+      0,
+    );
+
     const newOrder: Order = {
       id: tempId,
       order_number: orderNumber,
@@ -350,15 +649,38 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       status: 'open',
       tab_name: tabName ?? null,
       party_size: partySize ?? null,
-      total_amount: 0,
+      total_amount: totalAmount,
       service_charge_amount: 0,
-      created_at: new Date().toISOString(),
-      items: [],
+      created_at: nowIso,
+      items: mappedOrderItems,
     };
+
+    const newKitchenTickets: KitchenTicket[] = mappedOrderItems.map(it => ({
+      id: it.id,
+      item_name: it.item_name,
+      qty: it.qty,
+      station: it.station,
+      kot_status: 'new',
+      modifiers: it.modifiers,
+      notes: it.notes,
+      created_at: it.created_at,
+      order: {
+        id: tempId,
+        order_number: orderNumber,
+        table_id: tableId ?? null,
+        order_type: orderType,
+        tab_name: tabName ?? null,
+        status: 'open',
+      },
+    }));
 
     set(state => ({
       orders: { ...state.orders, [tempId]: newOrder },
       activeOrderId: tempId,
+      tables: tableId
+        ? state.tables.map(t => (t.id === tableId ? { ...t, status: 'occupied' as const } : t))
+        : state.tables,
+      kitchenTickets: [...newKitchenTickets, ...state.kitchenTickets],
     }));
 
     get().enqueueMutation({
@@ -369,6 +691,7 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
         clientTempId: tempId,
         ...(partySize !== undefined ? { partySize } : {}),
         ...(tabName ? { tabName } : {}),
+        ...(items && items.length > 0 ? { items } : {}),
       },
     });
 
@@ -579,9 +902,16 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
         ? state.tables.map(t => (t.id === order.table_id ? { ...t, status: 'available' as const } : t))
         : state.tables;
 
+      const updatedOrders = { ...state.orders, [orderId]: { ...order, status: 'cancelled' as const } };
+      const nextActiveOrderId =
+        state.activeOrderId === orderId
+          ? (Object.values(updatedOrders).find(o => o.status === 'open')?.id ?? null)
+          : state.activeOrderId;
+
       return {
         tables: updatedTables,
-        orders: { ...state.orders, [orderId]: { ...order, status: 'cancelled' } },
+        orders: updatedOrders,
+        activeOrderId: nextActiveOrderId,
         kitchenTickets: state.kitchenTickets.filter(kt => kt.order.id !== orderId),
       };
     });
@@ -601,9 +931,16 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
         ? state.tables.map(t => (t.id === order.table_id ? { ...t, status: 'dirty' as const } : t))
         : state.tables;
 
+      const updatedOrders = { ...state.orders, [orderId]: { ...order, status: 'billed' as const } };
+      const nextActiveOrderId =
+        state.activeOrderId === orderId
+          ? (Object.values(updatedOrders).find(o => o.status === 'open')?.id ?? null)
+          : state.activeOrderId;
+
       return {
         tables: updatedTables,
-        orders: { ...state.orders, [orderId]: { ...order, status: 'billed' } },
+        orders: updatedOrders,
+        activeOrderId: nextActiveOrderId,
       };
     });
 
@@ -615,19 +952,42 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
 
   completeOrderSettlement: (orderId, status) => {
     set(state => {
-      const order = state.orders[orderId];
-      const updatedTables = order?.table_id
-        ? state.tables.map(t => (t.id === order.table_id ? { ...t, status: 'dirty' as const } : t))
+      const order =
+        state.orders[orderId] ??
+        (state.activeOrderId ? state.orders[state.activeOrderId] : undefined);
+      const targetTableId = order?.table_id ?? state.activeTableId;
+
+      const updatedTables = targetTableId
+        ? state.tables.map(t => (t.id === targetTableId ? { ...t, status: 'dirty' as const } : t))
         : state.tables;
 
-      const updatedOrders = order
-        ? { ...state.orders, [orderId]: { ...order, status } }
-        : state.orders;
+      const updatedOrders: Record<string, Order> = {};
+      Object.entries(state.orders).forEach(([id, ord]) => {
+        if (id === orderId || (targetTableId && ord.table_id === targetTableId && ord.status === 'open')) {
+          if (id.startsWith('temp-ord-') && id !== orderId) {
+            return;
+          }
+          updatedOrders[id] = { ...ord, status };
+        } else {
+          updatedOrders[id] = ord;
+        }
+      });
+
+      const remainingOpenOrder = Object.values(updatedOrders).find(o => o.status === 'open');
+      const nextActiveOrderId =
+        state.activeOrderId &&
+        updatedOrders[state.activeOrderId] &&
+        updatedOrders[state.activeOrderId].status === 'open'
+          ? state.activeOrderId
+          : (remainingOpenOrder?.id ?? null);
 
       return {
         tables: updatedTables,
         orders: updatedOrders,
-        kitchenTickets: state.kitchenTickets.filter(kt => kt.order.id !== orderId),
+        activeOrderId: nextActiveOrderId,
+        kitchenTickets: state.kitchenTickets.filter(
+          kt => kt.order.id !== orderId && (!targetTableId || kt.order.table_id !== targetTableId),
+        ),
       };
     });
   },
@@ -692,6 +1052,7 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
 
   resetStore: () => {
     set({
+      businessProfile: env.ENABLE_MOCK ? mockBusinessProfile : null,
       tables: env.ENABLE_MOCK ? mockTables : [],
       tableCategories: [],
       categories: env.ENABLE_MOCK ? mockMenuCategories : [],
@@ -699,6 +1060,7 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       menuHash: null,
       categoriesEtag: undefined,
       orders: env.ENABLE_MOCK ? { [mockActiveOrder.id]: mockActiveOrder } : {},
+      draftOrdersByTable: {},
       kitchenTickets: env.ENABLE_MOCK ? mockKitchenTickets : [],
       currentShift: env.ENABLE_MOCK ? mockCurrentShift : null,
       activeTableId: env.ENABLE_MOCK ? (mockTables[0]?.id ?? null) : null,

@@ -15,6 +15,7 @@
     "ios:horeca": "react-native run-ios --scheme=BaigamatsHoreca",
     "lint": "eslint .",
     "start": "react-native start",
+    "start:reset": "react-native start -- --reset-cache",
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "build:apk:horeca": "node scripts/build-android.js --app horeca --env prod --type apk",

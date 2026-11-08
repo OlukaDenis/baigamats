@@ -7,6 +7,7 @@ import type { MeResponse, StaffMember } from '../../../api/schemas';
 import { databaseManager } from '../../../db/DatabaseManager';
 import { useHorecaStore } from '../../../db/offlineStore';
 import { mockStaffMembers } from '../../../mock/horecaMockData';
+import { fetchAndStoreBusinessProfile } from '../hooks/useBusinessProfile';
 
 const LAST_USERNAME_SERVICE = 'com.baigamats.horeca.auth.last_username';
 const LAST_USERNAME_ACCOUNT = 'last_staff_username';
@@ -99,8 +100,10 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
 
       // Mount isolated SQLite database for authenticated staff
       databaseManager.setCurrentUser(activeId);
+      useHorecaStore.getState().hydrateBusinessProfile();
       useHorecaStore.getState().hydrateTables();
       useHorecaStore.getState().hydrateMenu();
+      fetchAndStoreBusinessProfile().catch(() => {});
 
       set({
         me,
@@ -154,8 +157,10 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
     // Switch to the staff member's isolated SQLite database
     databaseManager.setCurrentUser(activeId);
     useHorecaStore.getState().resetStore();
+    useHorecaStore.getState().hydrateBusinessProfile();
     useHorecaStore.getState().hydrateTables();
     useHorecaStore.getState().hydrateMenu();
+    fetchAndStoreBusinessProfile().catch(() => {});
 
     set({
       me,
@@ -182,9 +187,11 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
       // Switch staff user: mount the new staff's isolated SQLite database
       databaseManager.setCurrentUser(staff.id);
       useHorecaStore.getState().resetStore();
+      useHorecaStore.getState().hydrateBusinessProfile();
       useHorecaStore.getState().hydrateTables();
       useHorecaStore.getState().hydrateMenu();
     }
+    fetchAndStoreBusinessProfile().catch(() => {});
 
     set({
       activeStaff: staff,

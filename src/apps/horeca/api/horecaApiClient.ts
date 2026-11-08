@@ -3,39 +3,46 @@ import { env } from '@shared/config/env';
 import { tokenStorage } from '@shared/services/tokenStorage';
 import { generateIdempotencyKey } from '@shared/utils/idempotency';
 import { setupHorecaMockAdapter } from '../mock/horecaMockAdapter';
-import type {
-  AddItemDto,
-  BillDto,
-  BillResponse,
-  CloseShiftDto,
-  CreateOrderDto,
-  CreateTableDto,
-  CurrentShiftResponse,
-  KitchenTicket,
-  LoginDto,
-  LoginResponse,
-  MeResponse,
-  MenuAvailabilityMap,
-  MenuCategory,
-  MenuItem,
-  MenuItemsPage,
-  MenuTree,
-  MenuVersion,
-  OpenShiftDto,
-  Order,
-  PinLoginDto,
-  PaymentStatus,
-  Receipt,
-  SetPinDto,
-  Shift,
-  StaffMember,
-  StartPaymentDto,
-  StartPaymentResponse,
-  Table,
-  TableCategory,
-  UpdateTableDto,
-  VerifyPinDto,
-  VerifyPinResponse,
+import {
+  type AddItemDto,
+  type BillDto,
+  type BillResponse,
+  type BusinessProfile,
+  businessProfileSchema,
+  type CloseShiftDto,
+  type CreateOrderDto,
+  type CreateTableDto,
+  type CurrentShiftResponse,
+  type HorecaDashboardData,
+  horecaDashboardSchema,
+  type HorecaDashboardSettings,
+  horecaDashboardSettingsSchema,
+  type KitchenTicket,
+  type LoginDto,
+  type LoginResponse,
+  type MeResponse,
+  type MenuAvailabilityMap,
+  type MenuCategory,
+  type MenuItem,
+  type MenuItemsPage,
+  type MenuTree,
+  type MenuVersion,
+  type OpenShiftDto,
+  type Order,
+  type PinLoginDto,
+  type PaymentStatus,
+  type Receipt,
+  type SetPinDto,
+  type Shift,
+  type StaffMember,
+  type StartPaymentDto,
+  type StartPaymentResponse,
+  type Table,
+  type TableCategory,
+  type UpdateHorecaDashboardSettingsDto,
+  type UpdateTableDto,
+  type VerifyPinDto,
+  type VerifyPinResponse,
 } from './schemas';
 
 // Additional interface types
@@ -197,6 +204,27 @@ export const horecaApi = {
   me: async (): Promise<MeResponse> => {
     const res = await horecaClient.get('/v1/me');
     return res.data;
+  },
+  getBusiness: async (): Promise<BusinessProfile> => {
+    let res;
+    try {
+      res = await horecaClient.get('/business', {
+        baseURL: env.API_BASE_URL,
+      });
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        res = await horecaClient.get('/api/v1/business', {
+          baseURL: env.API_BASE_URL,
+        });
+      } else {
+        throw err;
+      }
+    }
+    const raw =
+      res.data && typeof res.data === 'object' && 'data' in res.data && res.data.data
+        ? res.data.data
+        : res.data;
+    return businessProfileSchema.parse(raw);
   },
   logout: async (): Promise<{ signedOut: boolean }> => {
     const res = await horecaClient.post('/v1/auth/logout');
@@ -368,8 +396,16 @@ export const horecaApi = {
     }
   },
   createOrder: async (dto: CreateOrderDto): Promise<Order> => {
-    const res = await horecaClient.post('/v1/orders', dto);
-    return res.data;
+    try {
+      const res = await horecaClient.post('/v1/orders', dto);
+      return res.data;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        const res = await horecaClient.post('/orders', dto);
+        return res.data;
+      }
+      throw err;
+    }
   },
   getOrder: async (id: string): Promise<Order> => {
     try {
@@ -474,7 +510,86 @@ export const horecaApi = {
     return res.data;
   },
 
-  // Reports
+  // Reports & Manager Dashboard (GET /api/v1/horeca/dashboard)
+  getDashboard: async (params?: {
+    date?: string;
+    from?: string;
+    to?: string;
+  }): Promise<HorecaDashboardData> => {
+    const query =
+      params?.from || params?.to
+        ? { from: params?.from, to: params?.to }
+        : params?.date
+          ? { date: params.date }
+          : undefined;
+
+    let res;
+    try {
+      res = await horecaClient.get('/horeca/dashboard', {
+        baseURL: env.API_BASE_URL,
+        params: query,
+      });
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        res = await horecaClient.get('/api/v1/horeca/dashboard', {
+          baseURL: env.API_BASE_URL,
+          params: query,
+        });
+      } else {
+        throw new Error(extractDashboardErrorMessage(err));
+      }
+    }
+
+    const raw = unwrapDashboardEnvelope(res.data);
+    return horecaDashboardSchema.parse(raw);
+  },
+
+  getDashboardSettings: async (): Promise<HorecaDashboardSettings> => {
+    let res;
+    try {
+      res = await horecaClient.get('/horeca/dashboard/settings', {
+        baseURL: env.API_BASE_URL,
+      });
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        res = await horecaClient.get('/api/v1/horeca/dashboard/settings', {
+          baseURL: env.API_BASE_URL,
+        });
+      } else {
+        throw new Error(extractDashboardErrorMessage(err));
+      }
+    }
+
+    const raw = unwrapDashboardEnvelope(res.data);
+    return horecaDashboardSettingsSchema.parse(raw);
+  },
+
+  updateDashboardSettings: async (
+    dto: UpdateHorecaDashboardSettingsDto,
+  ): Promise<HorecaDashboardSettings> => {
+    const payload = {
+      target_check: Math.round(Number(dto.target_check)),
+      optimal_turn: Math.round(Number(dto.optimal_turn)),
+    };
+    let res;
+    try {
+      res = await horecaClient.put('/horeca/dashboard/settings', payload, {
+        baseURL: env.API_BASE_URL,
+      });
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        res = await horecaClient.put('/api/v1/horeca/dashboard/settings', payload, {
+          baseURL: env.API_BASE_URL,
+        });
+      } else {
+        throw new Error(extractDashboardErrorMessage(err));
+      }
+    }
+
+    const raw = unwrapDashboardEnvelope(res.data);
+    return horecaDashboardSettingsSchema.parse(raw);
+  },
+
   getDailyReport: async (date?: string): Promise<DailyReport> => {
     const res = await horecaClient.get('/v1/reports/daily', { params: { date } });
     return res.data;
@@ -484,3 +599,64 @@ export const horecaApi = {
     return res.data;
   },
 };
+
+function unwrapDashboardEnvelope(body: any): any {
+  if (!body || typeof body !== 'object') {
+    throw new Error('Unexpected empty response from dashboard server.');
+  }
+
+  // Handle HTTP 200 with {"data": null, "error": "<message>"} per handoff section 5
+  if (body.error) {
+    const errMsg =
+      typeof body.error === 'string'
+        ? body.error
+        : body.error?.message || 'Unable to load dashboard figures.';
+    throw new Error(errMsg);
+  }
+
+  if ('data' in body) {
+    if (body.data === null || body.data === undefined) {
+      throw new Error('No dashboard data returned from server.');
+    }
+    return body.data;
+  }
+
+  return body;
+}
+
+export function extractDashboardErrorMessage(err: any): string {
+  const status = err?.response?.status;
+  const data = err?.response?.data;
+  const retryAfter = err?.response?.headers?.['retry-after'] ?? err?.response?.headers?.['Retry-After'];
+
+  if (data?.error) {
+    if (typeof data.error === 'string') {
+      return data.error;
+    }
+    if (typeof data.error?.message === 'string') {
+      if (status === 429 && retryAfter) {
+        return `${data.error.message} (Retry after ${retryAfter}s)`;
+      }
+      return data.error.message;
+    }
+  }
+
+  if (status === 401) {
+    return 'Session expired or unauthorized. Please sign in again.';
+  }
+  if (status === 403) {
+    return 'Access denied. Manager permissions (account:read) are required to view reports.';
+  }
+  if (status === 429) {
+    return retryAfter
+      ? `Too many requests. Please wait ${retryAfter} seconds and try again.`
+      : 'Too many requests. Please wait a moment and try again.';
+  }
+
+  if (typeof data?.message === 'string') {
+    return data.message;
+  }
+
+  return err?.message || 'Unable to load dashboard figures.';
+}
+

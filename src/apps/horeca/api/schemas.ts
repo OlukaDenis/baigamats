@@ -142,14 +142,25 @@ export const orderSchema = z.object({
   created_at: z.string(),
   updated_at: z.string().optional(),
   items: z.array(orderItemSchema).optional().default([]),
+  warnings: z.array(z.string()).optional(),
 });
 export type Order = z.infer<typeof orderSchema>;
+
+export const createOrderItemInputSchema = z.object({
+  menuItemId: z.string(),
+  qty: z.number().int().min(1).max(500),
+  modifiers: z.array(z.string()).max(20).optional(),
+  notes: z.string().max(300).optional(),
+  ageVerifiedBy: z.string().optional(),
+});
+export type CreateOrderItemInput = z.infer<typeof createOrderItemInputSchema>;
 
 export const createOrderDtoSchema = z.object({
   orderType: orderTypeSchema,
   tableId: z.string().optional(),
-  partySize: z.number().optional(),
+  partySize: z.number().int().min(1).max(500).optional(),
   tabName: z.string().optional(),
+  items: z.array(createOrderItemInputSchema).max(100).optional(),
 });
 export type CreateOrderDto = z.infer<typeof createOrderDtoSchema>;
 
@@ -204,6 +215,10 @@ export const billResponseSchema = z.object({
   paymentMethod: z.string().optional(),
   saleId: z.string(),
   saleNumber: z.string(),
+  fdn: z.string().nullable().optional(),
+  efrisInvoiceNumber: z.string().nullable().optional(),
+  efrisNumber: z.string().nullable().optional(),
+  fiscalNumber: z.string().nullable().optional(),
 });
 export type BillResponse = z.infer<typeof billResponseSchema>;
 
@@ -233,6 +248,10 @@ export const paymentStatusSchema = z.object({
   amount: z.number(),
   saleId: z.string().nullable().optional(),
   saleNumber: z.string().nullable().optional(),
+  fdn: z.string().nullable().optional(),
+  efrisInvoiceNumber: z.string().nullable().optional(),
+  efrisNumber: z.string().nullable().optional(),
+  fiscalNumber: z.string().nullable().optional(),
 });
 export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
 
@@ -257,10 +276,12 @@ export const receiptSchema = z.object({
   itemsTotal: z.number(),
   serviceCharge: z.number().default(0),
   total: z.number(),
-  tin: z.string().optional().default('1002948192'),
-  efrisInvoiceNumber: z.string().optional().default('EFRIS-UG-2026-88192'),
-  fdn: z.string().optional().default('EFRIS-UG-2026-88192'),
-  qrVerificationUrl: z.string().optional().default('https://efris.ura.go.ug/verify/88192'),
+  tin: z.string().nullable().optional(),
+  efrisInvoiceNumber: z.string().nullable().optional(),
+  efrisNumber: z.string().nullable().optional(),
+  fiscalNumber: z.string().nullable().optional(),
+  fdn: z.string().nullable().optional(),
+  qrVerificationUrl: z.string().nullable().optional(),
 });
 export type Receipt = z.infer<typeof receiptSchema>;
 
@@ -393,3 +414,103 @@ export const meResponseSchema = z.object({
   permissions: z.array(z.string()),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;
+
+// ==========================================
+// Business Settings & VAT (GET /api/v1/business)
+// ==========================================
+export const businessReceiptSettingsSchema = z.object({
+  header_note: z.string().nullable().optional().default(null),
+  footer: z.string().nullable().optional().default(null),
+  show_tin: z.boolean().optional().default(false),
+});
+export type BusinessReceiptSettings = z.infer<typeof businessReceiptSettingsSchema>;
+
+export const businessVatSettingsSchema = z.object({
+  enabled: z.boolean().optional().default(false),
+  name: z.string().nullable().optional().transform(v => v || 'VAT'),
+  rate_pct: z.coerce.number().optional().default(18),
+  inclusive: z.boolean().optional().default(true),
+});
+export type BusinessVatSettings = z.infer<typeof businessVatSettingsSchema>;
+
+export const businessProfileSchema = z.object({
+  name: z.string().nullable().optional().default(null),
+  legal_name: z.string().nullable().optional().default(null),
+  institution_code: z.string().nullable().optional().default(null),
+  phone: z.string().nullable().optional().default(null),
+  email: z.string().nullable().optional().default(null),
+  address: z.string().nullable().optional().default(null),
+  logo_url: z.string().nullable().optional().default(null),
+  currency: z.string().nullable().optional().transform(v => v || 'UGX'),
+  tin: z.string().nullable().optional().default(null),
+  receipt: businessReceiptSettingsSchema.nullable().optional().transform(v => v ?? {
+    header_note: null,
+    footer: null,
+    show_tin: false,
+  }),
+  vat: businessVatSettingsSchema.nullable().optional().transform(v => v ?? {
+    enabled: false,
+    name: 'VAT',
+    rate_pct: 18,
+    inclusive: true,
+  }),
+});
+export type BusinessProfile = z.infer<typeof businessProfileSchema>;
+
+// ==========================================
+// HORECA Manager Dashboard (GET /api/v1/horeca/dashboard)
+// ==========================================
+export const horecaDashboardDepartmentSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  amount: z.coerce.number().default(0),
+  pct: z.coerce.number().default(0),
+});
+export type HorecaDashboardDepartment = z.infer<typeof horecaDashboardDepartmentSchema>;
+
+export const horecaDashboardServerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  covers: z.coerce.number().default(0),
+  sales: z.coerce.number().default(0),
+});
+export type HorecaDashboardServer = z.infer<typeof horecaDashboardServerSchema>;
+
+export const horecaDashboardSchema = z.object({
+  day: z.string().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  revenue: z.object({
+    total: z.coerce.number().default(0),
+    change_pct: z.number().nullable().optional().default(null),
+  }),
+  checks: z.object({
+    count: z.coerce.number().default(0),
+    guests: z.coerce.number().default(0),
+  }),
+  avg_check: z.object({
+    value: z.coerce.number().default(0),
+    target: z.coerce.number().default(45000),
+  }),
+  avg_turn_minutes: z.object({
+    value: z.coerce.number().default(0),
+    optimal: z.coerce.number().default(50),
+  }),
+  departments: z.array(horecaDashboardDepartmentSchema).default([]),
+  servers: z.array(horecaDashboardServerSchema).default([]),
+});
+export type HorecaDashboardData = z.infer<typeof horecaDashboardSchema>;
+
+export const horecaDashboardSettingsSchema = z.object({
+  target_check: z.coerce.number().default(45000),
+  optimal_turn: z.coerce.number().default(50),
+});
+export type HorecaDashboardSettings = z.infer<typeof horecaDashboardSettingsSchema>;
+
+export const updateHorecaDashboardSettingsDtoSchema = z.object({
+  target_check: z.number().gt(0, 'Enter an average check target above zero.'),
+  optimal_turn: z.number().gt(0, 'Enter a table-turn time above zero.'),
+});
+export type UpdateHorecaDashboardSettingsDto = z.infer<typeof updateHorecaDashboardSettingsDtoSchema>;
+
+

@@ -4,10 +4,12 @@ import { ArrowLeftIcon, ShoppingCartIcon } from 'react-native-heroicons/outline'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHorecaStore } from '../../db/offlineStore';
 import { useHorecaColors } from '../../theme/colors';
+import { resolveBusinessName } from '../../utils/vat';
 import { AppText } from '../atoms/AppText';
 
 export interface HorecaSubAppBarProps {
   title: string;
+  subtitle?: string;
   onBack?: () => void;
   ordersCount?: number;
   onOrdersPress?: () => void;
@@ -16,10 +18,11 @@ export interface HorecaSubAppBarProps {
 
 /**
  * Secondary AppBar for screens not on the bottom navigation bar.
- * Displays back button on the left, screen title, and orders cart icon with counter on the right.
+ * Displays back button on the left, screen title (with business subtitle), and orders cart icon with counter on the right.
  */
 export function HorecaSubAppBar({
   title,
+  subtitle,
   onBack,
   ordersCount,
   onOrdersPress,
@@ -29,20 +32,13 @@ export function HorecaSubAppBar({
   const colors = useHorecaColors();
 
   const orders = useHorecaStore(state => state.orders);
-  const activeOrderId = useHorecaStore(state => state.activeOrderId);
-  const activeTableId = useHorecaStore(state => state.activeTableId);
+  const businessProfile = useHorecaStore(state => state.businessProfile);
 
-  const currentOrder =
-    (activeOrderId ? orders[activeOrderId] : null) ??
-    Object.values(orders).find(o => o.table_id === activeTableId && o.status === 'open');
-
-  const computedCount = currentOrder
-    ? (currentOrder.items ?? []).reduce((sum, item) => sum + item.qty, 0)
-    : Object.values(orders)
-        .filter(o => o.status === 'open')
-        .reduce((sum, o) => sum + (o.items ?? []).reduce((s, it) => s + it.qty, 0), 0);
+  const computedCount = Object.values(orders).filter(o => o.status === 'open').length;
 
   const badgeCount = ordersCount ?? computedCount;
+  const businessName = resolveBusinessName(businessProfile);
+  const resolvedSubtitle = subtitle?.trim() || (businessName ? businessName : undefined);
 
   return (
     <View
@@ -61,9 +57,20 @@ export function HorecaSubAppBar({
           >
             <ArrowLeftIcon color={colors.onSurface} size={18} />
           </Pressable>
-          <AppText variant="title" numberOfLines={1} className="text-text font-bold flex-1">
-            {title}
-          </AppText>
+          <View className="flex-1">
+            <AppText variant="title" numberOfLines={1} className="text-text font-bold">
+              {title}
+            </AppText>
+            {resolvedSubtitle ? (
+              <AppText
+                variant="caption"
+                numberOfLines={1}
+                className="text-text-secondary text-[11px] font-medium"
+              >
+                {resolvedSubtitle}
+              </AppText>
+            ) : null}
+          </View>
         </View>
 
         {/* Right: Orders Cart Icon Counter */}

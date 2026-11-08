@@ -25,7 +25,11 @@ import type { PaymentStatus, StartPaymentResponse } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
 import { syncEngine } from '@horeca/db/syncEngine';
 import { HORECA_TABLES_QUERY_KEY } from '@horeca/features/floor/hooks/useFloorTables';
-import { HORECA_OPEN_ORDERS_QUERY_KEY } from '@horeca/features/orders/hooks/useOpenOrders';
+import {
+  HORECA_OPEN_ORDERS_QUERY_KEY,
+  refreshOpenOrdersInBackground,
+} from '@horeca/features/orders/hooks/useOpenOrders';
+import { printerService } from '@horeca/services/printerService';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
@@ -50,6 +54,7 @@ export interface CompletedPaymentResult {
   saleId?: string | null;
   saleNumber?: string | null;
   paymentId?: string | null;
+  fdn?: string | null;
 }
 
 interface PaymentCheckoutScreenProps {
@@ -121,6 +126,8 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
 
   // Ensure we always have a real server orderId on the payment screen
   useEffect(() => {
+    if (hasFinalizedRef.current) return;
+
     const candidate = propOrderId || currentOrder?.id || activeOrderId;
     if (candidate && !candidate.startsWith('temp-ord-')) {
       setResolvedOrderId(candidate);
@@ -216,11 +223,15 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
       if (hasFinalizedRef.current) return;
       hasFinalizedRef.current = true;
       completeOrderSettlement(result.orderId, status);
+      if (resolvedOrderId && resolvedOrderId !== result.orderId) {
+        completeOrderSettlement(resolvedOrderId, status);
+      }
+      refreshOpenOrdersInBackground(queryClient).catch(() => { });
       queryClient.invalidateQueries({ queryKey: HORECA_OPEN_ORDERS_QUERY_KEY }).catch(() => { });
       queryClient.invalidateQueries({ queryKey: HORECA_TABLES_QUERY_KEY }).catch(() => { });
       onPaymentSuccess(result);
     },
-    [completeOrderSettlement, onPaymentSuccess, queryClient],
+    [completeOrderSettlement, onPaymentSuccess, queryClient, resolvedOrderId],
   );
 
   // ==========================================
@@ -251,6 +262,12 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
         paymentMethod: 'cash',
       });
 
+      if (triggerDrawer) {
+        printerService.kickCashDrawer().catch(() => {
+          // Do not block completing the cash sale if cash drawer / printer is offline
+        });
+      }
+
       finalizeOrderSuccess(
         {
           orderId: res.orderId || resolvedOrderId,
@@ -258,6 +275,12 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
           amount: resolvedTotal,
           saleId: res.saleId,
           saleNumber: res.saleNumber,
+          fdn:
+            res.fdn ||
+            res.efrisInvoiceNumber ||
+            res.efrisNumber ||
+            res.fiscalNumber ||
+            null,
         },
         'billed',
       );
@@ -372,15 +395,24 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
         setPaymentStatus(statusRes);
 
         if (statusRes.state === 'paid') {
+          const settledId = statusRes.orderId || targetOrderId;
+          completeOrderSettlement(settledId, 'paid');
+          refreshOpenOrdersInBackground(queryClient).catch(() => { });
           setTimeout(() => {
             finalizeOrderSuccess(
               {
-                orderId: statusRes.orderId || targetOrderId,
+                orderId: settledId,
                 method: 'mobile_money',
                 amount: statusRes.amount || momoSession.amount || resolvedTotal,
                 saleId: statusRes.saleId,
                 saleNumber: statusRes.saleNumber,
                 paymentId: statusRes.paymentId,
+                fdn:
+                  statusRes.fdn ||
+                  statusRes.efrisInvoiceNumber ||
+                  statusRes.efrisNumber ||
+                  statusRes.fiscalNumber ||
+                  null,
               },
               'paid',
             );
@@ -623,6 +655,12 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
                 saleId: paymentStatus?.saleId,
                 saleNumber: paymentStatus?.saleNumber,
                 paymentId: paymentStatus?.paymentId || momoSession?.paymentId,
+                fdn:
+                  paymentStatus?.fdn ||
+                  paymentStatus?.efrisInvoiceNumber ||
+                  paymentStatus?.efrisNumber ||
+                  paymentStatus?.fiscalNumber ||
+                  null,
               },
               'paid',
             )

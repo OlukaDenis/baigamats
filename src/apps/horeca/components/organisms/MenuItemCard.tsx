@@ -47,10 +47,13 @@ export const MenuItemCard = React.memo<MenuItemCardProps>(
 
         {/* Details */}
         <View className="flex-1 mr-2">
-          <View className="flex-row items-center">
+          <View className="flex-row items-center flex-wrap">
             <AppText variant="label" className="font-bold text-text mr-2" numberOfLines={1}>
               {item.name}
             </AppText>
+            {item.age_restricted ? (
+              <Badge label="18+" variant="reserved" size="sm" className="mr-1.5" />
+            ) : null}
             {!isAvailable ? (
               <Badge label="UNAVAILABLE" variant="neutral" size="sm" />
             ) : null}

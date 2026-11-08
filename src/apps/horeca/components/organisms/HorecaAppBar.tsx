@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, Pressable, View } from 'react-native';
 import {
   ComputerDesktopIcon,
   LockClosedIcon,
@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHorecaStore } from '../../db/offlineStore';
 import { useHorecaColors } from '../../theme/colors';
+import { resolveBusinessName } from '../../utils/vat';
 import { AppText } from '../atoms/AppText';
 
 export interface HorecaAppBarProps {
@@ -26,35 +27,42 @@ export interface HorecaAppBarProps {
 
 /**
  * Primary AppBar displayed on bottom navigation bar screens.
- * Shows left icon, screen title, and right actions: cart (orders) with counter, lock, and user account.
+ * Shows left icon (or business logo), screen title + business details subtitle,
+ * and right actions: cart (orders) with counter, lock, and user account.
  */
 export function HorecaAppBar({
   title,
+  subtitle,
   leftIcon,
   ordersCount,
   onOrdersPress,
   onLockPress,
   onProfilePress,
+  rightAction,
   className = '',
 }: HorecaAppBarProps) {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
+  const [logoError, setLogoError] = useState(false);
 
   const orders = useHorecaStore(state => state.orders);
-  const activeOrderId = useHorecaStore(state => state.activeOrderId);
-  const activeTableId = useHorecaStore(state => state.activeTableId);
+  const businessProfile = useHorecaStore(state => state.businessProfile);
 
-  const currentOrder =
-    (activeOrderId ? orders[activeOrderId] : null) ??
-    Object.values(orders).find(o => o.table_id === activeTableId && o.status === 'open');
-
-  const computedCount = currentOrder
-    ? (currentOrder.items ?? []).reduce((sum, item) => sum + item.qty, 0)
-    : Object.values(orders)
-        .filter(o => o.status === 'open')
-        .reduce((sum, o) => sum + (o.items ?? []).reduce((s, it) => s + it.qty, 0), 0);
+  const computedCount = Object.values(orders).filter(o => o.status === 'open').length;
 
   const badgeCount = ordersCount ?? computedCount;
+
+  const businessName = resolveBusinessName(businessProfile);
+  const businessContact = [
+    businessProfile?.phone?.trim(),
+    businessProfile?.address?.trim(),
+  ]
+    .filter(Boolean)
+    .join(' • ');
+  const resolvedSubtitle =
+    subtitle?.trim() || (businessName ? businessName : undefined);
+
+  const showLogo = Boolean(businessProfile?.logo_url && !logoError);
 
   return (
     <View
@@ -62,10 +70,17 @@ export function HorecaAppBar({
       className={`border-b border-border bg-surface px-4 pb-3 ${className}`.trim()}
     >
       <View className="flex-row items-center justify-between">
-        {/* Left: Icon & Screen Name */}
+        {/* Left: Icon / Business Logo & Screen Name + Business Header */}
         <View className="flex-row items-center flex-1 mr-2">
           {leftIcon ? (
             <View className="mr-3">{leftIcon}</View>
+          ) : showLogo ? (
+            <Image
+              source={{ uri: businessProfile!.logo_url! }}
+              onError={() => setLogoError(true)}
+              className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 mr-3"
+              resizeMode="cover"
+            />
           ) : (
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mr-3">
               <ComputerDesktopIcon
@@ -76,13 +91,25 @@ export function HorecaAppBar({
               />
             </View>
           )}
-          <AppText variant="title" numberOfLines={1} className="text-text font-bold flex-1">
-            {title}
-          </AppText>
+          <View className="flex-1">
+            <AppText variant="title" numberOfLines={1} className="text-text font-bold">
+              {title}
+            </AppText>
+            {resolvedSubtitle ? (
+              <AppText
+                variant="caption"
+                numberOfLines={1}
+                className="text-text-secondary text-[11px] font-medium"
+              >
+                {resolvedSubtitle}
+              </AppText>
+            ) : null}
+          </View>
         </View>
 
         {/* Right: Cart (Orders) Counter, Lock, Account */}
         <View className="flex-row items-center">
+          {rightAction ? <View className="mr-2">{rightAction}</View> : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`View Orders, ${badgeCount} selected`}

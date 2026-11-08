@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Image, Pressable, View } from 'react-native';
 import {
   CheckCircleIcon,
   DocumentCheckIcon,
@@ -7,14 +7,25 @@ import {
   QrCodeIcon,
   ShareIcon,
 } from 'react-native-heroicons/outline';
+import { useQueryClient } from '@tanstack/react-query';
 import { horecaApi } from '@horeca/api/horecaApiClient';
 import type { Receipt } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
+import { refreshOpenOrdersInBackground } from '@horeca/features/orders/hooks/useOpenOrders';
 import { mockReceipt } from '@horeca/mock/horecaMockData';
+import { printerService } from '@horeca/services/printerService';
+import { usePrinterStore } from '@horeca/services/printerStore';
 import { useHorecaColors } from '@horeca/theme/colors';
+import {
+  calculateVatBreakdown,
+  resolveBusinessName,
+  resolvePrintableTin,
+  resolveRealFiscalNumber,
+} from '@horeca/utils/vat';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
+import { BluetoothPrinterModal } from '@horeca/components/organisms/BluetoothPrinterModal';
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
@@ -31,11 +42,23 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
   onDone,
 }) => {
   const colors = useHorecaColors();
+  const queryClient = useQueryClient();
   const orders = useHorecaStore(state => state.orders);
   const tables = useHorecaStore(state => state.tables);
   const activeTableId = useHorecaStore(state => state.activeTableId);
+  const businessProfile = useHorecaStore(state => state.businessProfile);
 
   const [fetchedReceipt, setFetchedReceipt] = useState<Receipt | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [isPrinterModalOpen, setIsPrinterModalOpen] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
+  const savedPrinter = usePrinterStore(state => state.savedPrinter);
+
+  useEffect(() => {
+    usePrinterStore.getState().hydrate().catch(() => {});
+    refreshOpenOrdersInBackground(queryClient).catch(() => {});
+  }, [queryClient]);
 
   useEffect(() => {
     if (!saleInfo?.orderId || saleInfo.orderId.startsWith('temp-ord-')) return;
@@ -60,11 +83,22 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
     tables.find(t => t.id === (settledOrder?.table_id ?? activeTableId)) ?? tables[0];
 
   const receipt = useMemo<Receipt>(() => {
+    const businessDisplayName = resolveBusinessName(businessProfile, fetchedReceipt?.business || mockReceipt.business);
+    const resolvedFdn = resolveRealFiscalNumber({
+      fdn: saleInfo?.fdn ?? fetchedReceipt?.fdn,
+      efrisInvoiceNumber: fetchedReceipt?.efrisInvoiceNumber,
+      efrisNumber: fetchedReceipt?.efrisNumber,
+      fiscalNumber: fetchedReceipt?.fiscalNumber,
+    });
+
     if (fetchedReceipt) {
       return {
         ...mockReceipt,
         ...fetchedReceipt,
+        business: businessDisplayName,
         orderNumber: saleInfo?.saleNumber || fetchedReceipt.orderNumber,
+        fdn: resolvedFdn,
+        efrisInvoiceNumber: resolvedFdn,
       };
     }
 
@@ -81,26 +115,89 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
 
       return {
         ...mockReceipt,
+        business: businessDisplayName,
         orderNumber: saleInfo?.saleNumber || settledOrder.order_number,
         table: settledTable ? `T${settledTable.table_number}` : mockReceipt.table,
         lines,
         itemsTotal,
         total,
+        fdn: resolvedFdn,
+        efrisInvoiceNumber: resolvedFdn,
       };
     }
 
     return {
       ...mockReceipt,
+      business: businessDisplayName,
       orderNumber: saleInfo?.saleNumber || mockReceipt.orderNumber,
       total: saleInfo?.amount || mockReceipt.total,
+      fdn: resolvedFdn,
+      efrisInvoiceNumber: resolvedFdn,
     };
-  }, [fetchedReceipt, saleInfo, settledOrder, settledTable]);
+  }, [businessProfile, fetchedReceipt, saleInfo, settledOrder, settledTable]);
 
-  const subtotal = Math.round(receipt.total / 1.18);
-  const vatAmount = Math.max(0, receipt.total - subtotal);
+  const vatBreakdown = useMemo(
+    () => calculateVatBreakdown(receipt.total, businessProfile?.vat),
+    [receipt.total, businessProfile?.vat],
+  );
+
+  const printableTin = useMemo(
+    () => resolvePrintableTin(businessProfile),
+    [businessProfile],
+  );
+
+  const realFiscalNumber = useMemo(
+    () => resolveRealFiscalNumber(receipt),
+    [receipt],
+  );
+
+  const addressLine = businessProfile?.address?.trim() || null;
+  const phoneLine = businessProfile?.phone?.trim() ? `Tel: ${businessProfile.phone.trim()}` : null;
+  const emailLine = businessProfile?.email?.trim() || null;
+  const contactSummary = [addressLine, phoneLine, emailLine].filter(Boolean).join(' • ');
+  const headerNote = businessProfile?.receipt?.header_note?.trim() || null;
+  const footerNote = businessProfile?.receipt?.footer?.trim() || null;
+  const showLogo = Boolean(businessProfile?.logo_url && !logoError);
+
+  const executePrint = useCallback(
+    async (overrideAddress?: string) => {
+      setIsPrinting(true);
+      try {
+        await printerService.printReceipt(receipt, {
+          address: overrideAddress,
+          businessProfile,
+        });
+        const activeName =
+          usePrinterStore.getState().savedPrinter?.name || 'Bluetooth Printer';
+        appModal.success(
+          'Receipt Printed',
+          `Thermal receipt sent to ${activeName}.`,
+        );
+      } catch (err: any) {
+        if (err?.code === 'NO_PRINTER_SELECTED' || err?.message === 'NO_PRINTER_SELECTED') {
+          setIsPrinterModalOpen(true);
+          return;
+        }
+        appModal.confirm({
+          title: 'Printer Connection Issue',
+          message:
+            err?.message ||
+            'Could not print to the Bluetooth thermal printer. Would you like to select or reconnect your printer?',
+          confirmText: 'Select Printer',
+          cancelText: 'Cancel',
+          onConfirm: () => {
+            setIsPrinterModalOpen(true);
+          },
+        });
+      } finally {
+        setIsPrinting(false);
+      }
+    },
+    [businessProfile, receipt],
+  );
 
   const handlePrint = () => {
-    appModal.info('Printing', 'Thermal receipt sent to Bluetooth ESC/POS printer.');
+    executePrint();
   };
 
   const handleShare = () => {
@@ -143,18 +240,36 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
       <View className="rounded-3xl bg-surface border border-border p-6 shadow-md mb-6">
         {/* Header Branding */}
         <View className="items-center pb-4 border-b border-border/50">
-          <View className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-2">
-            <DocumentCheckIcon color={colors.primary} size={24} />
-          </View>
+          {showLogo ? (
+            <Image
+              source={{ uri: businessProfile!.logo_url! }}
+              onError={() => setLogoError(true)}
+              className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 mb-2"
+              resizeMode="contain"
+            />
+          ) : (
+            <View className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-2">
+              <DocumentCheckIcon color={colors.primary} size={24} />
+            </View>
+          )}
           <AppText variant="title" className="text-xl font-extrabold text-text text-center">
             {receipt.business}
           </AppText>
-          <AppText variant="caption" className="text-text-secondary text-center mt-0.5">
-            Kampala, Uganda • Tel: +256 700 123 456
-          </AppText>
-          <AppText variant="caption" className="text-text-secondary text-center text-[11px] mt-0.5">
-            TIN: {receipt.tin} • VAT: 18% INCLUDED
-          </AppText>
+          {contactSummary ? (
+            <AppText variant="caption" className="text-text-secondary text-center mt-0.5">
+              {contactSummary}
+            </AppText>
+          ) : null}
+          {printableTin ? (
+            <AppText variant="caption" className="text-text-secondary text-center text-[11px] mt-0.5">
+              TIN: {printableTin}
+            </AppText>
+          ) : null}
+          {headerNote ? (
+            <AppText variant="caption" className="text-text-secondary text-center text-xs italic mt-1">
+              {headerNote}
+            </AppText>
+          ) : null}
 
           {/* Paid Stamp Badge */}
           <View className="mt-3 px-3.5 py-1.5 rounded-full bg-status-available/15 border border-status-available/30 flex-row items-center">
@@ -218,54 +333,91 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
 
         {/* Totals Section */}
         <View className="py-4 border-b border-border/40">
-          <View className="flex-row justify-between py-1">
-            <AppText variant="caption" className="text-text-secondary">
-              Subtotal
-            </AppText>
-            <AppText variant="caption" className="text-text font-medium">
-              UGX {subtotal.toLocaleString()}
-            </AppText>
-          </View>
-          <View className="flex-row justify-between py-1">
-            <AppText variant="caption" className="text-text-secondary">
-              VAT (18% Statutory Tax)
-            </AppText>
-            <AppText variant="caption" className="text-text font-medium">
-              UGX {vatAmount.toLocaleString()}
-            </AppText>
-          </View>
-          <View className="flex-row justify-between pt-2 mt-1 border-t border-border/30 items-center">
+          {vatBreakdown.enabled ? (
+            <>
+              <View className="flex-row justify-between py-1">
+                <AppText variant="caption" className="text-text-secondary">
+                  Subtotal (Net)
+                </AppText>
+                <AppText variant="caption" className="text-text font-medium">
+                  UGX {vatBreakdown.netAmount.toLocaleString()}
+                </AppText>
+              </View>
+              <View className="flex-row justify-between py-1">
+                <AppText variant="caption" className="text-text-secondary">
+                  {vatBreakdown.label} ({vatBreakdown.ratePct}%{' '}
+                  {vatBreakdown.inclusive ? 'Inclusive' : 'Exclusive'})
+                </AppText>
+                <AppText variant="caption" className="text-text font-medium">
+                  UGX {vatBreakdown.vatAmount.toLocaleString()}
+                </AppText>
+              </View>
+            </>
+          ) : null}
+          <View
+            className={`flex-row justify-between items-center ${
+              vatBreakdown.enabled ? 'pt-2 mt-1 border-t border-border/30' : ''
+            }`}
+          >
             <AppText variant="title" className="text-lg font-bold text-text">
               GRAND TOTAL
             </AppText>
             <AppText variant="title" className="text-xl font-extrabold text-primary">
-              UGX {receipt.total.toLocaleString()}
+              UGX {vatBreakdown.grandTotal.toLocaleString()}
             </AppText>
           </View>
         </View>
 
-        {/* Fiscal Compliance Footer */}
-        <View className="items-center pt-4">
-          <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mb-1.5">
-            <QrCodeIcon color={colors.onSurfaceVariant} size={22} />
+        {/* Fiscal Compliance & Receipt Footer */}
+        {realFiscalNumber || footerNote ? (
+          <View className="items-center pt-4">
+            {realFiscalNumber ? (
+              <>
+                <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mb-1.5">
+                  <QrCodeIcon color={colors.onSurfaceVariant} size={22} />
+                </View>
+                <AppText variant="caption" className="text-text-secondary font-mono text-[10px]">
+                  EFRIS FDN: {realFiscalNumber}
+                </AppText>
+              </>
+            ) : null}
+            {footerNote ? (
+              <AppText variant="caption" className="text-text-secondary text-xs text-center mt-1">
+                {footerNote}
+              </AppText>
+            ) : null}
           </View>
-          <AppText variant="caption" className="text-text-secondary font-mono text-[10px]">
-            EFRIS FDN: {receipt.fdn}
-          </AppText>
-          <AppText variant="caption" className="text-text-secondary text-[10px] text-center mt-1">
-            Thank you for dining with us! Please retain this fiscal receipt.
-          </AppText>
-        </View>
+        ) : null}
       </View>
 
       {/* Action Buttons */}
       <View className="space-y-3">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Configure Bluetooth Printer"
+          onPress={() => setIsPrinterModalOpen(true)}
+          className="flex-row items-center justify-between px-4 py-2.5 mb-2 rounded-2xl bg-surface border border-border active:opacity-80"
+        >
+          <View className="flex-row items-center flex-1 mr-2">
+            <PrinterIcon color={colors.primary} size={16} />
+            <AppText variant="caption" className="text-text font-semibold ml-2" numberOfLines={1}>
+              {savedPrinter
+                ? `Printer: ${savedPrinter.name} (${savedPrinter.paperWidth}mm)`
+                : 'No default Bluetooth printer selected'}
+            </AppText>
+          </View>
+          <AppText variant="caption" className="text-primary font-bold text-xs">
+            {savedPrinter ? 'Change' : 'Select Printer'}
+          </AppText>
+        </Pressable>
+
         <View className="flex-row mb-3">
           <View className="flex-1 mr-2">
             <Button
-              label="Print Receipt"
+              label={isPrinting ? 'Printing...' : 'Print Receipt'}
               variant="secondary"
               onPress={handlePrint}
+              loading={isPrinting}
               leftIcon={<PrinterIcon color={colors.primary} size={18} />}
             />
           </View>
@@ -286,6 +438,14 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
           onPress={onDone}
         />
       </View>
+
+      <BluetoothPrinterModal
+        visible={isPrinterModalOpen}
+        onClose={() => setIsPrinterModalOpen(false)}
+        onPrinterReady={address => {
+          executePrint(address);
+        }}
+      />
     </ScreenTemplate>
   );
 };

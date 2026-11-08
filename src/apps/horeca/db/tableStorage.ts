@@ -1,5 +1,13 @@
 import * as Keychain from 'react-native-keychain';
-import type { MenuCategory, MenuItem, MenuTree, Table, TableCategory } from '../api/schemas';
+import {
+  type BusinessProfile,
+  businessProfileSchema,
+  type MenuCategory,
+  type MenuItem,
+  type MenuTree,
+  type Table,
+  type TableCategory,
+} from '../api/schemas';
 import { menuRepository } from './repositories/menuRepository';
 import { tableRepository } from './repositories/tableRepository';
 
@@ -13,10 +21,13 @@ export interface CachedMenuCatalogue {
 const TABLE_STORAGE_SERVICE = 'com.baigamats.horeca.tables.offline';
 const CATEGORY_STORAGE_SERVICE = 'com.baigamats.horeca.table-categories.offline';
 const MENU_STORAGE_SERVICE = 'com.baigamats.horeca.menu.offline';
+const BUSINESS_PROFILE_SERVICE = 'com.baigamats.horeca.business.offline';
+const BUSINESS_PROFILE_ACCOUNT = 'business_profile';
 
 let inMemoryTables: Table[] | null = null;
 let inMemoryCategories: TableCategory[] | null = null;
 let inMemoryMenuCatalogue: CachedMenuCatalogue | null = null;
+let inMemoryBusinessProfile: BusinessProfile | null = null;
 
 /**
  * Storage adapter backed by high-performance SQLite via WatermelonDB repositories.
@@ -115,16 +126,58 @@ export const tableStorage = {
   },
 
   /**
+   * Persist Business Profile for offline receipt & AppBar branding.
+   */
+  async saveBusinessProfile(profile: BusinessProfile): Promise<void> {
+    inMemoryBusinessProfile = profile;
+    try {
+      await Keychain.setGenericPassword(
+        BUSINESS_PROFILE_ACCOUNT,
+        JSON.stringify(profile),
+        {
+          service: BUSINESS_PROFILE_SERVICE,
+          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+        },
+      );
+    } catch {
+      // Ignore keychain write errors
+    }
+  },
+
+  async getBusinessProfile(): Promise<BusinessProfile | null> {
+    if (inMemoryBusinessProfile) {
+      return inMemoryBusinessProfile;
+    }
+    try {
+      const creds = await Keychain.getGenericPassword({
+        service: BUSINESS_PROFILE_SERVICE,
+      });
+      if (creds && creds.password) {
+        const parsed = businessProfileSchema.safeParse(JSON.parse(creds.password));
+        if (parsed.success) {
+          inMemoryBusinessProfile = parsed.data;
+          return parsed.data;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    return inMemoryBusinessProfile;
+  },
+
+  /**
    * Clear cached tables, categories and menu, including cleaning any legacy Keychain keys.
    */
   async clear(): Promise<void> {
     inMemoryTables = null;
     inMemoryCategories = null;
     inMemoryMenuCatalogue = null;
+    inMemoryBusinessProfile = null;
     try {
       await Keychain.resetGenericPassword({ service: TABLE_STORAGE_SERVICE });
       await Keychain.resetGenericPassword({ service: CATEGORY_STORAGE_SERVICE });
       await Keychain.resetGenericPassword({ service: MENU_STORAGE_SERVICE });
+      await Keychain.resetGenericPassword({ service: BUSINESS_PROFILE_SERVICE });
     } catch {
       // Ignore
     }

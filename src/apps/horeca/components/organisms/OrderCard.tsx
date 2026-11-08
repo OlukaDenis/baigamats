@@ -40,7 +40,7 @@ export const OrderCard = React.memo<OrderCardProps>(
         ? order.total_amount
         : (order.items ?? []).reduce((sum, it) => sum + it.unit_price * it.qty, 0);
 
-    const isBilled = order.status === 'billed';
+    const isBilled = order.status === 'billed' || order.status === 'paid';
     const isOffline = order.id.startsWith('temp-ord-');
 
     return (

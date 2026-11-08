@@ -73,7 +73,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
   }, [allOrdersList]);
 
   const billedOrders = useMemo(() => {
-    return allOrdersList.filter(o => o.status === 'billed');
+    return allOrdersList.filter(o => o.status === 'billed' || o.status === 'paid');
   }, [allOrdersList]);
 
   const currentTabOrders = useMemo(() => {
