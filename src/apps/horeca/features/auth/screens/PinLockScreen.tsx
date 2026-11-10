@@ -28,6 +28,7 @@ import { NumPad } from '@horeca/components/organisms/NumPad';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
+import { resolveMatchingStaff } from '../utils/roleAccess';
 
 const PIN_LENGTH = 4;
 
@@ -103,9 +104,10 @@ export const PinLockScreen: React.FC = () => {
       if (res.session?.accessToken) {
         // Cache the successful username
         setLastUsername(username.trim());
-        await tokenStorage.saveTokens({
-          accessToken: res.session.accessToken,
-          refreshToken: res.session.refreshToken,
+        await tokenStorage.setSession({
+          session: res.session,
+          user: res.user,
+          profile: res.profile,
         });
         const me = await horecaApi.me();
         let staffList: StaffMember[] = [];
@@ -115,7 +117,11 @@ export const PinLockScreen: React.FC = () => {
         } catch {
           // staff endpoint may be restricted for this role
         }
-        loginSuccess(me, staffList.find(s => s.id === me.userId) ?? staffList[0]);
+        const matchedStaff = resolveMatchingStaff(staffList, me.userId || res.user?.id);
+        loginSuccess(me, matchedStaff ?? undefined, {
+          user: res.user,
+          profile: res.profile,
+        });
       } else {
         appModal.error('Sign In Failed', 'Unexpected response from server.');
         setPin('');

@@ -23,6 +23,7 @@ import { Button } from '@horeca/components/atoms/Button';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useHorecaAuthStore } from '@horeca/features/auth/store/horecaAuthStore';
+import { resolveIsManager } from '@horeca/features/auth/utils/roleAccess';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { DashboardDateFilter } from '../components/DashboardDateFilter';
 import {
@@ -49,12 +50,9 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
   const colors = useHorecaColors();
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const me = useHorecaAuthStore(state => state.me);
+  const loginProfile = useHorecaAuthStore(state => state.loginProfile);
 
-  const isManager =
-    activeStaff?.access === 'manager' ||
-    activeStaff?.role === 'manager' ||
-    activeStaff?.role === 'admin' ||
-    (!activeStaff && (me?.role === 'manager' || me?.role === 'admin'));
+  const isManager = resolveIsManager({ loginProfile, me, activeStaff });
 
   const [preset, setPreset] = useState<DashboardDatePreset>('today');
   const [lastRangePreset, setLastRangePreset] =

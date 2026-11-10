@@ -28,11 +28,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const { isDark, toggleTheme, colors } = useHorecaTheme();
   const me = useHorecaAuthStore(state => state.me);
+  const loginProfile = useHorecaAuthStore(state => state.loginProfile);
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const logout = useHorecaAuthStore(state => state.logout);
 
   const displayName = me?.name ?? activeStaff?.name ?? 'Staff Member';
-  const displayRole = (me?.role ?? activeStaff?.role ?? 'staff').toUpperCase();
+  const displayRole = (loginProfile?.role ?? me?.role ?? activeStaff?.role ?? 'staff').toUpperCase();
 
   const initials =
     displayName

@@ -9,6 +9,7 @@ import {
 import { env } from '@shared/config/env';
 import { tokenStorage } from '@shared/services/tokenStorage';
 import { horecaApi } from '@horeca/api/horecaApiClient';
+import type { LoginResponse, StaffMember } from '@horeca/api/schemas';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
@@ -16,6 +17,7 @@ import { FormField } from '@horeca/components/molecules/FormField';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
+import { resolveMatchingStaff } from '../utils/roleAccess';
 
 export const HorecaLoginScreen: React.FC = () => {
   const colors = useHorecaColors();
@@ -42,6 +44,33 @@ export const HorecaLoginScreen: React.FC = () => {
     return () => sub.remove();
   }, [isMfaStep]);
 
+  const completeAuthSession = async (res: LoginResponse) => {
+    if (!res.session?.accessToken) {
+      return;
+    }
+
+    await tokenStorage.setSession({
+      session: res.session,
+      user: res.user,
+      profile: res.profile,
+    });
+
+    const me = await horecaApi.me();
+    let staffList: StaffMember[] = [];
+    try {
+      staffList = await horecaApi.getStaff();
+      useHorecaAuthStore.getState().setStaffList(staffList);
+    } catch {
+      // staff endpoint might require manager or be empty
+    }
+
+    const matchedStaff = resolveMatchingStaff(staffList, me.userId || res.user?.id);
+    loginSuccess(me, matchedStaff ?? undefined, {
+      user: res.user,
+      profile: res.profile,
+    });
+  };
+
   const handleLogin = async () => {
     if (!loginId.trim() || !password.trim()) {
       appModal.warning('Required', 'Please enter your email or staff username and password.');
@@ -57,19 +86,7 @@ export const HorecaLoginScreen: React.FC = () => {
         setFactorId(res.factorId);
         setMfaSession(res.mfaSession);
       } else if (res.session?.accessToken) {
-        await tokenStorage.saveTokens({
-          accessToken: res.session.accessToken,
-          refreshToken: res.session.refreshToken,
-        });
-        const me = await horecaApi.me();
-        let staffList: any[] = [];
-        try {
-          staffList = await horecaApi.getStaff();
-          useHorecaAuthStore.getState().setStaffList(staffList);
-        } catch {
-          // staff endpoint might require manager or be empty
-        }
-        loginSuccess(me, staffList[0]);
+        await completeAuthSession(res);
       }
     } catch (err: any) {
       if (env.ENABLE_MOCK) {
@@ -80,7 +97,10 @@ export const HorecaLoginScreen: React.FC = () => {
           role: 'manager' as const,
           permissions: ['tables:read', 'tables:write', 'orders:read', 'orders:write', 'billing:write'],
         };
-        loginSuccess(mockMe);
+        loginSuccess(mockMe, undefined, {
+          user: { id: 'staff-01', email: 'alex@horeca.com' },
+          profile: { organizationId: 'org-demo', role: 'manager' },
+        });
       } else {
         const errorMsg =
           err?.response?.data?.message || err?.message || 'Invalid username or password';
@@ -101,19 +121,7 @@ export const HorecaLoginScreen: React.FC = () => {
     try {
       const res = await horecaApi.mfaVerify(factorId, mfaCode, mfaSession);
       if (res.session?.accessToken) {
-        await tokenStorage.saveTokens({
-          accessToken: res.session.accessToken,
-          refreshToken: res.session.refreshToken,
-        });
-        const me = await horecaApi.me();
-        let staffList: any[] = [];
-        try {
-          staffList = await horecaApi.getStaff();
-          useHorecaAuthStore.getState().setStaffList(staffList);
-        } catch {
-          // ignore
-        }
-        loginSuccess(me, staffList[0]);
+        await completeAuthSession(res);
       }
     } catch (err: any) {
       const errorMsg =

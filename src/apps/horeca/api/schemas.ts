@@ -410,7 +410,7 @@ export const meResponseSchema = z.object({
   userId: z.string(),
   name: z.string(),
   organizationId: z.string(),
-  role: z.enum(['manager', 'cashier', 'waiter', 'kitchen', 'admin', 'owner']),
+  role: z.enum(['manager', 'cashier', 'waiter', 'kitchen', 'admin', 'owner', 'staff']),
   permissions: z.array(z.string()),
 });
 export type MeResponse = z.infer<typeof meResponseSchema>;

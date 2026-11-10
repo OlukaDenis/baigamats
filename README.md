@@ -233,12 +233,15 @@ pnpm test            # Jest unit & component test suites
 
 ## Production Release Signing Configuration
 
-Release builds are configured in `android/app/build.gradle`. For local development and test builds, they utilize `debug.keystore`.
+Release builds (`*StagingRelease` and `*ProdRelease`) use per-app release signing configurations in [`android/app/build.gradle`](file:///d:/Projects/MobileProjects/baigamats/android/app/build.gradle) (`saccoRelease` and `horecaRelease`).
 
-Before deploying to Google Play Store:
-1. Generate your production release keystore:
-   ```bash
-   keytool -genkey -v -keystore my-release-key.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
-   ```
-2. Place the keystore in `android/app/` and reference it via Gradle properties or environment variables (`MYAPP_UPLOAD_STORE_FILE`, `MYAPP_UPLOAD_KEY_ALIAS`, etc.).
-3. Update `signingConfigs.release` in `android/app/build.gradle` accordingly.
+Credentials are loaded in order from:
+1. `android/keystore.properties` (gitignored; see [`android/keystore.properties.example`](file:///d:/Projects/MobileProjects/baigamats/android/keystore.properties.example))
+2. Gradle properties (`~/.gradle/gradle.properties` or `-P` flags)
+3. Environment variables (`HORECA_UPLOAD_*` / `SACCO_UPLOAD_*`)
+
+Expected keys:
+- `HORECA_UPLOAD_STORE_FILE`, `HORECA_UPLOAD_STORE_PASSWORD`, `HORECA_UPLOAD_KEY_ALIAS`, `HORECA_UPLOAD_KEY_PASSWORD`
+- `SACCO_UPLOAD_STORE_FILE`, `SACCO_UPLOAD_STORE_PASSWORD`, `SACCO_UPLOAD_KEY_ALIAS`, `SACCO_UPLOAD_KEY_PASSWORD`
+
+Keystore paths are resolved relative to `android/app/` (where `*.keystore` files are gitignored). If release credentials or keystore files are not present locally, Gradle logs a warning and falls back to `debug.keystore`.

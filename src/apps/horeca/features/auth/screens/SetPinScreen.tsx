@@ -17,6 +17,8 @@ interface SetPinScreenProps {
 export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
   const colors = useHorecaColors();
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
+  const me = useHorecaAuthStore(state => state.me);
+  const loginUser = useHorecaAuthStore(state => state.loginUser);
 
   const [step, setStep] = useState<'enter' | 'confirm'>('enter');
   const [pin, setPin] = useState<string>('');
@@ -56,14 +58,15 @@ export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
       return;
     }
 
-    if (!activeStaff) {
+    const targetStaffId = activeStaff?.id ?? me?.userId ?? loginUser?.id;
+    if (!targetStaffId) {
       appModal.error('Error', 'No active staff member selected.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await horecaApi.setStaffPin(activeStaff.id, { pin: confirmed });
+      await horecaApi.setStaffPin(targetStaffId, { pin: confirmed });
       appModal.success('Success', 'Staff PIN updated successfully.', onBack);
     } catch {
       // Offline / demo fallback

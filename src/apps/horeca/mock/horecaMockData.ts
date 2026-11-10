@@ -39,8 +39,8 @@ export const mockStaffMembers: StaffMember[] = [
   {
     id: 'staff-01',
     name: 'Alex R.',
-    role: 'Head Bartender',
-    access: 'waiter',
+    role: 'Floor Manager',
+    access: 'manager',
     hasPin: true,
   },
   {

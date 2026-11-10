@@ -14,6 +14,49 @@ def loadFlavorVersion(String appFlavor, String envFlavor) {
     }
     return [versionCode: 1, versionName: "1.0.0"]
 }
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { stream ->
+        keystoreProperties.load(stream)
+    }
+}
+
+def resolveSigningProp = { String key ->
+    def val = keystoreProperties.getProperty(key)
+    if (val == null || val.trim().isEmpty()) {
+        val = project.findProperty(key)?.toString()
+    }
+    if (val == null || val.trim().isEmpty()) {
+        val = System.getenv(key)
+    }
+    return val?.trim() ?: null
+}
+
+def configureReleaseSigning = { signingCfg, String prefix ->
+    def storeFileName = resolveSigningProp("${prefix}_UPLOAD_STORE_FILE")
+    def storePwd = resolveSigningProp("${prefix}_UPLOAD_STORE_PASSWORD")
+    def keyAliasVal = resolveSigningProp("${prefix}_UPLOAD_KEY_ALIAS")
+    def keyPwd = resolveSigningProp("${prefix}_UPLOAD_KEY_PASSWORD")
+
+    if (storeFileName && storePwd && keyAliasVal && keyPwd) {
+        def resolvedStoreFile = file(storeFileName)
+        if (resolvedStoreFile.exists()) {
+            signingCfg.storeFile = resolvedStoreFile
+            signingCfg.storePassword = storePwd
+            signingCfg.keyAlias = keyAliasVal
+            signingCfg.keyPassword = keyPwd
+            return true
+        } else {
+            logger.warn("Keystore file not found for ${prefix}: ${resolvedStoreFile}. Falling back to debug signing.")
+        }
+    } else {
+        logger.warn("Release signing credentials not configured for ${prefix}. Falling back to debug signing.")
+    }
+    return false
+}
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -102,17 +145,39 @@ android {
         versionName "1.0"
     }
 
+    signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        saccoRelease {
+            enableV1Signing true
+            enableV2Signing true
+        }
+        horecaRelease {
+            enableV1Signing true
+            enableV2Signing true
+        }
+    }
+
+    def hasSaccoSigning = configureReleaseSigning(signingConfigs.saccoRelease, "SACCO")
+    def hasHorecaSigning = configureReleaseSigning(signingConfigs.horecaRelease, "HORECA")
+
     flavorDimensions "app", "env"
     productFlavors {
         sacco {
             dimension "app"
             applicationId "com.baigamats.app"
             resValue "string", "app_name", "Baigamats"
+            signingConfig hasSaccoSigning ? signingConfigs.saccoRelease : signingConfigs.debug
         }
         horeca {
             dimension "app"
             applicationId "com.baigamats.horeca"
             resValue "string", "app_name", "Baigamats HORECA"
+            signingConfig hasHorecaSigning ? signingConfigs.horecaRelease : signingConfigs.debug
         }
         dev {
             dimension "env"
@@ -126,22 +191,11 @@ android {
             dimension "env"
         }
     }
-    signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
-    }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }

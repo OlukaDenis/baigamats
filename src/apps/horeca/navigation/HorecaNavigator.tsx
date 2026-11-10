@@ -23,6 +23,7 @@ import { ProfileScreen } from '../features/auth/screens/ProfileScreen';
 import { SetPinScreen } from '../features/auth/screens/SetPinScreen';
 import { useBusinessProfile } from '../features/auth/hooks/useBusinessProfile';
 import { useHorecaAuthStore } from '../features/auth/store/horecaAuthStore';
+import { resolveIsManager } from '../features/auth/utils/roleAccess';
 import { BackOfficeScreen } from '../features/backoffice/screens/BackOfficeScreen';
 import { FloorPlanScreen } from '../features/floor/screens/FloorPlanScreen';
 import { KitchenDisplayScreen } from '../features/kitchen/screens/KitchenDisplayScreen';
@@ -68,6 +69,7 @@ export const HorecaNavigator: React.FC = () => {
   const status = useHorecaAuthStore(state => state.status);
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const me = useHorecaAuthStore(state => state.me);
+  const loginProfile = useHorecaAuthStore(state => state.loginProfile);
   const lockTerminal = useHorecaAuthStore(state => state.lockTerminal);
   const autoLockSeconds = useHorecaAuthStore(state => state.autoLockSeconds);
   const hydrate = useHorecaAuthStore(state => state.hydrate);
@@ -285,11 +287,7 @@ export const HorecaNavigator: React.FC = () => {
     );
   }
 
-  const isManager =
-    activeStaff?.access === 'manager' ||
-    activeStaff?.role === 'manager' ||
-    activeStaff?.role === 'admin' ||
-    (!activeStaff && (me?.role === 'manager' || me?.role === 'admin'));
+  const isManager = resolveIsManager({ loginProfile, me, activeStaff });
 
   const effectiveTab: MainTab =
     !isManager && (currentTab === 'reports' || currentTab === 'backoffice')
