@@ -4,8 +4,7 @@ import {
   ComputerDesktopIcon,
   LockClosedIcon,
   ShoppingCartIcon,
-  UserIcon,
-} from 'react-native-heroicons/outline';
+} from 'react-native-heroicons/solid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHorecaStore } from '../../db/offlineStore';
 import { useHorecaColors } from '../../theme/colors';
@@ -20,7 +19,6 @@ export interface HorecaAppBarProps {
   ordersCount?: number;
   onOrdersPress?: () => void;
   onLockPress?: () => void;
-  onProfilePress?: () => void;
   rightAction?: React.ReactNode;
   className?: string;
 }
@@ -28,7 +26,7 @@ export interface HorecaAppBarProps {
 /**
  * Primary AppBar displayed on bottom navigation bar screens.
  * Shows left icon (or business logo), screen title + business details subtitle,
- * and right actions: cart (orders) with counter, lock, and user account.
+ * and right actions: cart (orders) with counter and lock.
  */
 export function HorecaAppBar({
   title,
@@ -37,7 +35,6 @@ export function HorecaAppBar({
   ordersCount,
   onOrdersPress,
   onLockPress,
-  onProfilePress,
   rightAction,
   className = '',
 }: HorecaAppBarProps) {
@@ -78,11 +75,11 @@ export function HorecaAppBar({
             <Image
               source={{ uri: businessProfile!.logo_url! }}
               onError={() => setLogoError(true)}
-              className="h-10 w-10 rounded-horeca bg-primary/10 border border-primary/20 mr-3"
+              className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 mr-3"
               resizeMode="cover"
             />
           ) : (
-            <View className="h-10 w-10 items-center justify-center rounded-horeca bg-primary/10 border border-primary/20 mr-3">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-primary/10 border border-primary/20 mr-3">
               <ComputerDesktopIcon
                 color={colors.primary}
                 size={20}
@@ -107,14 +104,14 @@ export function HorecaAppBar({
           </View>
         </View>
 
-        {/* Right: Cart (Orders) Counter, Lock, Account */}
+        {/* Right: Cart (Orders) Counter & Lock */}
         <View className="flex-row items-center">
           {rightAction ? <View className="mr-2">{rightAction}</View> : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`View Orders, ${badgeCount} selected`}
             onPress={onOrdersPress}
-            className="relative h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border mr-2 active:opacity-70"
+            className="relative h-10 w-10 items-center justify-center rounded-full bg-background border border-border mr-2 active:opacity-70"
             hitSlop={6}
           >
             <ShoppingCartIcon color={colors.onSurfaceVariant} size={18} />
@@ -130,22 +127,10 @@ export function HorecaAppBar({
               accessibilityRole="button"
               accessibilityLabel="Lock Terminal"
               onPress={onLockPress}
-              className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border mr-2 active:opacity-70"
+              className="h-10 w-10 items-center justify-center rounded-full bg-background border border-border active:opacity-70"
               hitSlop={6}
             >
               <LockClosedIcon color={colors.onSurfaceVariant} size={18} />
-            </Pressable>
-          ) : null}
-
-          {onProfilePress ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="User Profile"
-              onPress={onProfilePress}
-              className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border active:opacity-70"
-              hitSlop={6}
-            >
-              <UserIcon color={colors.onSurfaceVariant} size={18} />
             </Pressable>
           ) : null}
         </View>

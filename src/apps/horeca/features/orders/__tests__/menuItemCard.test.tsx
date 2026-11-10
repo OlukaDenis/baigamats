@@ -32,10 +32,10 @@ const mockUnavailableItem: MenuItem = {
 };
 
 describe('MenuItemCard Organism', () => {
-  it('renders kitchen menu item with 0 quantity and triggers onAdd', () => {
+  it('renders kitchen menu item with 0 quantity and triggers onAdd', async () => {
     const onAdd = jest.fn();
 
-    render(
+    await render(
       <HorecaThemeProvider>
         <MenuItemCard
           item={mockKitchenItem}
@@ -47,16 +47,15 @@ describe('MenuItemCard Organism', () => {
 
     expect(screen.getByText('Wagyu Burger')).toBeOnTheScreen();
     expect(screen.getByText('Kitchen')).toBeOnTheScreen();
-    expect(screen.getByText('🍲')).toBeOnTheScreen();
     expect(screen.getByText('UGX 45,000')).toBeOnTheScreen();
 
     const addButton = screen.getByRole('button', { name: /Add Wagyu Burger/ });
-    fireEvent.press(addButton);
+    await fireEvent.press(addButton);
     expect(onAdd).toHaveBeenCalledWith(mockKitchenItem);
   });
 
-  it('renders bar item with emoji and station label', () => {
-    render(
+  it('renders bar item with station label', async () => {
+    await render(
       <HorecaThemeProvider>
         <MenuItemCard
           item={mockBarItem}
@@ -68,14 +67,13 @@ describe('MenuItemCard Organism', () => {
 
     expect(screen.getByText('Signature Gin Tonic')).toBeOnTheScreen();
     expect(screen.getByText('Bar')).toBeOnTheScreen();
-    expect(screen.getByText('🍸')).toBeOnTheScreen();
   });
 
-  it('renders stepper when quantity > 0 and triggers onAdd and onRemove', () => {
+  it('renders stepper when quantity > 0 and triggers onAdd and onRemove', async () => {
     const onAdd = jest.fn();
     const onRemove = jest.fn();
 
-    render(
+    await render(
       <HorecaThemeProvider>
         <MenuItemCard
           item={mockKitchenItem}
@@ -90,19 +88,19 @@ describe('MenuItemCard Organism', () => {
 
     // Decrease
     const decreaseButton = screen.getByRole('button', { name: /Decrease Wagyu Burger/ });
-    fireEvent.press(decreaseButton);
+    await fireEvent.press(decreaseButton);
     expect(onRemove).toHaveBeenCalledWith(mockKitchenItem);
 
     // Increase
     const increaseButton = screen.getByRole('button', { name: /Increase Wagyu Burger/ });
-    fireEvent.press(increaseButton);
+    await fireEvent.press(increaseButton);
     expect(onAdd).toHaveBeenCalledWith(mockKitchenItem);
   });
 
-  it('shows UNAVAILABLE badge and disables add button when item is inactive', () => {
+  it('shows UNAVAILABLE badge and disables add button when item is inactive', async () => {
     const onAdd = jest.fn();
 
-    render(
+    await render(
       <HorecaThemeProvider>
         <MenuItemCard
           item={mockUnavailableItem}
@@ -114,15 +112,15 @@ describe('MenuItemCard Organism', () => {
 
     expect(screen.getByText('UNAVAILABLE')).toBeOnTheScreen();
     const addButton = screen.getByRole('button', { name: /Add Lobster Bisque/ });
-    fireEvent.press(addButton);
+    await fireEvent.press(addButton);
     expect(onAdd).not.toHaveBeenCalled();
   });
 
-  it('disables stepper controls when disabled prop is true', () => {
+  it('disables stepper controls when disabled prop is true', async () => {
     const onAdd = jest.fn();
     const onRemove = jest.fn();
 
-    render(
+    await render(
       <HorecaThemeProvider>
         <MenuItemCard
           item={mockKitchenItem}
@@ -135,11 +133,11 @@ describe('MenuItemCard Organism', () => {
     );
 
     const increaseButton = screen.getByRole('button', { name: /Increase Wagyu Burger/ });
-    fireEvent.press(increaseButton);
+    await fireEvent.press(increaseButton);
     expect(onAdd).not.toHaveBeenCalled();
 
     const decreaseButton = screen.getByRole('button', { name: /Decrease Wagyu Burger/ });
-    fireEvent.press(decreaseButton);
+    await fireEvent.press(decreaseButton);
     expect(onRemove).not.toHaveBeenCalled();
   });
 });

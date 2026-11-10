@@ -13,26 +13,23 @@ import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
-import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useKitchenTickets } from '../hooks/useKitchenTickets';
 
 interface KitchenDisplayScreenProps {
-  onLockTerminal: () => void;
+  onBack?: () => void;
   onOrdersPress?: () => void;
-  onProfilePress?: () => void;
 }
 
 export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
-  onLockTerminal,
+  onBack,
   onOrdersPress,
-  onProfilePress,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
 
-  const isOnline = useHorecaStore(state => state.isOnline);
   const [selectedStation, setSelectedStation] = useState<'all' | 'kitchen' | 'bar'>('all');
 
   const { tickets, updateStatus } = useKitchenTickets(selectedStation);
@@ -158,13 +155,11 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
     <ScreenTemplate
       className="bg-background"
       header={
-        <HorecaAppBar
+        <HorecaSubAppBar
           title="Kitchen Display (KDS)"
           subtitle={`KDS • ${tickets.length} ACTIVE TICKETS`}
-          isOnline={isOnline}
+          onBack={onBack}
           onOrdersPress={onOrdersPress}
-          onLockPress={onLockTerminal}
-          onProfilePress={onProfilePress}
         />
       }
       contentContainerClassName="flex-1"

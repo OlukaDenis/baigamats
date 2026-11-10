@@ -18,21 +18,19 @@ import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
 import { BluetoothPrinterModal } from '@horeca/components/organisms/BluetoothPrinterModal';
-import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../../auth/store/horecaAuthStore';
 
 interface BackOfficeScreenProps {
-  onLockTerminal: () => void;
+  onBack?: () => void;
   onOrdersPress?: () => void;
-  onProfilePress?: () => void;
 }
 
 export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
-  onLockTerminal,
+  onBack,
   onOrdersPress,
-  onProfilePress,
 }) => {
   const { colors, isDark, toggleTheme } = useHorecaTheme();
 
@@ -95,12 +93,11 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
       withBottomInset
       className="bg-background"
       header={
-        <HorecaAppBar
+        <HorecaSubAppBar
           title="Admin Back Office"
           subtitle="MASTER CONFIG"
+          onBack={onBack}
           onOrdersPress={onOrdersPress}
-          onLockPress={onLockTerminal}
-          onProfilePress={onProfilePress}
         />
       }
       contentContainerClassName="px-4 py-5"

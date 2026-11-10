@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
-import { ArrowLeftIcon, ShoppingCartIcon } from 'react-native-heroicons/outline';
+import { ChevronLeftIcon } from 'react-native-heroicons/outline';
+import { ShoppingCartIcon } from 'react-native-heroicons/solid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHorecaStore } from '../../db/offlineStore';
 import { useHorecaColors } from '../../theme/colors';
@@ -52,10 +53,10 @@ export function HorecaSubAppBar({
             accessibilityRole="button"
             accessibilityLabel="Go Back"
             onPress={onBack}
-            className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border mr-3 active:opacity-70"
+            className="h-10 w-10 items-center justify-center rounded-none mr-2 active:opacity-70"
             hitSlop={6}
           >
-            <ArrowLeftIcon color={colors.onSurface} size={18} />
+            <ChevronLeftIcon color={colors.onSurface} size={20} strokeWidth={2.75} />
           </Pressable>
           <View className="flex-1">
             <AppText variant="title" numberOfLines={1} className="text-text font-bold">
@@ -78,7 +79,7 @@ export function HorecaSubAppBar({
           accessibilityRole="button"
           accessibilityLabel={`View Orders, ${badgeCount} selected`}
           onPress={onOrdersPress}
-          className="relative h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border active:opacity-70"
+          className="relative h-10 w-10 items-center justify-center rounded-full bg-background border border-border active:opacity-70"
           hitSlop={6}
         >
           <ShoppingCartIcon color={colors.onSurfaceVariant} size={18} />

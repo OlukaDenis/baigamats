@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   RefreshControl,
   View,
 } from 'react-native';
@@ -9,6 +10,10 @@ import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
 } from 'react-native-heroicons/outline';
+import {
+  BanknotesIcon,
+  FireIcon,
+} from 'react-native-heroicons/solid';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Order, Table } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
@@ -30,15 +35,17 @@ const TABLE_STATUSES = ['occupied', 'available', 'reserved', 'dirty'] as const;
 interface FloorPlanScreenProps {
   onOpenOrder: (table: Table) => void;
   onOrdersPress?: () => void;
+  onOpenKitchen?: () => void;
+  onOpenShift?: () => void;
   onLockTerminal: () => void;
-  onProfilePress?: () => void;
 }
 
 export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
   onOpenOrder,
   onOrdersPress,
+  onOpenKitchen,
+  onOpenShift,
   onLockTerminal,
-  onProfilePress,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
@@ -144,13 +151,6 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
     });
   }, [tables, selectedSection, selectedStatus]);
 
-  const { occupiedCount, occupancyPercent } = useMemo(() => {
-    const occupied = tables.filter(t => t.status === 'occupied').length;
-    const percent =
-      tables.length > 0 ? Math.round((occupied / tables.length) * 100) : 0;
-    return { occupiedCount: occupied, occupancyPercent: percent };
-  }, [tables]);
-
   const renderTableCard = useCallback(
     ({ item }: { item: Table }) => {
       const tableOrder = openOrdersByTable.get(item.id);
@@ -185,7 +185,6 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
           title="Floor Plan"
           onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
-          onProfilePress={onProfilePress}
         />
       }
       contentContainerClassName="flex-1"
@@ -203,34 +202,67 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
         </View>
       ) : null}
 
-      {/* Category & Status Filters (offline, client-side) */}
-      <View className="flex-row px-4 py-2.5 border-b border-border/40">
-        <Select
-          className="flex-1 mr-2"
-          label="Table category"
-          options={sectionOptions}
-          value={selectedSection}
-          onChange={setSelectedSection}
-        />
-        <Select
-          className="flex-1"
-          label="Table status"
-          options={statusOptions}
-          value={selectedStatus}
-          onChange={setSelectedStatus}
-        />
+      {/* Quick Actions: Kitchen & Shift */}
+      <View className="flex-row px-4 pt-3 pb-1">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open Kitchen Display"
+          onPress={onOpenKitchen}
+          className="flex-1 mr-2 flex-row items-center rounded-horeca border border-border bg-surface p-3 active:opacity-80"
+        >
+          <View className="h-10 w-10 rounded-full bg-primary items-center justify-center mr-3">
+            <FireIcon color="#FFFFFF" size={20} />
+          </View>
+          <View className="flex-1">
+            <AppText variant="label" className="font-bold text-text">
+              Kitchen
+            </AppText>
+            <AppText variant="caption" className="text-[11px] text-text-secondary">
+              View KDS tickets
+            </AppText>
+          </View>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open Shift Management"
+          onPress={onOpenShift}
+          className="flex-1 flex-row items-center rounded-horeca border border-border bg-surface p-3 active:opacity-80"
+        >
+          <View className="h-10 w-10 rounded-full bg-primary items-center justify-center mr-3">
+            <BanknotesIcon color="#FFFFFF" size={20} />
+          </View>
+          <View className="flex-1">
+            <AppText variant="label" className="font-bold text-text">
+              Shift
+            </AppText>
+            <AppText variant="caption" className="text-[11px] text-text-secondary">
+              Cash & drawer
+            </AppText>
+          </View>
+        </Pressable>
       </View>
 
-      {/* Live Floor Stats Overview Bar */}
-      <View className="flex-row items-center justify-between px-4 py-2 bg-surface/60 border-b border-border/40">
-        <View className="flex-row items-center">
-          <View className="h-2 w-2 rounded-full bg-primary mr-1.5" />
-          <AppText variant="caption" className="text-text-secondary font-semibold text-[11px]">
-            OCCUPANCY:{' '}
-          </AppText>
-          <AppText variant="caption" className="text-text font-bold text-[11px]">
-            {occupancyPercent}% ({occupiedCount}/{tables.length})
-          </AppText>
+      {/* Category & Status Filters (offline, client-side) */}
+      <View className="px-4 py-2.5 border-b border-border/40">
+        <AppText variant="label" className="text-xs font-bold uppercase text-text-secondary mb-2">
+          Filters
+        </AppText>
+        <View className="flex-row">
+          <Select
+            className="flex-1 mr-2"
+            label="Table category"
+            options={sectionOptions}
+            value={selectedSection}
+            onChange={setSelectedSection}
+          />
+          <Select
+            className="flex-1"
+            label="Table status"
+            options={statusOptions}
+            value={selectedStatus}
+            onChange={setSelectedStatus}
+          />
         </View>
       </View>
 

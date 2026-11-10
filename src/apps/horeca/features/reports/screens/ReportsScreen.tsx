@@ -39,13 +39,11 @@ import {
 interface ReportsScreenProps {
   onLockTerminal: () => void;
   onOrdersPress?: () => void;
-  onProfilePress?: () => void;
 }
 
 export const ReportsScreen: React.FC<ReportsScreenProps> = ({
   onLockTerminal,
   onOrdersPress,
-  onProfilePress,
 }) => {
   const colors = useHorecaColors();
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
@@ -165,7 +163,6 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             subtitle="EXECUTIVE DASHBOARD"
             onOrdersPress={onOrdersPress}
             onLockPress={onLockTerminal}
-            onProfilePress={onProfilePress}
           />
         }
         contentContainerClassName="flex-1 items-center justify-center px-6"
@@ -222,7 +219,6 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
           subtitle="EXECUTIVE DASHBOARD"
           onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
-          onProfilePress={onProfilePress}
         />
       }
       contentContainerClassName="px-4 py-4"

@@ -39,7 +39,6 @@ interface TableDetailsScreenProps {
   onOrdersPress?: () => void;
   onBack: () => void;
   onLockTerminal: () => void;
-  onProfilePress?: () => void;
 }
 
 const ALL = 'all';
@@ -55,7 +54,6 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
   onOrdersPress,
   onBack,
   onLockTerminal: _onLockTerminal,
-  onProfilePress: _onProfilePress,
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();

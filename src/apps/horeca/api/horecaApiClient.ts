@@ -226,8 +226,19 @@ export const horecaApi = {
         : res.data;
     return businessProfileSchema.parse(raw);
   },
-  logout: async (): Promise<{ signedOut: boolean }> => {
-    const res = await horecaClient.post('/v1/auth/logout');
+  logout: async (accessToken?: string): Promise<{ signedOut: boolean }> => {
+    const res = await horecaClient.post(
+      '/v1/auth/logout',
+      undefined,
+      accessToken
+        ? {
+            skipAuth: true,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        : undefined,
+    );
     return res.data;
   },
 

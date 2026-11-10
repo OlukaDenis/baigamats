@@ -1,20 +1,25 @@
-import React, { type ReactNode } from 'react';
+import React, { type ComponentRef, type ReactNode, type RefObject } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   View,
+  type KeyboardAvoidingViewProps,
   type ScrollViewProps,
   type ViewProps,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export type ScreenScrollViewInstance = ComponentRef<typeof ScrollView>;
 
 export type ScreenTemplateProps = {
   children: ReactNode;
   header?: ReactNode;
   footer?: ReactNode;
   scrollable?: boolean;
+  scrollViewRef?: RefObject<ScreenScrollViewInstance | null>;
   scrollViewProps?: ScrollViewProps;
+  keyboardAvoidingBehavior?: KeyboardAvoidingViewProps['behavior'];
   containerProps?: ViewProps;
   withTopInset?: boolean;
   withBottomInset?: boolean;
@@ -31,7 +36,9 @@ export function ScreenTemplate({
   header,
   footer,
   scrollable = false,
+  scrollViewRef,
   scrollViewProps,
+  keyboardAvoidingBehavior,
   containerProps,
   withTopInset = false,
   withBottomInset = false,
@@ -39,17 +46,24 @@ export function ScreenTemplate({
   contentContainerClassName = '',
 }: ScreenTemplateProps) {
   const insets = useSafeAreaInsets();
+  const resolvedBehavior =
+    keyboardAvoidingBehavior ?? (Platform.OS === 'ios' ? 'padding' : 'height');
 
   const content = scrollable ? (
     <ScrollView
+      ref={scrollViewRef}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{
-        flexGrow: 1,
-        paddingBottom: withBottomInset ? insets.bottom + 16 : 16,
-      }}
-      className="flex-1"
       {...scrollViewProps}
+      contentContainerStyle={[
+        {
+          flexGrow: 1,
+          paddingBottom: withBottomInset ? insets.bottom + 16 : 16,
+        },
+        scrollViewProps?.contentContainerStyle,
+      ]}
+      className="flex-1"
     >
       <View className={`w-full flex-1 ${contentContainerClassName}`.trim()}>
         {children}
@@ -79,7 +93,7 @@ export function ScreenTemplate({
       {...containerProps}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={resolvedBehavior}
         className="flex-1"
       >
         {header}

@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import {
-  ArrowLeftIcon,
+  ChevronLeftIcon,
   ClockIcon,
   DocumentCheckIcon,
   ShoppingBagIcon,
@@ -29,7 +29,6 @@ import { useOpenOrders } from '../hooks/useOpenOrders';
 interface OrdersListScreenProps {
   onSelectOrder: (order: Order) => void;
   onLockTerminal: () => void;
-  onProfilePress?: () => void;
   onNewOrderPress?: () => void;
   onBack?: () => void;
 }
@@ -39,7 +38,6 @@ type StatusTab = 'open' | 'billed';
 export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
   onSelectOrder,
   onLockTerminal,
-  onProfilePress,
   onNewOrderPress,
   onBack,
 }) => {
@@ -152,15 +150,14 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Go Back"
                 onPress={onBack}
-                className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border active:opacity-70"
+                className="h-10 w-10 items-center justify-center rounded-none active:opacity-70"
                 hitSlop={6}
               >
-                <ArrowLeftIcon color={colors.onSurface} size={18} />
+                <ChevronLeftIcon color={colors.onSurface} size={20} strokeWidth={2.75} />
               </Pressable>
             ) : undefined
           }
           onLockPress={onLockTerminal}
-          onProfilePress={onProfilePress}
         />
       }
       contentContainerClassName="flex-1"

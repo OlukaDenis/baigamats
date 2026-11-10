@@ -478,9 +478,8 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
             </AppText>
             <AppText variant="caption" className="text-text-secondary text-[11px] mt-0.5">
               {currentOrder?.order_number
-                ? `Order ${currentOrder.order_number}`
+                ? `Order N°: ${currentOrder.order_number}`
                 : 'Active Order'}{' '}
-              {resolvedOrderId ? `• ID: ${resolvedOrderId.slice(0, 8)}...` : ''}
             </AppText>
           </View>
           <Badge

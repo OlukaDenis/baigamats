@@ -12,27 +12,24 @@ import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
 import { FormField } from '@horeca/components/molecules/FormField';
-import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
+import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 
 interface ShiftManagementScreenProps {
-  onLockTerminal: () => void;
+  onBack?: () => void;
   onOrdersPress?: () => void;
-  onProfilePress?: () => void;
 }
 
 export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
-  onLockTerminal,
+  onBack,
   onOrdersPress,
-  onProfilePress,
 }) => {
   const colors = useHorecaColors();
 
   const currentShift = useHorecaStore(state => state.currentShift);
   const openShiftOptimistic = useHorecaStore(state => state.openShiftOptimistic);
   const closeShiftOptimistic = useHorecaStore(state => state.closeShiftOptimistic);
-  const isOnline = useHorecaStore(state => state.isOnline);
 
   const [isOpenModalVisible, setIsOpenModalVisible] = useState<boolean>(false);
   const [isCloseModalVisible, setIsCloseModalVisible] = useState<boolean>(false);
@@ -74,13 +71,11 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
       withBottomInset
       className="bg-background"
       header={
-        <HorecaAppBar
+        <HorecaSubAppBar
           title="Shift & Drawer"
           subtitle={isShiftOpen ? 'DRAWER ACTIVE' : 'DRAWER LOCKED'}
-          isOnline={isOnline}
+          onBack={onBack}
           onOrdersPress={onOrdersPress}
-          onLockPress={onLockTerminal}
-          onProfilePress={onProfilePress}
         />
       }
       contentContainerClassName="px-4 py-5"

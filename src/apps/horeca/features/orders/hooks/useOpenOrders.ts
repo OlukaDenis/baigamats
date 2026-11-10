@@ -7,8 +7,8 @@ import { useHorecaStore } from '../../../db/offlineStore';
 export const HORECA_OPEN_ORDERS_QUERY_KEY = ['horeca', 'orders', 'active', 'mine'] as const;
 
 /**
- * Fetches open and billed orders for the current staff member from GET /orders?mine=true,
- * hydrates missing line items, and synchronizes the offline store.
+ * Fetches open and billed orders for the current staff member from GET /orders?mine=true
+ * and synchronizes the offline store without eagerly querying per-order details.
  */
 export async function fetchOpenAndBilledOrders(): Promise<Order[]> {
   let openFailed = false;
@@ -40,25 +40,16 @@ export async function fetchOpenAndBilledOrders(): Promise<Order[]> {
   });
   const list = Array.from(combinedMap.values());
 
-  // Hydrate line items for orders if the list endpoint omitted `items`
+  // Preserve any already-cached line items without issuing N+1 getOrder calls
   const existingOrders = useHorecaStore.getState().orders;
-  const hydrated = await Promise.all(
-    list.map(async ord => {
-      if (Array.isArray(ord.items) && ord.items.length > 0) return ord;
-      const cachedItems = existingOrders[ord.id]?.items;
-      if (ord.status !== 'open' && Array.isArray(cachedItems) && cachedItems.length > 0) {
-        return { ...ord, items: cachedItems };
-      }
-      try {
-        return await horecaApi.getOrder(ord.id);
-      } catch {
-        return { ...ord, items: cachedItems ?? ord.items ?? [] };
-      }
-    }),
-  );
+  const normalized = list.map(ord => {
+    if (Array.isArray(ord.items) && ord.items.length > 0) return ord;
+    const cachedItems = existingOrders[ord.id]?.items;
+    return { ...ord, items: cachedItems ?? ord.items ?? [] };
+  });
 
-  useHorecaStore.getState().setOrders(hydrated);
-  return hydrated;
+  useHorecaStore.getState().setOrders(normalized);
+  return normalized;
 }
 
 /**

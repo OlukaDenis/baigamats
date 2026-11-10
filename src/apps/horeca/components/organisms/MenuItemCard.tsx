@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { MinusIcon, PlusIcon } from 'react-native-heroicons/outline';
+import { ShoppingBagIcon } from 'react-native-heroicons/solid';
 import type { MenuItem } from '../../api/schemas';
 import { useHorecaColors } from '../../theme/colors';
 import { formatUGX } from '../../utils/currency';
@@ -40,9 +41,14 @@ export const MenuItemCard = React.memo<MenuItemCardProps>(
           quantity > 0 ? 'bg-primary/5 border-primary/40' : 'bg-surface border-border'
         } ${!canAdd ? 'opacity-50' : ''} ${className}`.trim()}
       >
-        {/* Icon / Emoji badge */}
-        <View className="h-12 w-12 rounded-horeca bg-background border border-border items-center justify-center mr-3.5">
-          <AppText className="text-xl">{item.station === 'bar' ? '🍸' : '🍲'}</AppText>
+        {/* Left Shopping Bag Badge */}
+        <View className="h-12 w-12 rounded-full bg-primary items-center justify-center mr-3.5">
+          <ShoppingBagIcon
+            color="#FFFFFF"
+            size={22}
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
         </View>
 
         {/* Details */}

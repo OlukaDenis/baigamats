@@ -161,7 +161,10 @@ describe('HorecaNavigator manager Reports tab visibility', () => {
 
     const reportsTab = screen.getByRole('button', { name: 'Navigate to Reports' });
     expect(reportsTab).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Navigate to Admin' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Navigate to Profile' })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Navigate to Kitchen' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Navigate to Shift' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Navigate to Admin' })).toBeNull();
 
     await act(async () => {
       fireEvent.press(reportsTab);
@@ -171,7 +174,7 @@ describe('HorecaNavigator manager Reports tab visibility', () => {
     expect(screen.queryByText('Manager Access Required')).toBeNull();
   });
 
-  it('shows Reports and Admin bottom tabs for loginProfile.role="manager" when activeStaff is null', async () => {
+  it('shows Reports and Profile bottom tabs for loginProfile.role="manager" and navigates to Admin from Profile', async () => {
     useHorecaAuthStore.setState({
       status: 'authenticated',
       hydrate: jest.fn().mockResolvedValue(undefined),
@@ -200,10 +203,21 @@ describe('HorecaNavigator manager Reports tab visibility', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Navigate to Reports' })).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Navigate to Admin' })).toBeOnTheScreen();
+    const profileTab = screen.getByRole('button', { name: 'Navigate to Profile' });
+    expect(profileTab).toBeOnTheScreen();
+
+    await act(async () => {
+      fireEvent.press(profileTab);
+    });
+
+    const adminAction = screen.getByRole('button', { name: 'Admin Back Office' });
+    await act(async () => {
+      fireEvent.press(adminAction);
+    });
+    expect(screen.getByText('Admin Back Office')).toBeOnTheScreen();
   });
 
-  it('hides Reports and Admin bottom tabs when loginProfile.role="staff"', async () => {
+  it('hides Reports bottom tab and Profile Admin action when loginProfile.role="staff", and resets to Home after logout and re-login', async () => {
     useHorecaAuthStore.setState({
       status: 'authenticated',
       hydrate: jest.fn().mockResolvedValue(undefined),
@@ -246,5 +260,21 @@ describe('HorecaNavigator manager Reports tab visibility', () => {
     expect(screen.getByText('Floor Plan')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Navigate to Reports' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Navigate to Admin' })).toBeNull();
+
+    // Navigate to Profile, sign out, and log back in -> should land on Home (Floor Plan), not Profile
+    await act(async () => {
+      fireEvent.press(screen.getByRole('button', { name: 'Navigate to Profile' }));
+    });
+    expect(screen.getByText('Profile')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Admin Back Office' })).toBeNull();
+
+    await act(async () => {
+      useHorecaAuthStore.setState({ status: 'unauthenticated' });
+    });
+    await act(async () => {
+      useHorecaAuthStore.setState({ status: 'authenticated' });
+    });
+
+    expect(screen.getByText('Floor Plan')).toBeOnTheScreen();
   });
 });

@@ -2,29 +2,36 @@ import React from 'react';
 import { Pressable, Switch, View } from 'react-native';
 import {
   ArrowRightOnRectangleIcon,
+  ChevronRightIcon,
+} from 'react-native-heroicons/outline';
+import {
+  Cog6ToothIcon,
   KeyIcon,
   MoonIcon,
   SunIcon,
-} from 'react-native-heroicons/outline';
+} from 'react-native-heroicons/solid';
 import { useHorecaTheme } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
-import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
+import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
+import { resolveIsManager } from '../utils/roleAccess';
 
 export interface ProfileScreenProps {
-  onBack: () => void;
   onOrdersPress?: () => void;
+  onLockTerminal?: () => void;
   onChangePin?: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
-  onBack,
   onOrdersPress,
+  onLockTerminal,
   onChangePin,
+  onOpenAdmin,
 }) => {
   const { isDark, toggleTheme, colors } = useHorecaTheme();
   const me = useHorecaAuthStore(state => state.me);
@@ -32,6 +39,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const logout = useHorecaAuthStore(state => state.logout);
 
+  const isManager = resolveIsManager({ loginProfile, me, activeStaff });
   const displayName = me?.name ?? activeStaff?.name ?? 'Staff Member';
   const displayRole = (loginProfile?.role ?? me?.role ?? activeStaff?.role ?? 'staff').toUpperCase();
 
@@ -51,8 +59,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       confirmText: 'Log Out',
       cancelText: 'Cancel',
       isDestructive: true,
-      onConfirm: async () => {
-        await logout();
+      onConfirm: () => {
+        void logout();
       },
     });
   };
@@ -63,10 +71,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       withBottomInset
       className="bg-background"
       header={
-        <HorecaSubAppBar
+        <HorecaAppBar
           title="Profile"
-          onBack={onBack}
           onOrdersPress={onOrdersPress}
+          onLockPress={onLockTerminal}
         />
       }
       contentContainerClassName="px-4 py-5"
@@ -102,11 +110,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           className="flex-row items-center justify-between py-2"
         >
           <View className="flex-row items-center flex-1 mr-3">
-            <View className="h-9 w-9 rounded-horeca bg-background border border-border items-center justify-center mr-3">
+            <View className="h-9 w-9 rounded-full bg-primary items-center justify-center mr-3">
               {isDark ? (
-                <MoonIcon color={colors.primary} size={18} />
+                <MoonIcon color="#FFFFFF" size={18} />
               ) : (
-                <SunIcon color={colors.primary} size={18} />
+                <SunIcon color="#FFFFFF" size={18} />
               )}
             </View>
             <View className="flex-1">
@@ -133,8 +141,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             className="flex-row items-center justify-between pt-3 mt-3 border-t border-border/50 active:opacity-70"
           >
             <View className="flex-row items-center flex-1 mr-3">
-              <View className="h-9 w-9 rounded-horeca bg-background border border-border items-center justify-center mr-3">
-                <KeyIcon color={colors.primary} size={18} />
+              <View className="h-9 w-9 rounded-full bg-primary items-center justify-center mr-3">
+                <KeyIcon color="#FFFFFF" size={18} />
               </View>
               <View className="flex-1">
                 <AppText variant="label" className="font-semibold text-text">
@@ -145,6 +153,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </AppText>
               </View>
             </View>
+            <ChevronRightIcon color={colors.onSurfaceVariant} size={18} />
+          </Pressable>
+        ) : null}
+
+        {isManager && onOpenAdmin ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Admin Back Office"
+            onPress={onOpenAdmin}
+            className="flex-row items-center justify-between pt-3 mt-3 border-t border-border/50 active:opacity-70"
+          >
+            <View className="flex-row items-center flex-1 mr-3">
+              <View className="h-9 w-9 rounded-full bg-primary items-center justify-center mr-3">
+                <Cog6ToothIcon color="#FFFFFF" size={18} />
+              </View>
+              <View className="flex-1">
+                <AppText variant="label" className="font-semibold text-text">
+                  Admin & Back Office
+                </AppText>
+                <AppText variant="caption" className="text-text-secondary">
+                  Manage tables, menu, staff & printer settings
+                </AppText>
+              </View>
+            </View>
+            <ChevronRightIcon color={colors.onSurfaceVariant} size={18} />
           </Pressable>
         ) : null}
       </View>

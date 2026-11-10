@@ -11,6 +11,7 @@ import {
   TrashIcon,
   UserGroupIcon,
 } from 'react-native-heroicons/outline';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { horecaApi } from '@horeca/api/horecaApiClient';
 import type { Order, OrderItem } from '@horeca/api/schemas';
@@ -23,7 +24,10 @@ import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
 import { useHorecaAuthStore } from '@horeca/features/auth/store/horecaAuthStore';
-import { useOpenOrders } from '../hooks/useOpenOrders';
+import {
+  HORECA_OPEN_ORDERS_QUERY_KEY,
+  refreshOpenOrdersInBackground,
+} from '../hooks/useOpenOrders';
 import { useSubmitTableOrder } from '../hooks/useSubmitTableOrder';
 
 /** Placeholder shown when the table has no open order yet. */
@@ -44,7 +48,6 @@ interface OrderEntryScreenProps {
   onPayNow: (orderId: string, orderTotal: number) => void;
   onKitchenFire?: () => void;
   onLockTerminal: () => void;
-  onProfilePress?: () => void;
   onBack?: () => void;
 }
 
@@ -56,8 +59,9 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
-  const { isLoading, isFetching, refetch } = useOpenOrders();
+  const queryClient = useQueryClient();
   const { isSubmitting, submitTableOrder } = useSubmitTableOrder();
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
   const [isResolvingOrder, setIsResolvingOrder] = useState(false);
   const [expandedDraftItemId, setExpandedDraftItemId] = useState<string | null>(null);
 
@@ -87,28 +91,35 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
 
   const targetOrderId = propOrderId ?? activeOrderId;
 
-  // Fetch the specific order details by ID and refresh open orders when entering the screen
+  // Fetch only the current order's details and items by ID
   useEffect(() => {
     let mounted = true;
+    if (!targetOrderId || targetOrderId.startsWith('temp-ord-')) {
+      return () => {
+        mounted = false;
+      };
+    }
+
     (async () => {
-      if (targetOrderId && !targetOrderId.startsWith('temp-ord-')) {
-        try {
-          const exactOrder = await horecaApi.getOrder(targetOrderId);
-          if (mounted && exactOrder?.id) {
-            upsertOrder(exactOrder);
-          }
-        } catch {
-          // Retain cached order payload from POST /v1/orders
+      setIsLoadingOrder(true);
+      try {
+        const exactOrder = await horecaApi.getOrder(targetOrderId);
+        if (mounted && exactOrder?.id) {
+          upsertOrder(exactOrder);
+        }
+      } catch {
+        // Retain cached order payload from POST /v1/orders
+      } finally {
+        if (mounted) {
+          setIsLoadingOrder(false);
         }
       }
-      if (mounted) {
-        await refetch();
-      }
     })();
+
     return () => {
       mounted = false;
     };
-  }, [targetOrderId, refetch, upsertOrder]);
+  }, [targetOrderId, upsertOrder]);
 
   const openOrdersList = useMemo(
     () =>
@@ -193,9 +204,9 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
     currentOrder.total_amount && currentOrder.total_amount > 0
       ? currentOrder.total_amount
       : orderItems.reduce(
-          (sum, it) => sum + Math.max(0, it.unit_price * it.qty - (it.discount_amount ?? 0)),
-          0,
-        );
+        (sum, it) => sum + Math.max(0, it.unit_price * it.qty - (it.discount_amount ?? 0)),
+        0,
+      );
 
   const totalItemsCount = isDraftMode ? draftItemsCount : submittedItemsCount;
   const totalAmount = isDraftMode ? draftTotalAmount : submittedTotalAmount;
@@ -227,7 +238,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
       partySize,
     });
     if (createdOrder) {
-      await refetch();
+      queryClient.invalidateQueries({ queryKey: HORECA_OPEN_ORDERS_QUERY_KEY });
     }
   };
 
@@ -247,7 +258,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
         deleteOrderOptimistic(currentOrder.id);
         try {
           await syncEngine.processOutbox();
-          await refetch();
+          queryClient.invalidateQueries({ queryKey: HORECA_OPEN_ORDERS_QUERY_KEY });
         } catch {
           // Synced in background
         }
@@ -271,7 +282,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
       setIsResolvingOrder(true);
       try {
         await syncEngine.processOutbox();
-        const refreshedOrders = await refetch();
+        const refreshedOrders = await refreshOpenOrdersInBackground(queryClient);
         const matched =
           refreshedOrders.find(
             o =>
@@ -550,11 +561,6 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
       {/* Table Context Banner */}
       <View className="flex-row items-center justify-between px-4 py-2.5 bg-surface/70 border-b border-border/40">
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="h-9 w-9 rounded-horeca bg-primary/10 items-center justify-center mr-2.5">
-            <AppText variant="label" className="font-bold text-primary">
-              T{activeTable?.table_number ?? '01'}
-            </AppText>
-          </View>
           <View className="flex-1">
             <AppText variant="label" className="font-bold text-text" numberOfLines={1}>
               Table {activeTable?.table_number ?? '01'} • {activeTable?.section ?? 'Main Dining'}
@@ -563,7 +569,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               <AppText variant="caption" className="text-text-secondary text-[11px]">
                 {isDraftMode ? 'Unsent Draft' : `Order ${currentOrder.order_number}`} • {partySize} Guests
               </AppText>
-              {isFetching ? (
+              {isLoadingOrder ? (
                 <ActivityIndicator
                   size="small"
                   color={colors.primary}
@@ -608,18 +614,6 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               UGX {totalAmount.toLocaleString()}
             </AppText>
           </View>
-
-          {!isBilled && (isDraftMode || currentOrder.id) ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={isDraftMode ? 'Clear Draft Order' : 'Cancel Entire Order'}
-              onPress={handleDeleteEntireOrder}
-              className="h-8 w-8 rounded-horeca bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
-              hitSlop={6}
-            >
-              <TrashIcon color={colors.error} size={16} />
-            </Pressable>
-          ) : null}
         </View>
       </View>
 
@@ -647,7 +641,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
             }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
-              isLoading ? (
+              isLoadingOrder ? (
                 <View className="py-16 items-center justify-center">
                   <ActivityIndicator size="large" color={colors.primary} />
                   <AppText variant="body" className="text-text-secondary font-medium mt-3">
@@ -690,9 +684,8 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
               <View
-                className={`h-2 w-2 rounded-full mr-1.5 ${
-                  isDraftMode ? 'bg-warning' : 'bg-status-available'
-                }`}
+                className={`h-2 w-2 rounded-full mr-1.5 ${isDraftMode ? 'bg-warning' : 'bg-status-available'
+                  }`}
               />
               <AppText variant="caption" className="text-text-secondary font-semibold">
                 {totalItemsCount} {totalItemsCount === 1 ? 'ITEM' : 'ITEMS'}{' '}

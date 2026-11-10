@@ -181,8 +181,12 @@ describe('useHorecaAuthStore loginProfile persistence & matching', () => {
     expect(state.activeStaff).toBeNull();
   });
 
-  it('clears loginProfile and loginUser on logout', async () => {
-    jest.spyOn(horecaApi, 'logout').mockResolvedValue({ signedOut: true });
+  it('clears loginProfile and loginUser on logout immediately (fire-and-forget endpoint) while forwarding token', async () => {
+    jest.spyOn(tokenStorage, 'getAccessToken').mockResolvedValue('active-token-xyz');
+    // Never-resolving logout request proves logout does not block on the network call
+    const logoutApiSpy = jest
+      .spyOn(horecaApi, 'logout')
+      .mockImplementation(() => new Promise(() => {}));
     const clearSpy = jest.spyOn(tokenStorage, 'clearTokens').mockResolvedValue(undefined);
 
     useHorecaAuthStore.setState({
@@ -196,6 +200,7 @@ describe('useHorecaAuthStore loginProfile persistence & matching', () => {
     await useHorecaAuthStore.getState().logout();
 
     const state = useHorecaAuthStore.getState();
+    expect(logoutApiSpy).toHaveBeenCalledWith('active-token-xyz');
     expect(clearSpy).toHaveBeenCalled();
     expect(state.status).toBe('unauthenticated');
     expect(state.loginProfile).toBeNull();

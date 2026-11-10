@@ -45,6 +45,7 @@ interface HorecaAuthState {
   lockTerminal: () => void;
   unlockWithStaff: (staff: StaffMember) => void;
   logout: () => Promise<void>;
+  setMe: (me: MeResponse) => void;
   setStaffList: (list: StaffMember[]) => void;
   switchToPinLogin: () => void;
   switchToPasswordLogin: () => void;
@@ -260,12 +261,15 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
   },
 
   logout: async () => {
+    let token: string | null = null;
     try {
-      await horecaApi.logout();
+      token = await tokenStorage.getAccessToken();
     } catch {
-      // Ignore network errors during logout
+      // Ignore keychain read errors during logout
     }
-    await tokenStorage.clearTokens();
+
+    // Fire-and-forget logout endpoint so the user navigates to login immediately
+    void horecaApi.logout(token ?? undefined).catch(() => {});
 
     // Cleanly unmount SQLite database and purge store memory
     databaseManager.clearAll();
@@ -279,6 +283,19 @@ export const useHorecaAuthStore = create<HorecaAuthState>((set, get) => ({
       activeStaff: null,
       staffList: env.ENABLE_MOCK ? mockStaffMembers : [],
     });
+
+    try {
+      await tokenStorage.clearTokens();
+    } catch {
+      // Ignore token storage cleanup errors during logout
+    }
+  },
+
+  setMe: me => {
+    const state = get();
+    if (state.status === 'unauthenticated') return;
+    if (state.loginUser?.id && me.userId && state.loginUser.id !== me.userId) return;
+    set({ me });
   },
 
   setStaffList: staffList => set({ staffList }),
