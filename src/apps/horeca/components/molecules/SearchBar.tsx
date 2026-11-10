@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { MagnifyingGlassIcon, XMarkIcon } from 'react-native-heroicons/outline';
 import { useHorecaColors } from '../../theme/colors';
+import { buildControlStyleOverrides } from '../controlStyleOverrides';
 
 export interface SearchBarProps {
   value: string;
@@ -9,6 +10,8 @@ export interface SearchBarProps {
   placeholder?: string;
   onClear?: () => void;
   className?: string;
+  borderRadius?: number;
+  height?: number;
 }
 
 export function SearchBar({
@@ -17,12 +20,16 @@ export function SearchBar({
   placeholder = 'Search...',
   onClear,
   className = '',
+  borderRadius,
+  height,
 }: SearchBarProps) {
   const colors = useHorecaColors();
+  const overrideStyle = buildControlStyleOverrides({ borderRadius, height });
 
   return (
     <View
-      className={`min-h-11 flex-row items-center rounded-xl border border-border bg-surface px-3.5 ${className}`.trim()}
+      style={overrideStyle}
+      className={`min-h-[58px] flex-row items-center rounded-horeca border border-border bg-input px-3.5 ${className}`.trim()}
     >
       <MagnifyingGlassIcon
         color={colors.onSurfaceVariant}

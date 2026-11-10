@@ -123,7 +123,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
           {/* Header */}
           <View className="flex-row items-center justify-between pb-3 mb-3 border-b border-border/50">
             <View className="flex-row items-center flex-1 mr-2">
-              <View className="h-9 w-9 rounded-xl bg-primary/10 border border-primary/20 items-center justify-center mr-2.5">
+              <View className="h-9 w-9 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mr-2.5">
                 <PrinterIcon color={colors.primary} size={18} />
               </View>
               <View className="flex-1">
@@ -150,7 +150,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
           ) : null}
 
           {/* Paper Width Selector */}
-          <View className="flex-row items-center justify-between bg-background border border-border rounded-2xl p-2.5 mb-3">
+          <View className="flex-row items-center justify-between bg-background border border-border rounded-horeca p-2.5 mb-3">
             <AppText variant="caption" className="text-text-secondary font-semibold ml-1">
               Paper Roll Width
             </AppText>
@@ -176,7 +176,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
                     style={{
                       backgroundColor: selected ? colors.primary : 'transparent',
                     }}
-                    className="px-3 py-1.5 rounded-xl ml-1"
+                    className="px-3 py-1.5 rounded-horeca ml-1"
                   >
                     <AppText
                       variant="caption"
@@ -201,7 +201,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
               accessibilityLabel="Refresh paired printers"
               onPress={loadPairedDevices}
               disabled={isScanning}
-              className="flex-row items-center py-1 px-2 rounded-lg active:opacity-70"
+              className="flex-row items-center py-1 px-2 rounded-horeca active:opacity-70"
             >
               <ArrowPathIcon color={colors.primary} size={14} />
               <AppText variant="caption" className="text-primary font-bold text-xs ml-1">
@@ -220,7 +220,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
                 </AppText>
               </View>
             ) : pairedDevices.length === 0 ? (
-              <View className="p-4 rounded-2xl bg-background border border-border items-center">
+              <View className="p-4 rounded-horeca bg-background border border-border items-center">
                 <AppText variant="label" className="font-bold text-text text-center mb-1">
                   No Paired Bluetooth Devices Found
                 </AppText>
@@ -241,7 +241,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
                     accessibilityLabel={`Connect to ${device.name}`}
                     disabled={Boolean(connectingAddress)}
                     onPress={() => handleSelectDevice(device)}
-                    className={`flex-row items-center justify-between p-3.5 mb-2 rounded-2xl border ${
+                    className={`flex-row items-center justify-between p-3.5 mb-2 rounded-horeca border ${
                       isSelected
                         ? 'bg-primary/10 border-primary'
                         : 'bg-background border-border'

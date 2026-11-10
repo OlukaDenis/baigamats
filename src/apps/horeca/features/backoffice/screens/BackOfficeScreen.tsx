@@ -106,7 +106,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
       contentContainerClassName="px-4 py-5"
     >
       {/* Navigation Tabs */}
-      <View className="flex-row p-1 bg-surface border border-border rounded-2xl mb-5">
+      <View className="flex-row p-1 bg-surface border border-border rounded-horeca mb-5">
         {(['tables', 'menu', 'staff', 'theme'] as const).map(tab => {
           const isActive = activeTab === tab;
           return (
@@ -115,7 +115,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Tab ${tab}`}
               onPress={() => setActiveTab(tab)}
-              className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
+              className={`flex-1 py-2.5 rounded-horeca items-center justify-center ${
                 isActive ? 'bg-primary shadow-sm' : 'bg-transparent'
               }`}
             >
@@ -151,7 +151,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
           {tables.map(table => (
             <View
               key={table.id}
-              className="flex-row items-center justify-between p-3.5 mb-2.5 rounded-2xl bg-surface border border-border shadow-sm"
+              className="flex-row items-center justify-between p-3.5 mb-2.5 rounded-horeca bg-surface border border-border shadow-sm"
             >
               <View className="flex-1 mr-2">
                 <AppText variant="label" className="font-bold text-text">
@@ -172,7 +172,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel={`Delete table ${table.table_number}`}
                   onPress={() => handleDeleteTable(table.id)}
-                  className="h-8 w-8 rounded-lg bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
+                  className="h-8 w-8 rounded-horeca bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
                 >
                   <TrashIcon color={colors.error} size={16} />
                 </Pressable>
@@ -195,7 +195,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
           {menuItems.map(item => (
             <View
               key={item.id}
-              className="flex-row items-center justify-between p-3.5 mb-2.5 rounded-2xl bg-surface border border-border shadow-sm"
+              className="flex-row items-center justify-between p-3.5 mb-2.5 rounded-horeca bg-surface border border-border shadow-sm"
             >
               <View className="flex-1 mr-2">
                 <AppText variant="label" className="font-bold text-text" numberOfLines={1}>
@@ -226,7 +226,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
           {staffList.map(staff => (
             <View
               key={staff.id}
-              className="flex-row items-center justify-between p-3.5 mb-2.5 rounded-2xl bg-surface border border-border shadow-sm"
+              className="flex-row items-center justify-between p-3.5 mb-2.5 rounded-horeca bg-surface border border-border shadow-sm"
             >
               <View className="flex-1 mr-2">
                 <AppText variant="label" className="font-bold text-text">
@@ -249,7 +249,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
       {/* TAB 4: THEME & DISPLAY */}
       {activeTab === 'theme' && (
         <View>
-          <View className="rounded-3xl bg-surface border border-border p-5 shadow-sm mb-4">
+          <View className="rounded-horeca bg-surface border border-border p-5 shadow-sm mb-4">
             <AppText variant="title" className="text-lg font-bold text-text mb-1">
               Display & Appearance
             </AppText>
@@ -259,7 +259,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
 
             <View className="flex-row items-center justify-between py-3 border-t border-border/40">
               <View className="flex-row items-center flex-1 mr-2">
-                <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mr-3">
+                <View className="h-10 w-10 rounded-horeca bg-background border border-border items-center justify-center mr-3">
                   {isDark ? (
                     <MoonIcon color={colors.primary} size={20} />
                   ) : (
@@ -284,7 +284,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
             </View>
           </View>
 
-          <View className="rounded-3xl bg-surface border border-border p-5 shadow-sm">
+          <View className="rounded-horeca bg-surface border border-border p-5 shadow-sm">
             <View className="flex-row items-center justify-between mb-1">
               <AppText variant="title" className="text-lg font-bold text-text">
                 Bluetooth Thermal Printer
@@ -301,7 +301,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
 
             <View className="flex-row items-center justify-between py-3 border-t border-border/40 mb-3">
               <View className="flex-row items-center flex-1 mr-2">
-                <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mr-3">
+                <View className="h-10 w-10 rounded-horeca bg-background border border-border items-center justify-center mr-3">
                   <PrinterIcon color={colors.primary} size={20} />
                 </View>
                 <View className="flex-1">

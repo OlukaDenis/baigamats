@@ -152,7 +152,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Go Back"
                 onPress={onBack}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border active:opacity-70"
+                className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border active:opacity-70"
                 hitSlop={6}
               >
                 <ArrowLeftIcon color={colors.onSurface} size={18} />
@@ -166,7 +166,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
       contentContainerClassName="flex-1"
     >
       {/* 2 Tabs: Open and Billed */}
-      <View className="flex-row p-1.5 mx-4 mt-3 mb-2 bg-surface border border-border rounded-2xl">
+      <View className="flex-row p-1.5 mx-4 mt-3 mb-2 bg-surface border border-border rounded-horeca">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open Orders Tab"
@@ -174,7 +174,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
           style={{
             backgroundColor: activeStatusTab === 'open' ? colors.primary : 'transparent',
           }}
-          className="flex-1 py-2.5 rounded-xl flex-row items-center justify-center"
+          className="flex-1 py-2.5 rounded-horeca flex-row items-center justify-center"
         >
           <ClockIcon
             color={activeStatusTab === 'open' ? colors.onPrimary : colors.onSurfaceVariant}
@@ -199,7 +199,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
           style={{
             backgroundColor: activeStatusTab === 'billed' ? colors.primary : 'transparent',
           }}
-          className="flex-1 py-2.5 rounded-xl flex-row items-center justify-center"
+          className="flex-1 py-2.5 rounded-horeca flex-row items-center justify-center"
         >
           <DocumentCheckIcon
             color={activeStatusTab === 'billed' ? colors.onPrimary : colors.onSurfaceVariant}
@@ -284,7 +284,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
           }
           ListEmptyComponent={
             <View className="py-20 items-center justify-center px-4">
-              <View className="h-16 w-16 rounded-3xl bg-primary/10 border border-primary/20 items-center justify-center mb-3">
+              <View className="h-16 w-16 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mb-3">
                 <ShoppingBagIcon color={colors.primary} size={32} />
               </View>
               <AppText variant="title" className="text-text font-bold mb-1">

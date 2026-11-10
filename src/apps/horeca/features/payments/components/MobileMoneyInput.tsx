@@ -89,7 +89,7 @@ export const MobileMoneyInput: React.FC<MobileMoneyInputProps> = ({
 
       {/* Input Field Container */}
       <View
-        className="flex-row items-center rounded-2xl bg-background border px-3.5 py-1.5 min-h-[52px]"
+        className="flex-row items-center rounded-horeca bg-input border px-3.5 py-1.5 min-h-[58px]"
         style={{
           borderColor:
             error

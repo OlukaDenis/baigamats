@@ -15,7 +15,7 @@ export interface HorecaSplashScreenProps {
  * Displayed during app initialization, auth hydration, and offline store warmup.
  */
 export const HorecaSplashScreen: React.FC<HorecaSplashScreenProps> = ({
-  message = 'Initializing POS terminal...',
+  message = 'Initializing...',
 }) => {
   const colors = useHorecaColors();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -57,16 +57,13 @@ export const HorecaSplashScreen: React.FC<HorecaSplashScreenProps> = ({
         >
           {/* Hero Icon Container */}
           <View className="relative mb-6">
-            <View className="h-24 w-24 items-center justify-center rounded-3xl bg-primary/10 border-2 border-primary/25 shadow-lg">
+            <View className="h-24 w-24 items-center justify-center rounded-horeca bg-primary/10 border-2 border-primary/25 shadow-lg">
               <BuildingStorefrontIcon
                 color={colors.primary}
                 size={48}
                 accessibilityElementsHidden
                 importantForAccessibility="no"
               />
-            </View>
-            <View className="absolute -top-1.5 -right-1.5 h-8 w-8 items-center justify-center rounded-full bg-primary border-2 border-surface shadow-sm">
-              <SparklesIcon color={colors.onPrimary} size={16} />
             </View>
           </View>
 
@@ -91,7 +88,7 @@ export const HorecaSplashScreen: React.FC<HorecaSplashScreenProps> = ({
           </AppText>
 
           {/* Loading Indicator Pill */}
-          <View className="mt-10 flex-row items-center rounded-full border border-border bg-surface px-5 py-2.5 shadow-sm">
+          <View className="mt-10 flex-row items-center rounded-horeca bg-surface px-5 py-2.5">
             <ActivityIndicator size="small" color={colors.primary} />
             <AppText variant="caption" className="ml-3 font-medium text-text">
               {message}

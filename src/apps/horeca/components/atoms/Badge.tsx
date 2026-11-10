@@ -62,7 +62,7 @@ export function Badge({
   labelClassName = '',
   ...rest
 }: BadgeProps) {
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 rounded-md' : 'px-2.5 py-1 rounded-lg';
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 rounded-horeca' : 'px-2.5 py-1 rounded-horeca';
   const textSizeClass = size === 'sm' ? 'text-xs' : 'text-xs';
 
   return (

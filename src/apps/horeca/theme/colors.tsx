@@ -27,6 +27,7 @@ export const horecaLightColors = {
   surfaceContainer: '#efedee',
   surfaceContainerHigh: '#e9e8e9',
   surfaceContainerHighest: '#e3e2e3',
+  inputBackground: '#f3f4f6',
 
   onSurface: '#1b1c1d',
   onSurfaceVariant: '#434653',
@@ -81,6 +82,7 @@ export const horecaDarkColors: typeof horecaLightColors = {
   surfaceContainer: '#161e2a',
   surfaceContainerHigh: '#1c2635',
   surfaceContainerHighest: '#243043',
+  inputBackground: '#222b3a',
 
   onSurface: '#dae2fd',
   onSurfaceVariant: '#8f95a5',
@@ -108,6 +110,9 @@ export const horecaDarkColors: typeof horecaLightColors = {
   kotReady: '#34d399',
   kotServed: '#9ca3af',
 };
+
+export const HORECA_DEFAULT_RADIUS = 5;
+export const HORECA_DEFAULT_CONTROL_HEIGHT = 58;
 
 // Default static fallback export
 export const horecaColors = horecaLightColors;
@@ -157,6 +162,7 @@ export function toHorecaCssVariables(colors: HorecaColors): Record<string, strin
     '--color-tertiary': toRgbChannels(colors.tertiary),
     '--color-background': toRgbChannels(colors.background),
     '--color-surface': toRgbChannels(colors.surface),
+    '--color-input': toRgbChannels(colors.inputBackground),
     '--color-border': toRgbChannels(colors.outlineVariant || colors.outline),
     '--color-text': toRgbChannels(colors.onSurface),
     '--color-text-primary': toRgbChannels(colors.onSurface),
@@ -217,9 +223,8 @@ export function useHorecaTheme(): HorecaThemeContextValue {
 
 export function useHorecaColors(): HorecaColors {
   const context = useContext(HorecaThemeContext);
-  const systemScheme = useColorScheme();
   if (context && context.colors) {
     return context.colors;
   }
-  return systemScheme === 'dark' ? horecaDarkColors : horecaLightColors;
+  return horecaLightColors;
 }

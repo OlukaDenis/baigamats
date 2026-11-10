@@ -75,7 +75,7 @@ export const StartOrderModal: React.FC<StartOrderModalProps> = ({
           {/* Header */}
           <View className="flex-row items-center justify-between pb-4 border-b border-border/50">
             <View className="flex-row items-center flex-1 mr-3">
-              <View className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mr-3.5">
+              <View className="h-12 w-12 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mr-3.5">
                 <TableCellsIcon color={colors.primary} size={24} />
               </View>
               <View className="flex-1">
@@ -105,8 +105,8 @@ export const StartOrderModal: React.FC<StartOrderModalProps> = ({
 
           {/* Body Content */}
           <View className="py-5">
-            <View className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex-row items-center">
-              <View className="h-10 w-10 rounded-xl bg-primary/15 items-center justify-center mr-3">
+            <View className="p-4 rounded-horeca bg-primary/10 border border-primary/20 flex-row items-center">
+              <View className="h-10 w-10 rounded-horeca bg-primary/15 items-center justify-center mr-3">
                 {isSubmitting ? (
                   <ActivityIndicator color={colors.primary} size="small" />
                 ) : (

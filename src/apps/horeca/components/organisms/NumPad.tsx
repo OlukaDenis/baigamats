@@ -46,7 +46,7 @@ export function NumPad({
             accessibilityLabel={`Digit ${item.digit}`}
             accessibilityRole="button"
             onPress={() => onDigitPress(item.digit)}
-            className="w-[30%] mb-3 h-16 items-center justify-center rounded-2xl bg-surface border border-border shadow-sm active:bg-primary/10 active:border-primary"
+            className="w-[30%] mb-3 h-16 items-center justify-center rounded-horeca bg-surface border border-border shadow-sm active:bg-primary/10 active:border-primary"
           >
             <AppText className="text-2xl font-bold text-text">
               {item.digit}
@@ -65,7 +65,7 @@ export function NumPad({
           accessibilityRole="button"
           onPress={onClearPress}
           disabled={disableClear}
-          className={`w-[30%] h-16 items-center justify-center rounded-2xl bg-surface border border-border shadow-sm active:bg-error/10 active:border-error ${disableClear ? 'opacity-30' : ''
+          className={`w-[30%] h-16 items-center justify-center rounded-horeca bg-surface border border-border shadow-sm active:bg-error/10 active:border-error ${disableClear ? 'opacity-30' : ''
             }`}
         >
           <AppText className="text-base font-bold text-error">
@@ -77,7 +77,7 @@ export function NumPad({
           accessibilityLabel="Digit 0"
           accessibilityRole="button"
           onPress={() => onDigitPress('0')}
-          className="w-[30%] h-16 items-center justify-center rounded-2xl bg-surface border border-border shadow-sm active:bg-primary/10 active:border-primary"
+          className="w-[30%] h-16 items-center justify-center rounded-horeca bg-surface border border-border shadow-sm active:bg-primary/10 active:border-primary"
         >
           <AppText className="text-2xl font-bold text-text">
             0
@@ -88,7 +88,7 @@ export function NumPad({
           accessibilityLabel="Backspace"
           accessibilityRole="button"
           onPress={onBackspacePress}
-          className="w-[30%] h-16 items-center justify-center rounded-2xl bg-surface border border-border shadow-sm active:bg-primary/10 active:border-primary"
+          className="w-[30%] h-16 items-center justify-center rounded-horeca bg-surface border border-border shadow-sm active:bg-primary/10 active:border-primary"
         >
           <BackspaceIcon
             color={colors.onSurface}

@@ -237,18 +237,18 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
       </View>
 
       {/* Paper Receipt Card */}
-      <View className="rounded-3xl bg-surface border border-border p-6 shadow-md mb-6">
+      <View className="rounded-horeca bg-surface border border-border p-6 shadow-md mb-6">
         {/* Header Branding */}
         <View className="items-center pb-4 border-b border-border/50">
           {showLogo ? (
             <Image
               source={{ uri: businessProfile!.logo_url! }}
               onError={() => setLogoError(true)}
-              className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 mb-2"
+              className="h-14 w-14 rounded-horeca bg-primary/10 border border-primary/20 mb-2"
               resizeMode="contain"
             />
           ) : (
-            <View className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-2">
+            <View className="h-12 w-12 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mb-2">
               <DocumentCheckIcon color={colors.primary} size={24} />
             </View>
           )}
@@ -272,7 +272,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
           ) : null}
 
           {/* Paid Stamp Badge */}
-          <View className="mt-3 px-3.5 py-1.5 rounded-full bg-status-available/15 border border-status-available/30 flex-row items-center">
+          <View className="mt-3 px-3.5 py-1.5 rounded-horeca bg-status-available/15 border border-status-available/30 flex-row items-center">
             <CheckCircleIcon color={colors.statusAvailable} size={16} className="mr-1.5" />
             <AppText variant="caption" className="text-status-available font-bold text-xs">
               SETTLED & PAID IN FULL
@@ -373,7 +373,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
           <View className="items-center pt-4">
             {realFiscalNumber ? (
               <>
-                <View className="h-10 w-10 rounded-xl bg-background border border-border items-center justify-center mb-1.5">
+                <View className="h-10 w-10 rounded-horeca bg-background border border-border items-center justify-center mb-1.5">
                   <QrCodeIcon color={colors.onSurfaceVariant} size={22} />
                 </View>
                 <AppText variant="caption" className="text-text-secondary font-mono text-[10px]">
@@ -396,7 +396,7 @@ export const DigitalReceiptScreen: React.FC<DigitalReceiptScreenProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Configure Bluetooth Printer"
           onPress={() => setIsPrinterModalOpen(true)}
-          className="flex-row items-center justify-between px-4 py-2.5 mb-2 rounded-2xl bg-surface border border-border active:opacity-80"
+          className="flex-row items-center justify-between px-4 py-2.5 mb-2 rounded-horeca bg-surface border border-border active:opacity-80"
         >
           <View className="flex-row items-center flex-1 mr-2">
             <PrinterIcon color={colors.primary} size={16} />

@@ -72,7 +72,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       contentContainerClassName="px-4 py-5"
     >
       {/* Profile Identity Card */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-5 items-center shadow-sm">
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-5 items-center shadow-sm">
         <View className="h-20 w-20 rounded-full bg-primary/15 border-2 border-primary items-center justify-center mb-3">
           <AppText className="text-2xl font-extrabold text-primary">
             {initials}
@@ -89,7 +89,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       </View>
 
       {/* Preferences & Security Section */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-6 shadow-sm">
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-6 shadow-sm">
         <AppText variant="label" className="text-xs font-bold uppercase text-text-secondary mb-3">
           Preferences
         </AppText>
@@ -102,7 +102,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           className="flex-row items-center justify-between py-2"
         >
           <View className="flex-row items-center flex-1 mr-3">
-            <View className="h-9 w-9 rounded-xl bg-background border border-border items-center justify-center mr-3">
+            <View className="h-9 w-9 rounded-horeca bg-background border border-border items-center justify-center mr-3">
               {isDark ? (
                 <MoonIcon color={colors.primary} size={18} />
               ) : (
@@ -133,7 +133,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             className="flex-row items-center justify-between pt-3 mt-3 border-t border-border/50 active:opacity-70"
           >
             <View className="flex-row items-center flex-1 mr-3">
-              <View className="h-9 w-9 rounded-xl bg-background border border-border items-center justify-center mr-3">
+              <View className="h-9 w-9 rounded-horeca bg-background border border-border items-center justify-center mr-3">
                 <KeyIcon color={colors.primary} size={18} />
               </View>
               <View className="flex-1">

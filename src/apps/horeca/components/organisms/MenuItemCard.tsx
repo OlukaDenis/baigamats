@@ -36,12 +36,12 @@ export const MenuItemCard = React.memo<MenuItemCardProps>(
 
     return (
       <View
-        className={`flex-row items-center p-3.5 mb-2.5 rounded-2xl border ${
+        className={`flex-row items-center p-3.5 mb-2.5 rounded-horeca border ${
           quantity > 0 ? 'bg-primary/5 border-primary/40' : 'bg-surface border-border'
         } ${!canAdd ? 'opacity-50' : ''} ${className}`.trim()}
       >
         {/* Icon / Emoji badge */}
-        <View className="h-12 w-12 rounded-xl bg-background border border-border items-center justify-center mr-3.5">
+        <View className="h-12 w-12 rounded-horeca bg-background border border-border items-center justify-center mr-3.5">
           <AppText className="text-xl">{item.station === 'bar' ? '🍸' : '🍲'}</AppText>
         </View>
 
@@ -68,13 +68,13 @@ export const MenuItemCard = React.memo<MenuItemCardProps>(
 
         {/* Quantity Stepper or Add button */}
         {quantity > 0 ? (
-          <View className="flex-row items-center bg-background border border-border rounded-xl p-0.5">
+          <View className="flex-row items-center bg-background border border-border rounded-horeca p-0.5">
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Decrease ${item.name}`}
               disabled={disabled || !onRemove}
               onPress={() => onRemove?.(item)}
-              className="h-9 w-9 items-center justify-center rounded-lg bg-surface active:bg-primary/10"
+              className="h-9 w-9 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
             >
               <MinusIcon color={colors.onSurface} size={16} />
             </Pressable>
@@ -84,7 +84,7 @@ export const MenuItemCard = React.memo<MenuItemCardProps>(
               accessibilityLabel={`Increase ${item.name}`}
               disabled={!canAdd}
               onPress={() => onAdd(item)}
-              className="h-9 w-9 items-center justify-center rounded-lg bg-primary active:opacity-80"
+              className="h-9 w-9 items-center justify-center rounded-horeca bg-primary active:opacity-80"
             >
               <PlusIcon color={colors.onPrimary} size={16} />
             </Pressable>
@@ -95,7 +95,7 @@ export const MenuItemCard = React.memo<MenuItemCardProps>(
             accessibilityLabel={`Add ${item.name}`}
             disabled={!canAdd}
             onPress={() => onAdd(item)}
-            className="h-10 w-10 rounded-xl bg-primary items-center justify-center active:opacity-80"
+            className="h-10 w-10 rounded-horeca bg-primary items-center justify-center active:opacity-80"
           >
             <PlusIcon color={colors.onPrimary} size={20} />
           </Pressable>

@@ -55,7 +55,7 @@ export function AlertBanner({
       accessible
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      className={`flex-row items-start rounded-xl border p-3.5 ${
+      className={`flex-row items-start rounded-horeca border p-3.5 ${
         containerSeverityClasses[severity]
       } ${className}`.trim()}
       {...rest}

@@ -12,7 +12,7 @@ import { FormField } from '../molecules/FormField';
 describe('UI Components & Dark Mode Visibility', () => {
   afterEach(async () => {
     await act(async () => {
-      usePreferencesStore.setState({ themePreference: 'system' });
+      usePreferencesStore.setState({ themePreference: 'light' });
     });
   });
 

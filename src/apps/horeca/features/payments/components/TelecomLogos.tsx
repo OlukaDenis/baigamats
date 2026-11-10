@@ -98,7 +98,7 @@ export const TelecomBadge: React.FC<{
   return (
     <View
       testID={`${provider}-logo-badge`}
-      className={`flex-row items-center px-2 py-1 rounded-xl shadow-xs ${
+      className={`flex-row items-center px-2 py-1 rounded-horeca shadow-xs ${
         isMtn
           ? 'bg-[#FFCC00] border border-yellow-500/80'
           : 'bg-[#FFF0F0] border border-[#E60000]/30 dark:bg-[#2A0808] dark:border-[#E60000]/50'
@@ -120,7 +120,7 @@ export const TelecomBadge: React.FC<{
             {isMtn ? 'MTN' : 'airtel'}
           </AppText>
           <View
-            className={`ml-1 px-1 py-0.5 rounded ${
+            className={`ml-1 px-1 py-0.5 rounded-horeca ${
               isMtn ? 'bg-black/15' : 'bg-[#E60000]/15'
             }`}
           >

@@ -39,7 +39,7 @@ export function FormField({
           accessible
           accessibilityRole="alert"
           accessibilityLiveRegion="polite"
-          className="mt-2 flex-row items-center rounded-xl bg-error/10 border border-error/20 px-3 py-2"
+          className="mt-2 flex-row items-center rounded-horeca bg-error/10 border border-error/20 px-3 py-2"
         >
           <ExclamationCircleIcon
             color={colors.error}

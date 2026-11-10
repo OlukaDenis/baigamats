@@ -267,13 +267,13 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
             </View>
 
             {/* Party Size Stepper */}
-            <View className="flex-row items-center bg-background border border-border rounded-xl px-1.5 py-0.5">
+            <View className="flex-row items-center bg-background border border-border rounded-horeca px-1.5 py-0.5">
               <UsersIcon color={colors.onSurfaceVariant} size={13} />
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Decrease party size"
                 onPress={() => handlePartySizeChange(-1)}
-                className="h-6 w-6 items-center justify-center rounded-md active:bg-primary/10 ml-1"
+                className="h-6 w-6 items-center justify-center rounded-horeca active:bg-primary/10 ml-1"
                 hitSlop={4}
               >
                 <MinusIcon color={colors.onSurface} size={12} />
@@ -285,7 +285,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Increase party size"
                 onPress={() => handlePartySizeChange(1)}
-                className="h-6 w-6 items-center justify-center rounded-md active:bg-primary/10"
+                className="h-6 w-6 items-center justify-center rounded-horeca active:bg-primary/10"
                 hitSlop={4}
               >
                 <PlusIcon color={colors.onSurface} size={12} />
@@ -325,7 +325,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={`Category ${cat.name}`}
                 onPress={() => setSelectedCategory(cat.id)}
-                className={`mr-2 px-3.5 py-1.5 rounded-xl border ${
+                className={`mr-2 px-3.5 py-1.5 rounded-horeca border ${
                   isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
                 }`}
               >
@@ -407,7 +407,7 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
         >
           <View className="flex-row items-center justify-between mb-2.5">
             <View className="flex-row items-center flex-1">
-              <View className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 items-center justify-center mr-2">
+              <View className="h-8 w-8 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mr-2">
                 <ShoppingBagIcon color={colors.primary} size={16} />
               </View>
               <View className="flex-1 flex-row items-center justify-between">
@@ -441,10 +441,10 @@ export const TableDetailsScreen: React.FC<TableDetailsScreenProps> = ({
           accessibilityLabel={`View order, ${existingOrderCount} items, UGX ${formatUGX(existingOrderAmount)}`}
           onPress={() => onViewOrder(currentOrder?.id)}
           style={{ bottom: Math.max(insets.bottom, 12) + 8 }}
-          className="absolute left-4 right-4 rounded-2xl bg-primary p-3.5 shadow-xl flex-row items-center justify-between active:opacity-90"
+          className="absolute left-4 right-4 rounded-horeca bg-primary p-3.5 shadow-xl flex-row items-center justify-between active:opacity-90"
         >
           <View className="flex-row items-center">
-            <View className="h-10 w-10 rounded-xl bg-white/20 items-center justify-center mr-3">
+            <View className="h-10 w-10 rounded-horeca bg-white/20 items-center justify-center mr-3">
               <ShoppingBagIcon color={colors.onPrimary} size={20} />
             </View>
             <View>

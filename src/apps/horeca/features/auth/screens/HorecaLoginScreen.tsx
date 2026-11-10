@@ -143,7 +143,7 @@ export const HorecaLoginScreen: React.FC = () => {
       <View className="w-full max-w-md self-center">
         {/* Brand Header */}
         <View className="items-center mb-8">
-          <View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-3 shadow-sm">
+          <View className="h-16 w-16 items-center justify-center rounded-horeca bg-primary/10 border border-primary/20 mb-3 shadow-sm">
             <BuildingStorefrontIcon color={colors.primary} size={32} />
           </View>
           <AppText variant="display" className="text-2xl font-bold text-text text-center">
@@ -155,7 +155,7 @@ export const HorecaLoginScreen: React.FC = () => {
         </View>
 
         {/* Login Form Card */}
-        <View className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+        <View className="rounded-horeca p-6">
           {!isMfaStep ? (
             <>
               <AppText variant="title" className="text-text font-bold mb-1">
@@ -167,7 +167,7 @@ export const HorecaLoginScreen: React.FC = () => {
 
               <FormField
                 label="Username or Email"
-                placeholder="e.g. staff.alex or manager@bistro.com"
+                placeholder="Enter username or email"
                 value={loginId}
                 onChangeText={setLoginId}
                 autoCapitalize="none"
@@ -208,7 +208,7 @@ export const HorecaLoginScreen: React.FC = () => {
           ) : (
             <>
               <View className="items-center mb-5">
-                <View className="h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-2">
+                <View className="h-12 w-12 items-center justify-center rounded-horeca bg-primary/10 mb-2">
                   <ShieldCheckIcon color={colors.primary} size={24} />
                 </View>
                 <AppText variant="title" className="text-text font-bold">

@@ -30,7 +30,7 @@ describe('App', () => {
 
   afterEach(async () => {
     await act(async () => {
-      usePreferencesStore.setState({ themePreference: 'system' });
+      usePreferencesStore.setState({ themePreference: 'light' });
       await useAuthStore.getState().clearAuth();
     });
   });

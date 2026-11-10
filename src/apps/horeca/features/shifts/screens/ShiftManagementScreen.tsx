@@ -86,7 +86,7 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
       contentContainerClassName="px-4 py-5"
     >
       {/* Status Card Banner */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-5 shadow-sm">
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-5 shadow-sm">
         <View className="flex-row items-center justify-between pb-3 border-b border-border/50">
           <View className="flex-row items-center">
             <View
@@ -174,7 +174,7 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
           </>
         ) : (
           <View className="py-6 items-center">
-            <View className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-3">
+            <View className="h-14 w-14 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mb-3">
               <LockOpenIcon color={colors.primary} size={28} />
             </View>
             <AppText variant="title" className="text-text font-bold mb-1">
@@ -260,7 +260,7 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
               </Pressable>
             </View>
 
-            <View className="p-3.5 rounded-2xl bg-background border border-border mb-4">
+            <View className="p-3.5 rounded-horeca bg-background border border-border mb-4">
               <View className="flex-row justify-between mb-1">
                 <AppText variant="caption" className="text-text-secondary">Expected Cash:</AppText>
                 <AppText variant="label" className="font-bold text-text">UGX {expectedCash.toLocaleString()}</AppText>

@@ -59,11 +59,11 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
             : 'neutral';
 
     return (
-      <View className="mb-3.5 rounded-2xl bg-surface border border-border p-4 shadow-sm">
+      <View className="mb-3.5 rounded-horeca bg-surface border border-border p-4 shadow-sm">
         {/* Ticket Header */}
         <View className="flex-row items-center justify-between pb-3 border-b border-border/50">
           <View className="flex-row items-center">
-            <View className="px-2.5 py-1 rounded-lg bg-primary/15 border border-primary/30 mr-2.5">
+            <View className="px-2.5 py-1 rounded-horeca bg-primary/15 border border-primary/30 mr-2.5">
               <AppText variant="caption" className="font-bold text-primary">
                 Table {item.order.table_id?.replace(/\D/g, '') || '04'}
               </AppText>
@@ -74,7 +74,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
           </View>
 
           <View className="flex-row items-center">
-            <View className="flex-row items-center mr-2 px-2 py-0.5 rounded-md bg-background border border-border">
+            <View className="flex-row items-center mr-2 px-2 py-0.5 rounded-horeca bg-background border border-border">
               <ClockIcon color={colors.onSurfaceVariant} size={12} />
               <AppText variant="caption" className="ml-1 text-[10px] text-text-secondary font-medium">
                 8m elapsed
@@ -99,7 +99,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
               {item.modifiers.map((mod, idx) => (
                 <View
                   key={idx}
-                  className="mr-1.5 mb-1.5 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20"
+                  className="mr-1.5 mb-1.5 px-2 py-0.5 rounded-horeca bg-primary/10 border border-primary/20"
                 >
                   <AppText variant="caption" className="text-xs font-semibold text-primary">
                     {mod}
@@ -110,7 +110,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
           ) : null}
 
           {item.notes ? (
-            <View className="mt-2 flex-row items-start p-2.5 rounded-xl bg-status-reserved/10 border border-status-reserved/20">
+            <View className="mt-2 flex-row items-start p-2.5 rounded-horeca bg-status-reserved/10 border border-status-reserved/20">
               <ExclamationTriangleIcon color={colors.statusReserved} size={16} className="mr-1.5 mt-0.5" />
               <AppText variant="caption" className="flex-1 text-xs text-status-reserved font-medium">
                 Note: {item.notes}
@@ -183,7 +183,7 @@ export const KitchenDisplayScreen: React.FC<KitchenDisplayScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Filter ${station.label}`}
               onPress={() => setSelectedStation(station.id as any)}
-              className={`mr-2 px-3.5 py-1.5 rounded-xl border ${
+              className={`mr-2 px-3.5 py-1.5 rounded-horeca border ${
                 isActive
                   ? 'bg-primary border-primary shadow-sm'
                   : 'bg-surface border-border active:bg-surface/80'

@@ -78,11 +78,11 @@ export function HorecaAppBar({
             <Image
               source={{ uri: businessProfile!.logo_url! }}
               onError={() => setLogoError(true)}
-              className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 mr-3"
+              className="h-10 w-10 rounded-horeca bg-primary/10 border border-primary/20 mr-3"
               resizeMode="cover"
             />
           ) : (
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mr-3">
+            <View className="h-10 w-10 items-center justify-center rounded-horeca bg-primary/10 border border-primary/20 mr-3">
               <ComputerDesktopIcon
                 color={colors.primary}
                 size={20}
@@ -114,7 +114,7 @@ export function HorecaAppBar({
             accessibilityRole="button"
             accessibilityLabel={`View Orders, ${badgeCount} selected`}
             onPress={onOrdersPress}
-            className="relative h-10 w-10 items-center justify-center rounded-xl bg-background border border-border mr-2 active:opacity-70"
+            className="relative h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border mr-2 active:opacity-70"
             hitSlop={6}
           >
             <ShoppingCartIcon color={colors.onSurfaceVariant} size={18} />
@@ -130,7 +130,7 @@ export function HorecaAppBar({
               accessibilityRole="button"
               accessibilityLabel="Lock Terminal"
               onPress={onLockPress}
-              className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border mr-2 active:opacity-70"
+              className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border mr-2 active:opacity-70"
               hitSlop={6}
             >
               <LockClosedIcon color={colors.onSurfaceVariant} size={18} />
@@ -142,7 +142,7 @@ export function HorecaAppBar({
               accessibilityRole="button"
               accessibilityLabel="User Profile"
               onPress={onProfilePress}
-              className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border active:opacity-70"
+              className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border active:opacity-70"
               hitSlop={6}
             >
               <UserIcon color={colors.onSurfaceVariant} size={18} />

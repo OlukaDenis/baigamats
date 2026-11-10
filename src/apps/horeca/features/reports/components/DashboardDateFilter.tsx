@@ -172,7 +172,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Filter by ${option.label}`}
               onPress={() => handleChipPress(option.id)}
-              className={`mr-2 px-3.5 py-2 rounded-xl border flex-row items-center ${
+              className={`mr-2 px-3.5 py-2 rounded-horeca border flex-row items-center ${
                 isSelected
                   ? 'bg-primary border-primary'
                   : 'bg-surface border-border active:opacity-80'
@@ -198,7 +198,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
       </ScrollView>
 
       {/* Active Period Summary Row */}
-      <View className="flex-row items-center justify-between mt-2.5 px-3 py-2 rounded-xl bg-surface/80 border border-border/60">
+      <View className="flex-row items-center justify-between mt-2.5 px-3 py-2 rounded-horeca bg-surface/80 border border-border/60">
         <View className="flex-row items-center flex-1 mr-2">
           <CalendarDaysIcon size={15} color={colors.primary} />
           <AppText variant="caption" className="text-xs text-text font-semibold ml-2">
@@ -209,7 +209,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Open custom date range picker"
           onPress={openCustomPicker}
-          className="px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 active:opacity-75"
+          className="px-2.5 py-1 rounded-horeca bg-primary/10 border border-primary/20 active:opacity-75"
         >
           <AppText variant="caption" className="text-[11px] font-bold text-primary">
             Pick Dates
@@ -252,10 +252,10 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Select From date"
                 onPress={() => setActiveField('from')}
-                className={`w-[48%] p-2.5 rounded-xl border ${
+                className={`min-h-[58px] w-[48%] p-2.5 rounded-horeca border ${
                   activeField === 'from'
                     ? 'border-primary bg-primary/5'
-                    : 'border-border bg-background'
+                    : 'border-border bg-input'
                 }`}
               >
                 <AppText
@@ -282,10 +282,10 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Select To date"
                 onPress={() => setActiveField('to')}
-                className={`w-[48%] p-2.5 rounded-xl border ${
+                className={`min-h-[58px] w-[48%] p-2.5 rounded-horeca border ${
                   activeField === 'to'
                     ? 'border-primary bg-primary/5'
-                    : 'border-border bg-background'
+                    : 'border-border bg-input'
                 }`}
               >
                 <AppText
@@ -315,7 +315,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Previous month"
                 onPress={handlePrevMonth}
-                className="h-8 w-8 rounded-lg bg-background border border-border items-center justify-center"
+                className="h-8 w-8 rounded-horeca bg-background border border-border items-center justify-center"
               >
                 <ChevronLeftIcon size={16} color={colors.onSurface} />
               </Pressable>
@@ -328,7 +328,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Next month"
                 onPress={handleNextMonth}
-                className="h-8 w-8 rounded-lg bg-background border border-border items-center justify-center"
+                className="h-8 w-8 rounded-horeca bg-background border border-border items-center justify-center"
               >
                 <ChevronRightIcon size={16} color={colors.onSurface} />
               </Pressable>
@@ -367,7 +367,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Select ${cell.ymd}`}
                     onPress={() => handleDayPress(cell.ymd!)}
-                    className={`w-[14.28%] h-9 items-center justify-center rounded-lg ${
+                    className={`w-[14.28%] h-9 items-center justify-center rounded-horeca ${
                       isStart || isEnd
                         ? 'bg-primary'
                         : isInRange

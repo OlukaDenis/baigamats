@@ -145,7 +145,7 @@ export const MobileMoneyProcessingView: React.FC<MobileMoneyProcessingViewProps>
   const totalCharge = chargeAmount ?? (amount + (feeAmount ?? 0));
 
   return (
-    <View className="rounded-3xl bg-surface border border-border p-5 mb-5 shadow-sm">
+    <View className="rounded-horeca bg-surface border border-border p-5 mb-5 shadow-sm">
       {/* ============================================================== */}
       {/* 1. Header with Animated Radar Pulse / Status Artwork           */}
       {/* ============================================================== */}
@@ -172,7 +172,7 @@ export const MobileMoneyProcessingView: React.FC<MobileMoneyProcessingViewProps>
               />
               {/* Central Carrier Badge */}
               <View
-                className={`h-16 w-16 rounded-2xl items-center justify-center shadow-md border-2 ${isMtn
+                className={`h-16 w-16 rounded-horeca items-center justify-center shadow-md border-2 ${isMtn
                   ? 'bg-[#FFCC00] border-yellow-500'
                   : 'bg-[#FFF0F0] dark:bg-[#330808] border-[#E60000]'
                   }`}
@@ -199,7 +199,7 @@ export const MobileMoneyProcessingView: React.FC<MobileMoneyProcessingViewProps>
         <View className="mt-2 mb-2">
           {isSubmitting ? (
             <View
-              className={`flex-row items-center px-3.5 py-1.5 rounded-full border ${isMtn
+              className={`flex-row items-center px-3.5 py-1.5 rounded-horeca border ${isMtn
                 ? 'bg-yellow-500/10 border-yellow-500/30'
                 : 'bg-red-500/10 border-red-500/30'
                 }`}
@@ -217,7 +217,7 @@ export const MobileMoneyProcessingView: React.FC<MobileMoneyProcessingViewProps>
             </View>
           ) : isPending ? (
             <View
-              className={`flex-row items-center px-3.5 py-1.5 rounded-full border ${isMtn
+              className={`flex-row items-center px-3.5 py-1.5 rounded-horeca border ${isMtn
                 ? 'bg-yellow-500/10 border-yellow-500/30'
                 : 'bg-red-500/10 border-red-500/30'
                 }`}
@@ -234,14 +234,14 @@ export const MobileMoneyProcessingView: React.FC<MobileMoneyProcessingViewProps>
               </AppText>
             </View>
           ) : isPaid ? (
-            <View className="flex-row items-center px-3.5 py-1.5 rounded-full bg-status-available/15 border border-status-available/30">
+            <View className="flex-row items-center px-3.5 py-1.5 rounded-horeca bg-status-available/15 border border-status-available/30">
               <ShieldCheckIcon color={colors.statusAvailable} size={15} />
               <AppText variant="caption" className="text-status-available font-black ml-1.5 text-xs">
                 PAYMENT CONFIRMED & VERIFIED
               </AppText>
             </View>
           ) : (
-            <View className="flex-row items-center px-3.5 py-1.5 rounded-full bg-error/15 border border-error/30">
+            <View className="flex-row items-center px-3.5 py-1.5 rounded-horeca bg-error/15 border border-error/30">
               <ExclamationTriangleIcon color={colors.error} size={15} />
               <AppText variant="caption" className="text-error font-black ml-1.5 text-xs">
                 PAYMENT {state ? state.toUpperCase() : 'FAILED'}
@@ -281,7 +281,7 @@ export const MobileMoneyProcessingView: React.FC<MobileMoneyProcessingViewProps>
       {/* ============================================================== */}
       {/* 2. Customer & Fee Transparency Card                            */}
       {/* ============================================================== */}
-      <View className="my-4 p-4 rounded-2xl bg-background border border-border">
+      <View className="my-4 p-4 rounded-horeca bg-background border border-border">
         {/* Customer Phone & Carrier */}
         <View className="flex-row items-center justify-between mb-2.5">
           <AppText variant="caption" className="text-text-secondary font-medium">

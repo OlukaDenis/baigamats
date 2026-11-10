@@ -1,6 +1,7 @@
 import React, { type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, View, type PressableProps } from 'react-native';
 import { useHorecaColors } from '../../theme/colors';
+import { buildControlStyleOverrides } from '../controlStyleOverrides';
 import { AppText } from './AppText';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
@@ -25,9 +26,9 @@ const labelClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, { container: string; text: string }> = {
-  sm: { container: 'min-h-9 px-3 py-1.5 rounded-lg', text: 'text-sm' },
-  md: { container: 'min-h-12 px-5 py-3 rounded-xl', text: 'text-base' },
-  lg: { container: 'min-h-14 px-6 py-4 rounded-2xl', text: 'text-lg font-semibold' },
+  sm: { container: 'min-h-9 px-3 py-1.5 rounded-horeca', text: 'text-sm' },
+  md: { container: 'min-h-[58px] px-5 py-3 rounded-horeca', text: 'text-base' },
+  lg: { container: 'min-h-[58px] px-6 py-4 rounded-horeca', text: 'text-lg font-semibold' },
 };
 
 export type ButtonProps = Omit<PressableProps, 'children'> & {
@@ -39,6 +40,8 @@ export type ButtonProps = Omit<PressableProps, 'children'> & {
   rightIcon?: ReactNode;
   className?: string;
   labelClassName?: string;
+  borderRadius?: number;
+  height?: number;
 };
 
 export function Button({
@@ -51,6 +54,9 @@ export function Button({
   rightIcon,
   className = '',
   labelClassName = '',
+  borderRadius,
+  height,
+  style,
   ...rest
 }: ButtonProps) {
   const colors = useHorecaColors();
@@ -66,6 +72,7 @@ export function Button({
   }[variant];
 
   const sizeStyle = sizeClasses[size];
+  const overrideStyle = buildControlStyleOverrides({ borderRadius, height });
 
   return (
     <Pressable
@@ -73,6 +80,10 @@ export function Button({
       accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
+      style={state => [
+        typeof style === 'function' ? style(state) : style,
+        overrideStyle,
+      ]}
       className={`flex-row items-center justify-center ${sizeStyle.container} ${
         containerClasses[variant]
       } ${isDisabled ? 'opacity-50' : ''} ${className}`.trim()}

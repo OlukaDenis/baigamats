@@ -155,7 +155,7 @@ export const PinLockScreen: React.FC = () => {
         {/* Top Header Bar */}
         <View className="flex-row items-center justify-between pb-3 border-b border-border/50">
           <View className="flex-row items-center">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 mr-2.5">
+            <View className="h-10 w-10 items-center justify-center rounded-horeca bg-primary/10 border border-primary/20 mr-2.5">
               <ComputerDesktopIcon color={colors.primary} size={20} />
             </View>
             <View>
@@ -173,7 +173,7 @@ export const PinLockScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Toggle Theme"
               onPress={toggleTheme}
-              className="h-9 w-9 items-center justify-center rounded-xl bg-surface border border-border mr-2 active:opacity-70"
+              className="h-9 w-9 items-center justify-center rounded-horeca bg-surface border border-border mr-2 active:opacity-70"
               hitSlop={6}
             >
               {isDark ? (
@@ -216,7 +216,7 @@ export const PinLockScreen: React.FC = () => {
 
           {/* Custom Username Field with Centered Text */}
           <View className="w-full max-w-xs mb-4">
-            <View className="relative flex-row items-center justify-center rounded-2xl bg-surface border border-border px-4 py-2.5 shadow-sm focus:border-primary">
+            <View className="relative min-h-[58px] flex-row items-center justify-center rounded-horeca bg-input border border-border px-4 py-2.5 shadow-sm focus:border-primary">
               <View className="absolute left-3.5">
                 <UserIcon color={colors.onSurfaceVariant} size={18} />
               </View>

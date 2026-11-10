@@ -52,7 +52,7 @@ export function HorecaSubAppBar({
             accessibilityRole="button"
             accessibilityLabel="Go Back"
             onPress={onBack}
-            className="h-10 w-10 items-center justify-center rounded-xl bg-background border border-border mr-3 active:opacity-70"
+            className="h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border mr-3 active:opacity-70"
             hitSlop={6}
           >
             <ArrowLeftIcon color={colors.onSurface} size={18} />
@@ -78,7 +78,7 @@ export function HorecaSubAppBar({
           accessibilityRole="button"
           accessibilityLabel={`View Orders, ${badgeCount} selected`}
           onPress={onOrdersPress}
-          className="relative h-10 w-10 items-center justify-center rounded-xl bg-background border border-border active:opacity-70"
+          className="relative h-10 w-10 items-center justify-center rounded-horeca bg-background border border-border active:opacity-70"
           hitSlop={6}
         >
           <ShoppingCartIcon color={colors.onSurfaceVariant} size={18} />

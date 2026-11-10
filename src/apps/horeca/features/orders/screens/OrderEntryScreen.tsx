@@ -309,7 +309,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
     const isExpanded = expandedDraftItemId === item.id;
 
     return (
-      <View className="p-3.5 mb-2.5 rounded-2xl bg-surface border border-border shadow-sm">
+      <View className="p-3.5 mb-2.5 rounded-horeca bg-surface border border-border shadow-sm">
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-1 mr-2">
             <View className="flex-row items-center">
@@ -317,7 +317,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
                 {item.item_name}
               </AppText>
               {item.age_restricted ? (
-                <View className="px-1.5 py-0.5 rounded bg-warning/20 border border-warning/40">
+                <View className="px-1.5 py-0.5 rounded-horeca bg-warning/20 border border-warning/40">
                   <AppText variant="caption" className="text-[9px] font-bold text-warning">
                     18+
                   </AppText>
@@ -336,7 +336,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
         {item.modifiers && item.modifiers.length > 0 ? (
           <View className="flex-row flex-wrap mb-1.5">
             {item.modifiers.map((mod, i) => (
-              <View key={i} className="mr-1.5 mb-1 px-2 py-0.5 rounded-md bg-background border border-border">
+              <View key={i} className="mr-1.5 mb-1 px-2 py-0.5 rounded-horeca bg-background border border-border">
                 <AppText variant="caption" className="text-[10px] text-text-secondary font-medium">
                   {mod}
                 </AppText>
@@ -362,7 +362,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
 
         {/* Expandable Notes & Modifiers Editor */}
         {isExpanded ? (
-          <View className="mt-1 mb-2.5 p-2.5 rounded-xl bg-background border border-border">
+          <View className="mt-1 mb-2.5 p-2.5 rounded-horeca bg-background border border-border">
             <AppText variant="caption" className="text-[10px] text-text-secondary font-semibold uppercase mb-1">
               Special Notes (Max 300 chars)
             </AppText>
@@ -376,7 +376,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               placeholder="e.g., no ice, extra well done"
               placeholderTextColor={colors.onSurfaceVariant}
               maxLength={300}
-              className="text-xs text-text bg-surface border border-border rounded-lg px-2.5 py-1.5 mb-2"
+              className="min-h-[58px] text-xs text-text bg-input border border-border rounded-horeca px-3 py-2 mb-2"
             />
 
             <AppText variant="caption" className="text-[10px] text-text-secondary font-semibold uppercase mb-1">
@@ -396,19 +396,19 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               }}
               placeholder="e.g., spicy, lemon slice"
               placeholderTextColor={colors.onSurfaceVariant}
-              className="text-xs text-text bg-surface border border-border rounded-lg px-2.5 py-1.5"
+              className="min-h-[58px] text-xs text-text bg-input border border-border rounded-horeca px-3 py-2"
             />
           </View>
         ) : null}
 
         {/* Stepper, Edit Notes & Delete Row */}
         <View className="flex-row items-center justify-between pt-2 border-t border-border/40">
-          <View className="flex-row items-center bg-background border border-border rounded-xl p-0.5">
+          <View className="flex-row items-center bg-background border border-border rounded-horeca p-0.5">
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Decrease quantity"
               onPress={() => updateDraftItemQty(activeTableId, item.id, -1)}
-              className="h-8 w-8 items-center justify-center rounded-lg bg-surface active:bg-primary/10"
+              className="h-8 w-8 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
             >
               <MinusIcon color={colors.onSurface} size={14} />
             </Pressable>
@@ -419,7 +419,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Increase quantity"
               onPress={() => updateDraftItemQty(activeTableId, item.id, 1)}
-              className="h-8 w-8 items-center justify-center rounded-lg bg-surface active:bg-primary/10"
+              className="h-8 w-8 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
             >
               <PlusIcon color={colors.onSurface} size={14} />
             </Pressable>
@@ -432,7 +432,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               onPress={() =>
                 setExpandedDraftItemId(prev => (prev === item.id ? null : item.id))
               }
-              className="h-8 px-2.5 mr-2 rounded-lg bg-surface border border-border flex-row items-center justify-center active:opacity-70"
+              className="h-8 px-2.5 mr-2 rounded-horeca bg-surface border border-border flex-row items-center justify-center active:opacity-70"
             >
               <PencilSquareIcon color={colors.onSurfaceVariant} size={14} />
               <AppText variant="caption" className="text-text-secondary font-semibold ml-1 text-xs">
@@ -444,7 +444,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Remove ${item.item_name}`}
               onPress={() => removeDraftItem(activeTableId, item.id)}
-              className="h-8 px-2.5 rounded-lg bg-error/10 border border-error/20 flex-row items-center justify-center active:opacity-70"
+              className="h-8 px-2.5 rounded-horeca bg-error/10 border border-error/20 flex-row items-center justify-center active:opacity-70"
             >
               <TrashIcon color={colors.error} size={14} />
               <AppText variant="caption" className="text-error font-semibold ml-1 text-xs">
@@ -462,7 +462,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
     const lineTotal = Math.max(0, item.unit_price * item.qty - discount);
 
     return (
-      <View className="p-3.5 mb-2.5 rounded-2xl bg-surface border border-border shadow-sm">
+      <View className="p-3.5 mb-2.5 rounded-horeca bg-surface border border-border shadow-sm">
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-1 mr-2">
             <AppText variant="label" className="font-bold text-text" numberOfLines={1}>
@@ -481,7 +481,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
         {item.modifiers && item.modifiers.length > 0 ? (
           <View className="flex-row flex-wrap mb-2">
             {item.modifiers.map((mod, i) => (
-              <View key={i} className="mr-1.5 mb-1 px-2 py-0.5 rounded-md bg-background border border-border">
+              <View key={i} className="mr-1.5 mb-1 px-2 py-0.5 rounded-horeca bg-background border border-border">
                 <AppText variant="caption" className="text-[10px] text-text-secondary font-medium">
                   {mod}
                 </AppText>
@@ -498,12 +498,12 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
 
         {/* Stepper & Delete Row */}
         <View className="flex-row items-center justify-between pt-2 border-t border-border/40">
-          <View className="flex-row items-center bg-background border border-border rounded-xl p-0.5">
+          <View className="flex-row items-center bg-background border border-border rounded-horeca p-0.5">
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Decrease quantity"
               onPress={() => updateItemQtyOptimistic(currentOrder.id, item.id, -1)}
-              className="h-8 w-8 items-center justify-center rounded-lg bg-surface active:bg-primary/10"
+              className="h-8 w-8 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
             >
               <MinusIcon color={colors.onSurface} size={14} />
             </Pressable>
@@ -514,7 +514,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Increase quantity"
               onPress={() => updateItemQtyOptimistic(currentOrder.id, item.id, 1)}
-              className="h-8 w-8 items-center justify-center rounded-lg bg-surface active:bg-primary/10"
+              className="h-8 w-8 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
             >
               <PlusIcon color={colors.onSurface} size={14} />
             </Pressable>
@@ -524,7 +524,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Remove ${item.item_name}`}
             onPress={() => removeItemOptimistic(currentOrder.id, item.id)}
-            className="h-8 px-2.5 rounded-lg bg-error/10 border border-error/20 flex-row items-center justify-center active:opacity-70"
+            className="h-8 px-2.5 rounded-horeca bg-error/10 border border-error/20 flex-row items-center justify-center active:opacity-70"
           >
             <TrashIcon color={colors.error} size={14} />
             <AppText variant="caption" className="text-error font-semibold ml-1 text-xs">
@@ -550,7 +550,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
       {/* Table Context Banner */}
       <View className="flex-row items-center justify-between px-4 py-2.5 bg-surface/70 border-b border-border/40">
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="h-9 w-9 rounded-xl bg-primary/10 items-center justify-center mr-2.5">
+          <View className="h-9 w-9 rounded-horeca bg-primary/10 items-center justify-center mr-2.5">
             <AppText variant="label" className="font-bold text-primary">
               T{activeTable?.table_number ?? '01'}
             </AppText>
@@ -576,7 +576,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
 
         <View className="flex-row items-center">
           {isDraftMode && activeTableId ? (
-            <View className="flex-row items-center bg-background border border-border rounded-xl px-1.5 py-0.5 mr-2.5">
+            <View className="flex-row items-center bg-background border border-border rounded-horeca px-1.5 py-0.5 mr-2.5">
               <UserGroupIcon color={colors.onSurfaceVariant} size={13} />
               <Pressable
                 accessibilityRole="button"
@@ -614,7 +614,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
               accessibilityRole="button"
               accessibilityLabel={isDraftMode ? 'Clear Draft Order' : 'Cancel Entire Order'}
               onPress={handleDeleteEntireOrder}
-              className="h-8 w-8 rounded-xl bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
+              className="h-8 w-8 rounded-horeca bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
               hitSlop={6}
             >
               <TrashIcon color={colors.error} size={16} />
@@ -656,7 +656,7 @@ export const OrderEntryScreen: React.FC<OrderEntryScreenProps> = ({
                 </View>
               ) : (
                 <View className="py-16 items-center justify-center">
-                  <View className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 items-center justify-center mb-3">
+                  <View className="h-14 w-14 rounded-horeca bg-primary/10 border border-primary/20 items-center justify-center mb-3">
                     <ShoppingBagIcon color={colors.primary} size={28} />
                   </View>
                   <AppText variant="title" className="text-text font-bold mb-1">

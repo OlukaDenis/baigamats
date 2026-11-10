@@ -109,12 +109,12 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
                 Number of portions
               </AppText>
             </View>
-            <View className="flex-row items-center bg-background border border-border rounded-2xl p-1">
+            <View className="flex-row items-center bg-background border border-border rounded-horeca p-1">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Decrease quantity"
                 onPress={() => setQty(prev => Math.max(1, prev - 1))}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-surface active:bg-primary/10"
+                className="h-10 w-10 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
               >
                 <MinusIcon color={colors.onSurface} size={18} />
               </Pressable>
@@ -125,7 +125,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Increase quantity"
                 onPress={() => setQty(prev => prev + 1)}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-surface active:bg-primary/10"
+                className="h-10 w-10 items-center justify-center rounded-horeca bg-surface active:bg-primary/10"
               >
                 <PlusIcon color={colors.onSurface} size={18} />
               </Pressable>
@@ -146,7 +146,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Modifier ${mod}`}
                     onPress={() => toggleModifier(mod)}
-                    className={`mr-2 mb-2 px-3 py-1.5 rounded-xl border flex-row items-center ${
+                    className={`mr-2 mb-2 px-3 py-1.5 rounded-horeca border flex-row items-center ${
                       isSelected
                         ? 'bg-primary border-primary shadow-sm'
                         : 'bg-background border-border active:bg-surface'
@@ -186,7 +186,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
               accessibilityRole="checkbox"
               accessibilityState={{ checked: ageVerified }}
               onPress={() => setAgeVerified(prev => !prev)}
-              className={`flex-row items-center p-3 rounded-xl border mb-4 ${
+              className={`flex-row items-center p-3 rounded-horeca border mb-4 ${
                 ageVerified
                   ? 'bg-status-available/10 border-status-available/30'
                   : 'bg-status-reserved/10 border-status-reserved/30'
@@ -205,7 +205,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
                 </AppText>
               </View>
               <View
-                className={`h-5 w-5 rounded-md border items-center justify-center ${
+                className={`h-5 w-5 rounded-horeca border items-center justify-center ${
                   ageVerified ? 'bg-status-available border-status-available' : 'border-border bg-surface'
                 }`}
               >

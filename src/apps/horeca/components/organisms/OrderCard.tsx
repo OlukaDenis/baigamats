@@ -48,13 +48,13 @@ export const OrderCard = React.memo<OrderCardProps>(
         accessibilityRole="button"
         accessibilityLabel={`Order ${order.order_number}, ${itemsCount} items, status ${order.status}`}
         onPress={() => onPress(order)}
-        className={`mb-3 p-4 rounded-xl bg-surface border border-border shadow-sm active:opacity-80 ${className}`.trim()}
+        className={`mb-3 p-4 rounded-horeca bg-surface border border-border shadow-sm active:opacity-80 ${className}`.trim()}
       >
         {/* Header row */}
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center flex-1 mr-2">
             <View
-              className={`h-10 w-10 rounded-2xl items-center justify-center mr-3 border ${
+              className={`h-10 w-10 rounded-horeca items-center justify-center mr-3 border ${
                 isBilled
                   ? 'bg-status-available/10 border-status-available/30'
                   : 'bg-primary/10 border-primary/20'
@@ -102,7 +102,7 @@ export const OrderCard = React.memo<OrderCardProps>(
                 accessibilityRole="button"
                 accessibilityLabel={`Cancel Order ${order.order_number}`}
                 onPress={() => onCancel(order)}
-                className="h-8 w-8 ml-2 rounded-xl bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
+                className="h-8 w-8 ml-2 rounded-horeca bg-error/10 border border-error/20 items-center justify-center active:opacity-70"
                 hitSlop={6}
               >
                 <TrashIcon color={colors.error} size={15} />

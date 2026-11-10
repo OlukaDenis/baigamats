@@ -170,7 +170,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         }
         contentContainerClassName="flex-1 items-center justify-center px-6"
       >
-        <View className="h-16 w-16 rounded-2xl bg-error/10 border border-error/20 items-center justify-center mb-4">
+        <View className="h-16 w-16 rounded-horeca bg-error/10 border border-error/20 items-center justify-center mb-4">
           <ShieldExclamationIcon size={32} color={colors.error} />
         </View>
         <AppText variant="title" className="text-lg font-bold text-text text-center mb-1.5">
@@ -228,12 +228,12 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
       contentContainerClassName="px-4 py-4"
     >
       {/* Segmented Control: Today's Sales vs Date Range Summary */}
-      <View className="flex-row p-1 bg-surface border border-border rounded-2xl mb-3.5">
+      <View className="flex-row p-1 bg-surface border border-border rounded-horeca mb-3.5">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Today's Sales"
           onPress={() => handleSelectTab('daily')}
-          className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
+          className={`flex-1 py-2.5 rounded-horeca items-center justify-center ${
             activeTab === 'daily' ? 'bg-primary shadow-sm' : 'bg-transparent'
           }`}
         >
@@ -251,7 +251,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Date Range Summary"
           onPress={() => handleSelectTab('range')}
-          className={`flex-1 py-2.5 rounded-xl items-center justify-center ${
+          className={`flex-1 py-2.5 rounded-horeca items-center justify-center ${
             activeTab === 'range' ? 'bg-primary shadow-sm' : 'bg-transparent'
           }`}
         >
@@ -295,7 +295,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Configure dashboard targets"
             onPress={openTargetsModal}
-            className="flex-row items-center px-3 py-1.5 rounded-xl bg-surface border border-border mr-2 active:opacity-75"
+            className="flex-row items-center px-3 py-1.5 rounded-horeca bg-surface border border-border mr-2 active:opacity-75"
           >
             <AdjustmentsHorizontalIcon size={14} color={colors.primary} />
             <AppText variant="caption" className="text-xs font-bold text-text ml-1.5">
@@ -308,7 +308,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             accessibilityLabel="Refresh dashboard"
             disabled={isFetching}
             onPress={() => refetch()}
-            className="h-8 w-8 rounded-xl bg-surface border border-border items-center justify-center active:opacity-75"
+            className="h-8 w-8 rounded-horeca bg-surface border border-border items-center justify-center active:opacity-75"
           >
             <ArrowPathIcon size={15} color={colors.onSurface} />
           </Pressable>
@@ -319,7 +319,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
       {errorMessage ? (
         <View
           accessibilityRole="alert"
-          className="flex-row items-start p-3.5 mb-4 rounded-2xl bg-error/10 border border-error/30"
+          className="flex-row items-start p-3.5 mb-4 rounded-horeca bg-error/10 border border-error/30"
         >
           <ExclamationTriangleIcon size={18} color={colors.error} />
           <View className="flex-1 ml-2.5">
@@ -336,7 +336,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
       {/* KPI Cards 2x2 Grid */}
       <View className="flex-row flex-wrap justify-between mb-5">
         {/* 1. Total Revenue */}
-        <View className="w-[48%] mb-3 p-4 rounded-2xl bg-surface border border-border shadow-sm">
+        <View className="w-[48%] mb-3 p-4 rounded-horeca bg-surface border border-border shadow-sm">
           <View className="flex-row items-center justify-between mb-1.5">
             <AppText variant="caption" className="text-text-secondary text-[10px] font-bold uppercase">
               Total Revenue
@@ -365,7 +365,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         </View>
 
         {/* 2. Checks / Covers */}
-        <View className="w-[48%] mb-3 p-4 rounded-2xl bg-surface border border-border shadow-sm">
+        <View className="w-[48%] mb-3 p-4 rounded-horeca bg-surface border border-border shadow-sm">
           <View className="flex-row items-center justify-between mb-1.5">
             <AppText variant="caption" className="text-text-secondary text-[10px] font-bold uppercase">
               Checks / Covers
@@ -383,7 +383,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         </View>
 
         {/* 3. Avg Check Size */}
-        <View className="w-[48%] mb-3 p-4 rounded-2xl bg-surface border border-border shadow-sm">
+        <View className="w-[48%] mb-3 p-4 rounded-horeca bg-surface border border-border shadow-sm">
           <View className="flex-row items-center justify-between mb-1.5">
             <AppText variant="caption" className="text-text-secondary text-[10px] font-bold uppercase">
               Avg Check Size
@@ -399,7 +399,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         </View>
 
         {/* 4. Avg Turn Time */}
-        <View className="w-[48%] mb-3 p-4 rounded-2xl bg-surface border border-border shadow-sm">
+        <View className="w-[48%] mb-3 p-4 rounded-horeca bg-surface border border-border shadow-sm">
           <View className="flex-row items-center justify-between mb-1.5">
             <AppText variant="caption" className="text-text-secondary text-[10px] font-bold uppercase">
               Avg Turn Time
@@ -423,7 +423,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
       </View>
 
       {/* Sales by Department */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-5 shadow-sm">
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-5 shadow-sm">
         <AppText variant="title" className="text-lg font-bold text-text mb-3">
           Sales by Department
         </AppText>
@@ -434,7 +434,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             className="flex-row items-center justify-between py-2.5 border-b border-border/40"
           >
             <View className="flex-row items-center flex-1 mr-2">
-              <View className={`h-3 w-3 rounded-md mr-2.5 ${getDepartmentColorClass(dept.key)}`} />
+              <View className={`h-3 w-3 rounded-horeca mr-2.5 ${getDepartmentColorClass(dept.key)}`} />
               <AppText variant="label" className="text-text font-medium">
                 {dept.label}
               </AppText>
@@ -447,7 +447,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
       </View>
 
       {/* Server Performance Leaderboard */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-5 shadow-sm">
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-5 shadow-sm">
         <AppText variant="title" className="text-lg font-bold text-text mb-3">
           Server Performance Leaderboard
         </AppText>
@@ -535,7 +535,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
                 keyboardType="numeric"
                 placeholder="45000"
                 placeholderTextColor={colors.onSurfaceVariant}
-                className="bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm font-bold text-text"
+                className="min-h-[58px] bg-input border border-border rounded-horeca px-3.5 py-2.5 text-sm font-bold text-text"
               />
             </View>
 
@@ -555,7 +555,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
                 keyboardType="numeric"
                 placeholder="50"
                 placeholderTextColor={colors.onSurfaceVariant}
-                className="bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm font-bold text-text"
+                className="min-h-[58px] bg-input border border-border rounded-horeca px-3.5 py-2.5 text-sm font-bold text-text"
               />
             </View>
 

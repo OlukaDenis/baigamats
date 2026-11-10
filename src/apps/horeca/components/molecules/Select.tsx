@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FlatList, Modal, Pressable, View } from 'react-native';
+import { FlatList, Modal, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { CheckIcon, ChevronDownIcon } from 'react-native-heroicons/outline';
 import { useHorecaColors } from '../../theme/colors';
+import { buildControlStyleOverrides } from '../controlStyleOverrides';
 import { AppText } from '../atoms/AppText';
 
 export interface SelectOption<T extends string = string> {
@@ -18,6 +19,10 @@ export interface SelectProps<T extends string = string> {
   label?: string;
   placeholder?: string;
   className?: string;
+  triggerClassName?: string;
+  style?: StyleProp<ViewStyle>;
+  borderRadius?: number;
+  height?: number;
   disabled?: boolean;
 }
 
@@ -28,11 +33,17 @@ export function Select<T extends string = string>({
   label,
   placeholder = 'Select...',
   className = '',
+  triggerClassName = '',
+  style,
+  borderRadius,
+  height,
   disabled = false,
 }: SelectProps<T>) {
   const colors = useHorecaColors();
   const [open, setOpen] = useState(false);
   const selected = options.find(o => o.value === value);
+
+  const overrideStyle = buildControlStyleOverrides({ borderRadius, height });
 
   return (
     <View className={className}>
@@ -42,7 +53,8 @@ export function Select<T extends string = string>({
         accessibilityState={{ expanded: open, disabled }}
         disabled={disabled}
         onPress={() => setOpen(true)}
-        className="min-h-11 flex-row items-center justify-between rounded-xl border border-border bg-surface px-3.5 active:opacity-70"
+        style={[style, overrideStyle]}
+        className={`min-h-[58px] flex-row items-center justify-between rounded-horeca border border-border bg-input px-3.5 active:opacity-70 ${triggerClassName}`.trim()}
       >
         <AppText variant="label" className="text-sm font-semibold text-text flex-1" numberOfLines={1}>
           {selected ? selected.label : placeholder}

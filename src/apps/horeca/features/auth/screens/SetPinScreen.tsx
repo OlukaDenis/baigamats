@@ -86,7 +86,7 @@ export const SetPinScreen: React.FC<SetPinScreenProps> = ({ onBack }) => {
       contentContainerClassName="px-4 py-6 justify-between items-center"
     >
       <View className="items-center my-4">
-        <View className="h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 mb-3 shadow-sm">
+        <View className="h-16 w-16 items-center justify-center rounded-horeca bg-primary/10 border border-primary/20 mb-3 shadow-sm">
           <KeyIcon color={colors.primary} size={30} />
         </View>
 

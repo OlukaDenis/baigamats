@@ -470,7 +470,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
       contentContainerClassName="px-4 py-5"
     >
       {/* Settlement Summary Card */}
-      <View className="rounded-3xl bg-surface border border-border p-5 mb-5">
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-5">
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-1 mr-2">
             <AppText variant="label" className="font-bold text-text">
@@ -508,14 +508,14 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
       </View>
 
       {/* Payment Method Switch Tabs */}
-      <View className="flex-row p-1 bg-surface border border-border rounded-2xl mb-5">
+      <View className="flex-row p-1 bg-surface border border-border rounded-horeca mb-5">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Pay with Cash"
           disabled={currentMomoState === 'pending'}
           onPress={() => setSelectedMethod('cash')}
           style={{ backgroundColor: isCash ? colors.primary : 'transparent' }}
-          className="flex-1 py-3 rounded-xl flex-row items-center justify-center"
+          className="flex-1 py-3 rounded-horeca flex-row items-center justify-center"
         >
           <View className="mr-2">
             <BanknotesIcon
@@ -537,7 +537,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
           accessibilityLabel="Pay with Mobile Money"
           onPress={() => setSelectedMethod('momo')}
           style={{ backgroundColor: isMomo ? colors.primary : 'transparent' }}
-          className="flex-1 py-3 rounded-xl flex-row items-center justify-center"
+          className="flex-1 py-3 rounded-horeca flex-row items-center justify-center"
         >
           <View className="mr-2">
             <DevicePhoneMobileIcon
@@ -557,7 +557,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
 
       {/* CASH PAYMENT VIEW */}
       {isCash ? (
-        <View className="rounded-3xl bg-surface border border-border p-5 mb-5">
+        <View className="rounded-horeca bg-surface border border-border p-5 mb-5">
           {cashError ? (
             <AlertBanner severity="error" message={cashError} className="mb-4" />
           ) : null}
@@ -567,7 +567,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
             <AppText variant="caption" className="text-text-secondary font-semibold uppercase text-[11px] mb-1.5">
               Cash Tendered (UGX)
             </AppText>
-            <View className="flex-row items-center rounded-xl bg-background border border-border px-4 py-1.5">
+            <View className="min-h-[58px] flex-row items-center rounded-horeca bg-input border border-border px-4 py-1.5">
               <AppText variant="label" className="font-bold text-primary mr-2">
                 UGX
               </AppText>
@@ -584,7 +584,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
           </View>
 
           {/* Change Due Card */}
-          <View className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex-row items-center justify-between mb-4">
+          <View className="p-4 rounded-horeca bg-primary/10 border border-primary/20 flex-row items-center justify-between mb-4">
             <View>
               <AppText variant="label" className="font-bold text-primary">
                 Change Due Customer
@@ -668,7 +668,7 @@ export const PaymentCheckoutScreen: React.FC<PaymentCheckoutScreenProps> = ({
         />
       ) : (
         /* MOMO INITIATION FORM VIEW */
-        <View className="rounded-3xl bg-surface border border-border p-5 mb-5">
+        <View className="rounded-horeca bg-surface border border-border p-5 mb-5">
           {momoError ? (
             <AlertBanner severity="error" message={momoError} className="mb-4" />
           ) : null}

@@ -12,6 +12,6 @@ type PreferencesState = {
  * Shared client-side user preferences.
  */
 export const usePreferencesStore = create<PreferencesState>()(set => ({
-  themePreference: 'system',
+  themePreference: 'light',
   setThemePreference: themePreference => set({ themePreference }),
 }));

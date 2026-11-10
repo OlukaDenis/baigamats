@@ -12,6 +12,9 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      borderRadius: {
+        horeca: '8px',
+      },
       colors: {
         content: token('text'),
         text: token('text'),
@@ -22,6 +25,7 @@ module.exports = {
         tertiary: token('tertiary'),
         background: token('background'),
         surface: token('surface'),
+        input: token('input'),
         border: token('border'),
         'on-primary': token('on-primary'),
         'on-secondary': token('on-secondary'),
