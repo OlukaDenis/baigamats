@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '../../atoms/AppText';
 import { Button, type ButtonVariant } from '../../atoms/Button';
 import { useHorecaColors } from '../../../theme/colors';
+import { activityCaptureProps } from '../../../features/auth/utils/inactivityTracker';
 import { useAppModalStore, type ModalType } from './appModalStore';
 
 export const GlobalBottomSheetModal: React.FC = () => {
@@ -45,7 +46,9 @@ export const GlobalBottomSheetModal: React.FC = () => {
       try {
         setLoading(true);
         await onConfirm();
-        useAppModalStore.setState({ isOpen: false, isLoading: false });
+        if (useAppModalStore.getState().onConfirm === onConfirm) {
+          useAppModalStore.setState({ isOpen: false, isLoading: false });
+        }
       } catch (err) {
         console.error('[GlobalBottomSheetModal] Confirm handler error:', err);
         setLoading(false);
@@ -113,7 +116,7 @@ export const GlobalBottomSheetModal: React.FC = () => {
       onRequestClose={handleBackdropPress}
       statusBarTranslucent
     >
-      <View className="flex-1 justify-end bg-black/60">
+      <View {...activityCaptureProps} className="flex-1 justify-end bg-black/60">
         {/* Backdrop tap target */}
         <Pressable
           accessibilityRole="button"

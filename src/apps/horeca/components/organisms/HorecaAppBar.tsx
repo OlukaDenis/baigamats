@@ -49,16 +49,6 @@ export function HorecaAppBar({
 
   const badgeCount = ordersCount ?? computedCount;
 
-  const businessName = resolveBusinessName(businessProfile);
-  const businessContact = [
-    businessProfile?.phone?.trim(),
-    businessProfile?.address?.trim(),
-  ]
-    .filter(Boolean)
-    .join(' • ');
-  const resolvedSubtitle =
-    subtitle?.trim() || (businessName ? businessName : undefined);
-
   const showLogo = Boolean(businessProfile?.logo_url && !logoError);
 
   return (
@@ -92,13 +82,13 @@ export function HorecaAppBar({
             <AppText variant="title" numberOfLines={1} className="text-text font-bold">
               {title}
             </AppText>
-            {resolvedSubtitle ? (
+            {subtitle ? (
               <AppText
                 variant="caption"
                 numberOfLines={1}
                 className="text-text-secondary text-[11px] font-medium"
               >
-                {resolvedSubtitle}
+                {subtitle}
               </AppText>
             ) : null}
           </View>

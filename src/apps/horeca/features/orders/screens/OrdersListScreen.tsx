@@ -13,9 +13,12 @@ import {
   ShoppingBagIcon,
 } from 'react-native-heroicons/outline';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
+import { horecaApi } from '@horeca/api/horecaApiClient';
 import type { Order } from '@horeca/api/schemas';
 import { useHorecaStore } from '@horeca/db/offlineStore';
 import { syncEngine } from '@horeca/db/syncEngine';
+import { HORECA_TABLES_QUERY_KEY } from '@horeca/features/floor/hooks/useFloorTables';
 import { useHorecaColors } from '@horeca/theme/colors';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
@@ -43,6 +46,7 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const colors = useHorecaColors();
+  const queryClient = useQueryClient();
 
   const tables = useHorecaStore(state => state.tables);
   const deleteOrderOptimistic = useHorecaStore(state => state.deleteOrderOptimistic);
@@ -110,17 +114,40 @@ export const OrdersListScreen: React.FC<OrdersListScreenProps> = ({
         cancelText: 'Keep Order',
         isDestructive: true,
         onConfirm: async () => {
+          const isOnline = useHorecaStore.getState().isOnline;
+          const isOfflineTempOrder = ord.id.startsWith('temp-ord-');
+
+          if (!isOfflineTempOrder && isOnline) {
+            try {
+              await horecaApi.cancelOrder(ord.id);
+              deleteOrderOptimistic(ord.id, { skipOutbox: true });
+              await refetch();
+              queryClient.invalidateQueries({ queryKey: HORECA_TABLES_QUERY_KEY }).catch(() => {});
+              return;
+            } catch (err: any) {
+              if (err?.response) {
+                const msg =
+                  err?.response?.data?.message ||
+                  err?.message ||
+                  'Unable to cancel this order.';
+                appModal.error('Cancel Order Failed', msg);
+                return;
+              }
+            }
+          }
+
           deleteOrderOptimistic(ord.id);
           try {
             await syncEngine.processOutbox();
             await refetch();
+            queryClient.invalidateQueries({ queryKey: HORECA_TABLES_QUERY_KEY }).catch(() => {});
           } catch {
             // Handled by sync engine
           }
         },
       });
     },
-    [deleteOrderOptimistic, refetch],
+    [deleteOrderOptimistic, queryClient, refetch],
   );
 
   const renderOrderCard = useCallback(

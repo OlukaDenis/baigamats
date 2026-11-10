@@ -21,6 +21,7 @@ import { BluetoothPrinterModal } from '@horeca/components/organisms/BluetoothPri
 import { HorecaSubAppBar } from '@horeca/components/organisms/HorecaSubAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
+import { activityCaptureProps } from '../../auth/utils/inactivityTracker';
 import { useHorecaAuthStore } from '../../auth/store/horecaAuthStore';
 
 interface BackOfficeScreenProps {
@@ -367,7 +368,7 @@ export const BackOfficeScreen: React.FC<BackOfficeScreenProps> = ({
         animationType="fade"
         onRequestClose={() => setIsNewTableModalOpen(false)}
       >
-        <View className="flex-1 bg-black/60 items-center justify-center p-4">
+        <View {...activityCaptureProps} className="flex-1 bg-black/60 items-center justify-center p-4">
           <View className="w-full max-w-md rounded-3xl bg-surface border border-border p-6 shadow-2xl">
             <View className="flex-row items-center justify-between pb-3 mb-4 border-b border-border/50">
               <AppText variant="title" className="font-bold text-text">

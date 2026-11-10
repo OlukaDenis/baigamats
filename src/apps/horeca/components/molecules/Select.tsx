@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FlatList, Modal, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { CheckIcon, ChevronDownIcon } from 'react-native-heroicons/outline';
 import { useHorecaColors } from '../../theme/colors';
+import { activityCaptureProps } from '../../features/auth/utils/inactivityTracker';
 import { buildControlStyleOverrides } from '../controlStyleOverrides';
 import { AppText } from '../atoms/AppText';
 
@@ -73,7 +74,10 @@ export function Select<T extends string = string>({
           onPress={() => setOpen(false)}
           className="flex-1 items-center justify-center bg-black/40 px-6"
         >
-          <View className="w-full max-h-[60%] rounded-2xl border border-border bg-surface overflow-hidden">
+          <View
+            {...activityCaptureProps}
+            className="w-full max-h-[60%] rounded-2xl border border-border bg-surface overflow-hidden"
+          >
             {label ? (
               <AppText variant="label" className="px-4 pt-3 pb-2 text-xs font-bold text-text-secondary">
                 {label}

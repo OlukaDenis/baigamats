@@ -7,6 +7,8 @@ import { outboxRepository } from './repositories/outboxRepository';
 
 class SyncEngine {
   private isProcessing = false;
+  private processingPromise: Promise<void> | null = null;
+  private hasPendingReplay = false;
   private unsubscribeNetInfo: (() => void) | null = null;
   private unsubscribeStore: (() => void) | null = null;
   private outboxSubscription: Subscription | null = null;
@@ -71,150 +73,165 @@ class SyncEngine {
 
   /**
    * Processes the durable SQLite outbox in strict FIFO order when online.
+   * If already running, awaits the in-flight pass and schedules one replay pass
+   * so callers awaiting completion observe newly enqueued mutations too.
    */
-  async processOutbox() {
-    if (this.isProcessing) return;
-    this.isProcessing = true;
-
-    try {
-      while (useHorecaStore.getState().isOnline) {
-        // Fetch oldest pending mutation from SQLite
-        const dbMutation = await outboxRepository.getNextPendingMutation();
-
-        // Check in-memory fallback if SQLite had none
-        const inMemoryMutation = useHorecaStore.getState().outbox[0];
-        const mutation = dbMutation
-          ? {
-              id: dbMutation.id,
-              type: dbMutation.mutationType as any,
-              payload: dbMutation.payload,
-              attempts: dbMutation.attempts,
-              createdAt: dbMutation.createdAt.toISOString(),
-            }
-          : inMemoryMutation;
-
-        if (!mutation) break;
-
-        try {
-          switch (mutation.type) {
-            case 'create_order': {
-              const { tableId, orderType, partySize, tabName, items, clientTempId } =
-                mutation.payload;
-              const res = await horecaApi.createOrder({
-                orderType,
-                tableId,
-                ...(partySize !== undefined ? { partySize } : {}),
-                ...(tabName ? { tabName } : {}),
-                ...(Array.isArray(items) && items.length > 0 ? { items } : {}),
-              });
-              if (res?.id && clientTempId) {
-                this.idMap.set(clientTempId, res.id);
-                await orderRepository.reconcileCreatedOrder(clientTempId, res);
-                useHorecaStore.getState().upsertOrder(res, clientTempId);
-              }
-              break;
-            }
-
-            case 'add_item': {
-              let orderId = mutation.payload.orderId;
-              if (this.idMap.has(orderId)) {
-                orderId = this.idMap.get(orderId)!;
-              }
-              const addRes = await horecaApi.addItemToOrder(orderId, {
-                menuItemId: mutation.payload.menuItemId,
-                qty: mutation.payload.qty,
-                modifiers: mutation.payload.modifiers,
-                notes: mutation.payload.notes,
-                ageVerifiedBy: mutation.payload.ageVerifiedBy,
-              });
-              if (addRes?.item?.id && mutation.payload.clientTempItemId) {
-                this.idMap.set(mutation.payload.clientTempItemId, addRes.item.id);
-                await orderRepository.reconcileCreatedItem(mutation.payload.clientTempItemId, addRes.item);
-                useHorecaStore
-                  .getState()
-                  .replaceOrderItemId(
-                    orderId,
-                    mutation.payload.clientTempItemId,
-                    addRes.item,
-                    addRes.orderTotal,
-                  );
-              }
-              break;
-            }
-
-            case 'remove_item': {
-              let orderId = mutation.payload.orderId;
-              if (this.idMap.has(orderId)) {
-                orderId = this.idMap.get(orderId)!;
-              }
-              await horecaApi.removeItemFromOrder(
-                orderId,
-                this.idMap.get(mutation.payload.itemId) ?? mutation.payload.itemId,
-              );
-              break;
-            }
-
-            case 'update_kot_status': {
-              let orderId = mutation.payload.orderId;
-              if (this.idMap.has(orderId)) {
-                orderId = this.idMap.get(orderId)!;
-              }
-              await horecaApi.updateItemKotStatus(
-                orderId,
-                this.idMap.get(mutation.payload.itemId) ?? mutation.payload.itemId,
-                mutation.payload.status,
-              );
-              break;
-            }
-
-            case 'cancel_order': {
-              let orderId = mutation.payload.orderId;
-              if (this.idMap.has(orderId)) {
-                orderId = this.idMap.get(orderId)!;
-              }
-              await horecaApi.cancelOrder(orderId);
-              break;
-            }
-
-            case 'bill_cash': {
-              let orderId = mutation.payload.orderId;
-              if (this.idMap.has(orderId)) {
-                orderId = this.idMap.get(orderId)!;
-              }
-              await horecaApi.billCash(orderId, { paymentMethod: 'cash' });
-              break;
-            }
-
-            case 'open_shift': {
-              await horecaApi.openShift({ openingFloat: mutation.payload.openingFloat });
-              break;
-            }
-
-            case 'close_shift': {
-              await horecaApi.closeShift({
-                countedCash: mutation.payload.countedCash,
-                note: mutation.payload.note,
-              });
-              break;
-            }
-          }
-
-          // Dequeue from both SQLite and in-memory store
-          if (dbMutation) {
-            await outboxRepository.dequeueMutation(dbMutation.id);
-          }
-          useHorecaStore.getState().dequeueMutation(mutation.id);
-        } catch (err: any) {
-          console.warn(`[SyncEngine] Mutation ${mutation.id} error:`, err?.message);
-          if (dbMutation) {
-            await outboxRepository.markMutationFailed(dbMutation.id, err?.message);
-          }
-          break; // Pause outbox processing until next network event
-        }
-      }
-    } finally {
-      this.isProcessing = false;
+  async processOutbox(): Promise<void> {
+    if (this.processingPromise) {
+      this.hasPendingReplay = true;
+      return this.processingPromise;
     }
+
+    this.isProcessing = true;
+    const run = (async () => {
+      try {
+        do {
+          this.hasPendingReplay = false;
+          while (useHorecaStore.getState().isOnline) {
+            // Fetch oldest pending mutation from SQLite
+            const dbMutation = await outboxRepository.getNextPendingMutation();
+
+            // Check in-memory fallback if SQLite had none
+            const inMemoryMutation = useHorecaStore.getState().outbox[0];
+            const mutation = dbMutation
+              ? {
+                  id: dbMutation.id,
+                  type: dbMutation.mutationType as any,
+                  payload: dbMutation.payload,
+                  attempts: dbMutation.attempts,
+                  createdAt: dbMutation.createdAt.toISOString(),
+                }
+              : inMemoryMutation;
+
+            if (!mutation) break;
+
+            try {
+              switch (mutation.type) {
+                case 'create_order': {
+                  const { tableId, orderType, partySize, tabName, items, clientTempId } =
+                    mutation.payload;
+                  const res = await horecaApi.createOrder({
+                    orderType,
+                    tableId,
+                    ...(partySize !== undefined ? { partySize } : {}),
+                    ...(tabName ? { tabName } : {}),
+                    ...(Array.isArray(items) && items.length > 0 ? { items } : {}),
+                  });
+                  if (res?.id && clientTempId) {
+                    this.idMap.set(clientTempId, res.id);
+                    await orderRepository.reconcileCreatedOrder(clientTempId, res);
+                    useHorecaStore.getState().upsertOrder(res, clientTempId);
+                  }
+                  break;
+                }
+
+                case 'add_item': {
+                  let orderId = mutation.payload.orderId;
+                  if (this.idMap.has(orderId)) {
+                    orderId = this.idMap.get(orderId)!;
+                  }
+                  const addRes = await horecaApi.addItemToOrder(orderId, {
+                    menuItemId: mutation.payload.menuItemId,
+                    qty: mutation.payload.qty,
+                    modifiers: mutation.payload.modifiers,
+                    notes: mutation.payload.notes,
+                    ageVerifiedBy: mutation.payload.ageVerifiedBy,
+                  });
+                  if (addRes?.item?.id && mutation.payload.clientTempItemId) {
+                    this.idMap.set(mutation.payload.clientTempItemId, addRes.item.id);
+                    await orderRepository.reconcileCreatedItem(mutation.payload.clientTempItemId, addRes.item);
+                    useHorecaStore
+                      .getState()
+                      .replaceOrderItemId(
+                        orderId,
+                        mutation.payload.clientTempItemId,
+                        addRes.item,
+                        addRes.orderTotal,
+                      );
+                  }
+                  break;
+                }
+
+                case 'remove_item': {
+                  let orderId = mutation.payload.orderId;
+                  if (this.idMap.has(orderId)) {
+                    orderId = this.idMap.get(orderId)!;
+                  }
+                  await horecaApi.removeItemFromOrder(
+                    orderId,
+                    this.idMap.get(mutation.payload.itemId) ?? mutation.payload.itemId,
+                  );
+                  break;
+                }
+
+                case 'update_kot_status': {
+                  let orderId = mutation.payload.orderId;
+                  if (this.idMap.has(orderId)) {
+                    orderId = this.idMap.get(orderId)!;
+                  }
+                  await horecaApi.updateItemKotStatus(
+                    orderId,
+                    this.idMap.get(mutation.payload.itemId) ?? mutation.payload.itemId,
+                    mutation.payload.status,
+                  );
+                  break;
+                }
+
+                case 'cancel_order': {
+                  let orderId = mutation.payload.orderId;
+                  if (this.idMap.has(orderId)) {
+                    orderId = this.idMap.get(orderId)!;
+                  }
+                  await horecaApi.cancelOrder(orderId);
+                  break;
+                }
+
+                case 'bill_cash': {
+                  let orderId = mutation.payload.orderId;
+                  if (this.idMap.has(orderId)) {
+                    orderId = this.idMap.get(orderId)!;
+                  }
+                  await horecaApi.billCash(orderId, { paymentMethod: 'cash' });
+                  break;
+                }
+
+                case 'open_shift': {
+                  await horecaApi.openShift({ openingFloat: mutation.payload.openingFloat });
+                  break;
+                }
+
+                case 'close_shift': {
+                  await horecaApi.closeShift({
+                    countedCash: mutation.payload.countedCash,
+                    note: mutation.payload.note,
+                  });
+                  break;
+                }
+              }
+
+              // Dequeue from both SQLite and in-memory store
+              if (dbMutation) {
+                await outboxRepository.dequeueMutation(dbMutation.id);
+              }
+              useHorecaStore.getState().dequeueMutation(mutation.id);
+            } catch (err: any) {
+              console.warn(`[SyncEngine] Mutation ${mutation.id} error:`, err?.message);
+              if (dbMutation) {
+                await outboxRepository.markMutationFailed(dbMutation.id, err?.message);
+              }
+              this.hasPendingReplay = false;
+              break; // Pause outbox processing until next network event
+            }
+          }
+        } while (this.hasPendingReplay && useHorecaStore.getState().isOnline);
+      } finally {
+        this.isProcessing = false;
+        this.processingPromise = null;
+      }
+    })();
+
+    this.processingPromise = run;
+    return run;
   }
 }
 

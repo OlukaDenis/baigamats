@@ -33,13 +33,10 @@ export function HorecaSubAppBar({
   const colors = useHorecaColors();
 
   const orders = useHorecaStore(state => state.orders);
-  const businessProfile = useHorecaStore(state => state.businessProfile);
 
   const computedCount = Object.values(orders).filter(o => o.status === 'open').length;
 
   const badgeCount = ordersCount ?? computedCount;
-  const businessName = resolveBusinessName(businessProfile);
-  const resolvedSubtitle = subtitle?.trim() || (businessName ? businessName : undefined);
 
   return (
     <View
@@ -62,13 +59,13 @@ export function HorecaSubAppBar({
             <AppText variant="title" numberOfLines={1} className="text-text font-bold">
               {title}
             </AppText>
-            {resolvedSubtitle ? (
+            {subtitle ? (
               <AppText
                 variant="caption"
                 numberOfLines={1}
                 className="text-text-secondary text-[11px] font-medium"
               >
-                {resolvedSubtitle}
+                {subtitle}
               </AppText>
             ) : null}
           </View>

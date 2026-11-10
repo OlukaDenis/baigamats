@@ -8,6 +8,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Table } from '@horeca/api/schemas';
 import { useHorecaColors } from '@horeca/theme/colors';
+import { activityCaptureProps } from '@horeca/features/auth/utils/inactivityTracker';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
@@ -53,7 +54,7 @@ export const StartOrderModal: React.FC<StartOrderModalProps> = ({
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <View className="flex-1 justify-end bg-black/60">
+      <View {...activityCaptureProps} className="flex-1 justify-end bg-black/60">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Dismiss Modal"

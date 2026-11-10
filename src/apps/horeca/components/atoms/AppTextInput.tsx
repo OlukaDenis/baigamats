@@ -2,6 +2,7 @@ import React, { useState, type ComponentRef, type ReactNode, type Ref } from 're
 import { Pressable, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import { EyeIcon, EyeSlashIcon } from 'react-native-heroicons/outline';
 import { useHorecaColors } from '../../theme/colors';
+import { recordUserActivity } from '../../features/auth/utils/inactivityTracker';
 import { buildControlStyleOverrides } from '../controlStyleOverrides';
 
 export type AppTextInputInstance = ComponentRef<typeof TextInput>;
@@ -32,6 +33,7 @@ export function AppTextInput({
   style,
   onFocus,
   onBlur,
+  onChangeText,
   ...rest
 }: AppTextInputProps) {
   const colors = useHorecaColors();
@@ -68,12 +70,17 @@ export function AppTextInput({
         selectionColor={`${colors.primary}44`}
         secureTextEntry={shouldMask}
         onFocus={event => {
+          recordUserActivity();
           setIsFocused(true);
           onFocus?.(event);
         }}
         onBlur={event => {
           setIsFocused(false);
           onBlur?.(event);
+        }}
+        onChangeText={text => {
+          recordUserActivity();
+          onChangeText?.(text);
         }}
         style={[
           { color: colors.onSurface },

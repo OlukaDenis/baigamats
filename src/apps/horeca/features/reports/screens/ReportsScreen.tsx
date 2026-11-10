@@ -25,6 +25,7 @@ import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { useHorecaAuthStore } from '@horeca/features/auth/store/horecaAuthStore';
 import { resolveIsManager } from '@horeca/features/auth/utils/roleAccess';
 import { useHorecaColors } from '@horeca/theme/colors';
+import { activityCaptureProps } from '@horeca/features/auth/utils/inactivityTracker';
 import { DashboardDateFilter } from '../components/DashboardDateFilter';
 import {
   EMPTY_DASHBOARD_DATA,
@@ -494,7 +495,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         animationType="fade"
         onRequestClose={() => setIsTargetsModalOpen(false)}
       >
-        <View className="flex-1 bg-black/60 items-center justify-center px-4">
+        <View {...activityCaptureProps} className="flex-1 bg-black/60 items-center justify-center px-4">
           <View className="w-full max-w-md rounded-3xl bg-surface border border-border p-5 shadow-2xl">
             <View className="flex-row items-center justify-between mb-4">
               <View>

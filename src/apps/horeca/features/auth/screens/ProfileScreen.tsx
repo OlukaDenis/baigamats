@@ -5,9 +5,13 @@ import {
   ChevronRightIcon,
 } from 'react-native-heroicons/outline';
 import {
+  BuildingStorefrontIcon,
   Cog6ToothIcon,
+  EnvelopeIcon,
   KeyIcon,
+  MapPinIcon,
   MoonIcon,
+  PhoneIcon,
   SunIcon,
 } from 'react-native-heroicons/solid';
 import { useHorecaTheme } from '@horeca/theme/colors';
@@ -17,6 +21,8 @@ import { Button } from '@horeca/components/atoms/Button';
 import { HorecaAppBar } from '@horeca/components/organisms/HorecaAppBar';
 import { ScreenTemplate } from '@horeca/components/templates/ScreenTemplate';
 import { appModal } from '@horeca/components/molecules/modal/appModalStore';
+import { useHorecaStore } from '@horeca/db/offlineStore';
+import { resolveBusinessName } from '@horeca/utils/vat';
 import { useHorecaAuthStore } from '../store/horecaAuthStore';
 import { resolveIsManager } from '../utils/roleAccess';
 
@@ -38,10 +44,37 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const loginProfile = useHorecaAuthStore(state => state.loginProfile);
   const activeStaff = useHorecaAuthStore(state => state.activeStaff);
   const logout = useHorecaAuthStore(state => state.logout);
+  const businessProfile = useHorecaStore(state => state.businessProfile);
 
   const isManager = resolveIsManager({ loginProfile, me, activeStaff });
   const displayName = me?.name ?? activeStaff?.name ?? 'Staff Member';
   const displayRole = (loginProfile?.role ?? me?.role ?? activeStaff?.role ?? 'staff').toUpperCase();
+  const businessRows = [
+    {
+      key: 'name',
+      label: 'Business Name',
+      value: resolveBusinessName(businessProfile, '') || 'Not configured',
+      Icon: BuildingStorefrontIcon,
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      value: businessProfile?.phone?.trim() || 'Not configured',
+      Icon: PhoneIcon,
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      value: businessProfile?.email?.trim() || 'Not configured',
+      Icon: EnvelopeIcon,
+    },
+    {
+      key: 'address',
+      label: 'Address',
+      value: businessProfile?.address?.trim() || 'Not configured',
+      Icon: MapPinIcon,
+    },
+  ];
 
   const initials =
     displayName
@@ -94,6 +127,32 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <View className="mt-2">
           <Badge label={displayRole} variant="primary" size="md" />
         </View>
+      </View>
+
+      {/* Business Details Section */}
+      <View className="rounded-horeca bg-surface border border-border p-5 mb-5 shadow-sm">
+        <AppText variant="label" className="text-xs font-bold uppercase text-text-secondary mb-3">
+          Business
+        </AppText>
+        {businessRows.map(({ key, label, value, Icon }, index) => (
+          <View
+            key={key}
+            className={`flex-row items-center py-3 ${
+              index < businessRows.length - 1 ? 'border-b border-border/50' : ''
+            }`}>
+            <View className="h-9 w-9 rounded-full bg-primary items-center justify-center mr-3">
+              <Icon size={20} color="#FFFFFF" />
+            </View>
+            <View className="flex-1">
+              <AppText variant="caption" className="text-xs text-text-secondary">
+                {label}
+              </AppText>
+              <AppText className="text-base font-medium text-text">
+                {value}
+              </AppText>
+            </View>
+          </View>
+        ))}
       </View>
 
       {/* Preferences & Security Section */}

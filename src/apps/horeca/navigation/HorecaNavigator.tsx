@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AppState,
   BackHandler,
+  Keyboard,
   Pressable,
   StatusBar,
   View,
@@ -27,6 +29,12 @@ import { ProfileScreen } from '../features/auth/screens/ProfileScreen';
 import { SetPinScreen } from '../features/auth/screens/SetPinScreen';
 import { useBusinessProfile } from '../features/auth/hooks/useBusinessProfile';
 import { useHorecaAuthStore } from '../features/auth/store/horecaAuthStore';
+import {
+  activityCaptureProps,
+  getLastActivityAt,
+  recordUserActivity,
+  subscribeUserActivity,
+} from '../features/auth/utils/inactivityTracker';
 import { resolveIsManager } from '../features/auth/utils/roleAccess';
 import { BackOfficeScreen } from '../features/backoffice/screens/BackOfficeScreen';
 import { FloorPlanScreen } from '../features/floor/screens/FloorPlanScreen';
@@ -125,26 +133,64 @@ export const HorecaNavigator: React.FC = () => {
     }
   }, [status]);
 
-  // Auto-lock when inactive for configured seconds
+  // Auto-lock only after genuine user inactivity for configured seconds
   useEffect(() => {
     if (status !== 'authenticated') return;
 
-    let timer: ReturnType<typeof setTimeout>;
+    const timeoutMs = (autoLockSeconds || 360) * 1000;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-    const resetInactivityTimer = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
+    const scheduleLockTimer = () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      const elapsed = Date.now() - getLastActivityAt();
+      const remaining = timeoutMs - elapsed;
+      if (remaining <= 0) {
         lockTerminal();
-      }, (autoLockSeconds || 360) * 1000);  // Lock in 6 minutes if no activity
+        return;
+      }
+
+      timer = setTimeout(() => {
+        const idleFor = Date.now() - getLastActivityAt();
+        if (idleFor >= timeoutMs) {
+          lockTerminal();
+        } else {
+          scheduleLockTimer();
+        }
+      }, remaining);
     };
 
-    resetInactivityTimer();
+    recordUserActivity(true);
+    scheduleLockTimer();
 
-    return () => clearTimeout(timer);
+    const unsubscribeActivity = subscribeUserActivity(scheduleLockTimer);
+    const appStateSub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        scheduleLockTimer();
+      }
+    });
+    const keyboardShowSub = Keyboard.addListener('keyboardDidShow', () => {
+      recordUserActivity();
+    });
+    const keyboardHideSub = Keyboard.addListener('keyboardDidHide', () => {
+      recordUserActivity();
+    });
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      unsubscribeActivity();
+      appStateSub.remove();
+      keyboardShowSub.remove();
+      keyboardHideSub.remove();
+    };
   }, [status, autoLockSeconds, lockTerminal]);
 
   // Navigate to screen
   const navigateTo = useCallback((screen: MainTab) => {
+    recordUserActivity();
     setNavStack(prev => {
       const active = prev[prev.length - 1];
       if (active === screen) return prev;
@@ -176,6 +222,7 @@ export const HorecaNavigator: React.FC = () => {
    * or false to permit default Android behavior (exiting app) when at root.
    */
   const handleBack = useCallback((): boolean => {
+    recordUserActivity();
     // 1. If currently in the Set PIN modal screen, close it and stay on Profile
     if (isSettingPin) {
       setIsSettingPin(false);
@@ -441,7 +488,7 @@ export const HorecaNavigator: React.FC = () => {
     effectiveTab !== 'backoffice';
 
   return (
-    <View className="flex-1 bg-background">
+    <View {...activityCaptureProps} className="flex-1 bg-background">
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <View className="flex-1">{renderCurrentScreen()}</View>
 

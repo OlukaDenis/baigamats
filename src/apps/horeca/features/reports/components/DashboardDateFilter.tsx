@@ -15,6 +15,7 @@ import {
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Button } from '@horeca/components/atoms/Button';
 import { useHorecaColors } from '@horeca/theme/colors';
+import { activityCaptureProps } from '@horeca/features/auth/utils/inactivityTracker';
 import {
   DASHBOARD_PRESET_OPTIONS,
   type DashboardDatePreset,
@@ -224,7 +225,7 @@ export const DashboardDateFilter: React.FC<DashboardDateFilterProps> = ({
         animationType="fade"
         onRequestClose={() => setIsCustomModalOpen(false)}
       >
-        <View className="flex-1 bg-black/60 items-center justify-center px-4">
+        <View {...activityCaptureProps} className="flex-1 bg-black/60 items-center justify-center px-4">
           <View className="w-full max-w-md rounded-3xl bg-surface border border-border p-5 shadow-2xl">
             {/* Header */}
             <View className="flex-row items-center justify-between mb-4">

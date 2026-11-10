@@ -14,6 +14,7 @@ import { HorecaLoginScreen } from '../../features/auth/screens/HorecaLoginScreen
 import { FloorPlanScreen } from '../../features/floor/screens/FloorPlanScreen';
 import { fetchOpenAndBilledOrders } from '../../features/orders/hooks/useOpenOrders';
 import { OrderEntryScreen } from '../../features/orders/screens/OrderEntryScreen';
+import { OrdersListScreen } from '../../features/orders/screens/OrdersListScreen';
 import {
   HorecaThemeProvider,
   horecaDarkColors,
@@ -25,6 +26,8 @@ import {
 } from '../../theme/colors';
 import { AppTextInput } from '../atoms/AppTextInput';
 import { Button } from '../atoms/Button';
+import { GlobalBottomSheetModal } from '../molecules/modal/GlobalBottomSheetModal';
+import { useAppModalStore } from '../molecules/modal/appModalStore';
 import { SearchBar } from '../molecules/SearchBar';
 import { Select } from '../molecules/Select';
 import { HorecaAppBar } from '../organisms/HorecaAppBar';
@@ -92,6 +95,7 @@ describe('HORECA UI Components & Default Light Theme', () => {
     jest.restoreAllMocks();
     await act(async () => {
       usePreferencesStore.setState({ themePreference: 'light' });
+      useAppModalStore.setState({ isOpen: false, isLoading: false, onConfirm: undefined, onCancel: undefined });
     });
   });
 
@@ -397,6 +401,68 @@ describe('HORECA UI Components & Default Light Theme', () => {
     expect(screen.queryByRole('button', { name: 'Admin Back Office' })).toBeNull();
   });
 
+  it('renders ProfileScreen Business section card with name, phone, email, and address and falls back when unconfigured', async () => {
+    await act(async () => {
+      useHorecaAuthStore.setState({
+        loginProfile: { organizationId: 'org-1', role: 'staff' },
+        me: {
+          userId: 'u-3',
+          name: 'Grace Barista',
+          organizationId: 'org-1',
+          role: 'staff',
+          permissions: [],
+        },
+        activeStaff: null,
+      });
+      useHorecaStore.setState({
+        businessProfile: {
+          name: 'Savanna Bistro Ltd',
+          legal_name: 'Savanna Hospitality Group',
+          institution_code: 'SAV01',
+          phone: '+256 700 123456',
+          email: 'hello@savannabistro.ug',
+          address: 'Plot 14 Acacia Ave, Kampala',
+          logo_url: null,
+          currency: 'UGX',
+          tin: '1000123456',
+          receipt: {
+            header_note: null,
+            footer: null,
+            show_tin: true,
+          },
+          vat: {
+            enabled: false,
+            name: 'VAT',
+            rate_pct: 18,
+            inclusive: true,
+          },
+        },
+      });
+    });
+
+    await render(
+      <HorecaThemeProvider>
+        <ProfileScreen
+          onOrdersPress={() => {}}
+          onLockTerminal={() => {}}
+          onChangePin={() => {}}
+        />
+      </HorecaThemeProvider>,
+    );
+
+    expect(screen.getByText('Business')).toBeTruthy();
+    expect(screen.getByText('Savanna Bistro Ltd')).toBeTruthy();
+    expect(screen.getByText('+256 700 123456')).toBeTruthy();
+    expect(screen.getByText('hello@savannabistro.ug')).toBeTruthy();
+    expect(screen.getByText('Plot 14 Acacia Ave, Kampala')).toBeTruthy();
+
+    await act(async () => {
+      useHorecaStore.setState({ businessProfile: null });
+    });
+
+    expect(screen.getAllByText('Not configured')).toHaveLength(4);
+  });
+
   it('renders MenuItemCard left icon with white shopping bag inside circular primary background', async () => {
     const view = await render(
       <HorecaThemeProvider>
@@ -671,5 +737,169 @@ describe('HORECA UI Components & Default Light Theme', () => {
     expect(getOrderSpy).toHaveBeenCalledTimes(1);
     expect(getOrderSpy).toHaveBeenCalledWith('ord-42');
     expect(getOrdersSpy).not.toHaveBeenCalled();
+  });
+
+  it('reloads the new order list from the backend after successfully cancelling an order on OrdersListScreen', async () => {
+    useHorecaStore.setState({
+      isOnline: true,
+      tables: [
+        {
+          id: 'tbl-1',
+          table_number: 'T-01',
+          capacity: 4,
+          status: 'occupied',
+          section: 'Main',
+        },
+        {
+          id: 'tbl-2',
+          table_number: 'T-02',
+          capacity: 2,
+          status: 'occupied',
+          section: 'Main',
+        },
+      ],
+      orders: {},
+      activeOrderId: 'ord-1',
+    });
+
+    let serverOpenOrders = [
+      {
+        id: 'ord-1',
+        order_number: '#1001',
+        table_id: 'tbl-1',
+        order_type: 'dine_in' as const,
+        status: 'open' as const,
+        total_amount: 30000,
+        service_charge_amount: 0,
+        created_at: '2026-11-10T10:00:00Z',
+        items: [],
+      },
+      {
+        id: 'ord-2',
+        order_number: '#1002',
+        table_id: 'tbl-2',
+        order_type: 'dine_in' as const,
+        status: 'open' as const,
+        total_amount: 45000,
+        service_charge_amount: 0,
+        created_at: '2026-11-10T10:05:00Z',
+        items: [],
+      },
+    ];
+
+    const cancelOrderSpy = jest.spyOn(horecaApi, 'cancelOrder').mockImplementation(async id => {
+      serverOpenOrders = [
+        ...serverOpenOrders.filter(o => o.id !== id),
+        {
+          id: 'ord-3',
+          order_number: '#1003',
+          table_id: 'tbl-2',
+          order_type: 'dine_in' as const,
+          status: 'open' as const,
+          total_amount: 18000,
+          service_charge_amount: 0,
+          created_at: '2026-11-10T10:10:00Z',
+          items: [],
+        },
+      ];
+      return { id, status: 'cancelled' as const };
+    });
+
+    const getOrdersSpy = jest.spyOn(horecaApi, 'getOrders').mockImplementation(async params => {
+      if (params?.status === 'open') {
+        return { items: serverOpenOrders, total: serverOpenOrders.length };
+      }
+      return { items: [], total: 0 };
+    });
+
+    const queryClient = createQueryClient();
+    await render(
+      <QueryClientProvider client={queryClient}>
+        <HorecaThemeProvider>
+          <OrdersListScreen onSelectOrder={() => {}} onLockTerminal={() => {}} />
+          <GlobalBottomSheetModal />
+        </HorecaThemeProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('#1001')).toBeOnTheScreen();
+    expect(screen.getByText('#1002')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel Order #1001' }));
+    expect(screen.getByText(/Are you sure you want to cancel Order #1001/)).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel Order' }));
+
+    await waitFor(() => {
+      expect(cancelOrderSpy).toHaveBeenCalledTimes(1);
+      expect(cancelOrderSpy).toHaveBeenCalledWith('ord-1');
+      expect(screen.getByText('#1003')).toBeOnTheScreen();
+    });
+
+    expect(screen.queryByText('#1001')).toBeNull();
+    expect(screen.getByText('#1002')).toBeOnTheScreen();
+    expect(getOrdersSpy).toHaveBeenCalledWith({ mine: true, status: 'open' });
+    expect(getOrdersSpy.mock.calls.length).toBeGreaterThanOrEqual(4);
+    expect(useHorecaStore.getState().tables.find(t => t.id === 'tbl-1')?.status).toBe('available');
+  });
+
+  it('keeps order and displays error modal when cancelOrder fails with server error on OrdersListScreen', async () => {
+    useHorecaStore.setState({
+      isOnline: true,
+      tables: [
+        {
+          id: 'tbl-1',
+          table_number: 'T-01',
+          capacity: 4,
+          status: 'occupied',
+          section: 'Main',
+        },
+      ],
+      orders: {},
+    });
+
+    jest.spyOn(horecaApi, 'getOrders').mockImplementation(async params => {
+      if (params?.status === 'open') {
+        return {
+          items: [
+            {
+              id: 'ord-9',
+              order_number: '#1009',
+              table_id: 'tbl-1',
+              order_type: 'dine_in' as const,
+              status: 'open' as const,
+              total_amount: 25000,
+              service_charge_amount: 0,
+              created_at: '2026-11-10T10:00:00Z',
+              items: [],
+            },
+          ],
+          total: 1,
+        };
+      }
+      return { items: [], total: 0 };
+    });
+
+    jest.spyOn(horecaApi, 'cancelOrder').mockRejectedValue({
+      response: { status: 409, data: { message: 'Order already billed on another terminal.' } },
+    });
+
+    const queryClient = createQueryClient();
+    await render(
+      <QueryClientProvider client={queryClient}>
+        <HorecaThemeProvider>
+          <OrdersListScreen onSelectOrder={() => {}} onLockTerminal={() => {}} />
+          <GlobalBottomSheetModal />
+        </HorecaThemeProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('#1009')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel Order #1009' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel Order' }));
+
+    expect(await screen.findByText('Cancel Order Failed')).toBeOnTheScreen();
+    expect(screen.getByText('Order already billed on another terminal.')).toBeOnTheScreen();
+    expect(screen.getByText('#1009')).toBeOnTheScreen();
   });
 });

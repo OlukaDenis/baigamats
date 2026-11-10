@@ -53,22 +53,6 @@ export const OrderCard = React.memo<OrderCardProps>(
         {/* Header row */}
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center flex-1 mr-2">
-            <View
-              className={`h-10 w-10 rounded-horeca items-center justify-center mr-3 border ${
-                isBilled
-                  ? 'bg-status-available/10 border-status-available/30'
-                  : 'bg-primary/10 border-primary/20'
-              }`}
-            >
-              <AppText
-                variant="label"
-                className={`font-extrabold text-sm ${
-                  isBilled ? 'text-status-available' : 'text-primary'
-                }`}
-              >
-                {table ? `${table.table_number}` : 'ORD'}
-              </AppText>
-            </View>
 
             <View className="flex-1">
               <View className="flex-row items-center">

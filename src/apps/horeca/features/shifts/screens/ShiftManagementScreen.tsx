@@ -8,6 +8,7 @@ import {
 } from 'react-native-heroicons/outline';
 import { useHorecaStore } from '@horeca/db/offlineStore';
 import { useHorecaColors } from '@horeca/theme/colors';
+import { activityCaptureProps } from '@horeca/features/auth/utils/inactivityTracker';
 import { AppText } from '@horeca/components/atoms/AppText';
 import { Badge } from '@horeca/components/atoms/Badge';
 import { Button } from '@horeca/components/atoms/Button';
@@ -196,7 +197,7 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
         animationType="fade"
         onRequestClose={() => setIsOpenModalVisible(false)}
       >
-        <View className="flex-1 bg-black/60 items-center justify-center p-4">
+        <View {...activityCaptureProps} className="flex-1 bg-black/60 items-center justify-center p-4">
           <View className="w-full max-w-md rounded-3xl bg-surface border border-border p-6 shadow-2xl">
             <View className="flex-row items-center justify-between pb-3 mb-4 border-b border-border/50">
               <AppText variant="title" className="font-bold text-text">
@@ -239,7 +240,7 @@ export const ShiftManagementScreen: React.FC<ShiftManagementScreenProps> = ({
         animationType="fade"
         onRequestClose={() => setIsCloseModalVisible(false)}
       >
-        <View className="flex-1 bg-black/60 items-center justify-center p-4">
+        <View {...activityCaptureProps} className="flex-1 bg-black/60 items-center justify-center p-4">
           <View className="w-full max-w-md rounded-3xl bg-surface border border-border p-6 shadow-2xl">
             <View className="flex-row items-center justify-between pb-3 mb-4 border-b border-border/50">
               <AppText variant="title" className="font-bold text-text">

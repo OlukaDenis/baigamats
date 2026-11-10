@@ -182,7 +182,7 @@ export const FloorPlanScreen: React.FC<FloorPlanScreenProps> = ({
       className="bg-background"
       header={
         <HorecaAppBar
-          title="Floor Plan"
+          title="Home"
           onOrdersPress={onOrdersPress}
           onLockPress={onLockTerminal}
         />

@@ -151,7 +151,7 @@ interface HorecaState {
   updateItemQtyOptimistic: (orderId: string, itemId: string, delta: number) => void;
   updateKotStatusOptimistic: (orderId: string, itemId: string, status: OrderItem['kot_status']) => void;
   cancelOrderOptimistic: (orderId: string) => void;
-  deleteOrderOptimistic: (orderId: string) => void;
+  deleteOrderOptimistic: (orderId: string, options?: { skipOutbox?: boolean }) => void;
   billOrderOptimistic: (orderId: string, paymentMethod: 'cash') => void;
   completeOrderSettlement: (orderId: string, status: 'billed' | 'paid') => void;
 
@@ -841,7 +841,7 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
     }
   },
 
-  deleteOrderOptimistic: orderId => {
+  deleteOrderOptimistic: (orderId, options) => {
     set(state => {
       const order = state.orders[orderId];
       const updatedOrders = { ...state.orders };
@@ -859,10 +859,12 @@ export const useHorecaStore = create<HorecaState>((set, get) => ({
       };
     });
 
-    get().enqueueMutation({
-      type: 'cancel_order',
-      payload: { orderId },
-    });
+    if (!options?.skipOutbox) {
+      get().enqueueMutation({
+        type: 'cancel_order',
+        payload: { orderId },
+      });
+    }
   },
 
   updateKotStatusOptimistic: (orderId, itemId, status) => {

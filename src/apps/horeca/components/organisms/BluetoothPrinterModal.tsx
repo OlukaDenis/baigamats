@@ -17,6 +17,7 @@ import {
   usePrinterStore,
 } from '@horeca/services/printerStore';
 import { useHorecaColors } from '@horeca/theme/colors';
+import { activityCaptureProps } from '@horeca/features/auth/utils/inactivityTracker';
 
 interface BluetoothPrinterModalProps {
   visible: boolean;
@@ -118,7 +119,7 @@ export const BluetoothPrinterModal: React.FC<BluetoothPrinterModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-black/60 items-center justify-center p-4">
+      <View {...activityCaptureProps} className="flex-1 bg-black/60 items-center justify-center p-4">
         <View className="w-full max-w-md rounded-3xl bg-surface border border-border p-5 shadow-2xl max-h-[85%]">
           {/* Header */}
           <View className="flex-row items-center justify-between pb-3 mb-3 border-b border-border/50">
