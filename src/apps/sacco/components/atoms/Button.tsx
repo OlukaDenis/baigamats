@@ -12,7 +12,7 @@ const containerClasses: Record<ButtonVariant, string> = {
   outline: 'border border-border bg-surface',
 };
 
-// Secondary (orange) always pairs with on-secondary: never white/light text on orange.
+// Secondary (Gold) always pairs with on-secondary: Navy on Gold 5.6:1 per Brand Guide.
 const labelClasses: Record<ButtonVariant, string> = {
   primary: 'text-on-primary',
   secondary: 'text-on-secondary',

@@ -1,8 +1,17 @@
 /**
  * Brand colour tokens — the single source of truth for every colour in the app.
  *
- * Values come from the branding rule (.agents/rules/branding-style.md).
- * Do not add hex codes that are not in that palette.
+ * Values come from the Baigamats Brand Kit (Version 1.0, 11 November 2026).
+ * Primary: Baigamats Navy #13213C
+ * Secondary: Baigamats Gold #B6944A
+ * Tertiary: Baigamats Teal #1B7F77
+ *
+ * Safe text pairings adhere to WCAG AA:
+ * - White on Navy (16.0 : 1)
+ * - Gold on Navy (5.6 : 1)
+ * - Navy on Gold (5.6 : 1)
+ * - White on Teal (4.8 : 1)
+ * - Deep Gold #8A6A1F on Paper (4.7 : 1)
  *
  * These tokens are exposed to NativeWind as CSS variables (see ThemeProvider and
  * tailwind.config.js), so `bg-primary`, `text-on-primary`, etc. swap automatically
@@ -24,7 +33,7 @@ export type ThemeColors = {
   border: string;
   /** Primary body and heading text token. */
   text: string;
-  /** Fallback mapping for tertiary containers (mapped to surface). */
+  /** Tertiary / money confirmation token. */
   tertiary: string;
   error: string;
   onError: string;
@@ -32,37 +41,37 @@ export type ThemeColors = {
 };
 
 const lightColors: ThemeColors = {
-  primary: '#1B1340',
-  secondary: '#FF8A00',
-  background: '#FFFFFF',
-  surface: '#F7F7F9',
-  textPrimary: '#111111',
-  textSecondary: '#66666E',
+  primary: '#13213C',
+  secondary: '#B6944A',
+  background: '#F8F6F1',
+  surface: '#FFFFFF',
+  textPrimary: '#13213C',
+  textSecondary: '#5B6579',
   onPrimary: '#FFFFFF',
-  onSecondary: '#FFFFFF',
-  border: '#E5E5EB',
-  text: '#111111',
-  tertiary: '#F7F7F9',
-  error: '#BA1A1A',
+  onSecondary: '#13213C',
+  border: '#D5D9E1',
+  text: '#13213C',
+  tertiary: '#1B7F77',
+  error: '#A8342B',
   onError: '#FFFFFF',
-  success: '#16A34A',
+  success: '#1B7F77',
 };
 
 const darkColors: ThemeColors = {
-  primary: '#FFFFFF',
-  secondary: '#FFA040',
-  background: '#000000',
-  surface: '#141416',
+  primary: '#B6944A',
+  secondary: '#1B7F77',
+  background: '#13213C',
+  surface: '#2F3C53',
   textPrimary: '#FFFFFF',
-  textSecondary: '#9E9EA6',
-  onPrimary: '#000000',
-  onSecondary: '#000000',
-  border: '#26262B',
+  textSecondary: '#CBCED4',
+  onPrimary: '#13213C',
+  onSecondary: '#FFFFFF',
+  border: '#4C566B',
   text: '#FFFFFF',
-  tertiary: '#141416',
+  tertiary: '#1B7F77',
   error: '#FFB4AB',
   onError: '#690005',
-  success: '#22C55E',
+  success: '#549F99',
 };
 
 export const palettes: Record<ColorScheme, ThemeColors> = {

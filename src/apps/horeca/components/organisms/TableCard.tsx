@@ -16,28 +16,28 @@ export const TABLE_STATUS_TONES: Record<
   { background: string; border: string; accent: string; muted: string }
 > = {
   available: {
-    background: '#166534',
-    border: '#15803D',
-    accent: '#DCFCE7',
-    muted: '#BBF7D0',
+    background: '#135953',
+    border: '#1B7F77',
+    accent: '#EDF5F4',
+    muted: '#B6D6D3',
   },
   occupied: {
-    background: '#7F1D1D',
-    border: '#B91C1C',
-    accent: '#FEE2E2',
-    muted: '#FECACA',
+    background: '#742E1F',
+    border: '#D2674B',
+    accent: '#FDF2EE',
+    muted: '#F3BDB0',
   },
   reserved: {
-    background: '#92400E',
-    border: '#D97706',
-    accent: '#FEF3C7',
-    muted: '#FDE68A',
+    background: '#6C5422',
+    border: '#9A5B00',
+    accent: '#F9F6F1',
+    muted: '#DACAA4',
   },
   dirty: {
-    background: '#374151',
-    border: '#6B7280',
-    accent: '#F3F4F6',
-    muted: '#D1D5DB',
+    background: '#2F3C53',
+    border: '#5B6579',
+    accent: '#EEF0F4',
+    muted: '#CBCED4',
   },
 };
 

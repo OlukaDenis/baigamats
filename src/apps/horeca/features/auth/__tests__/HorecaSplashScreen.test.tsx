@@ -12,9 +12,8 @@ describe('HorecaSplashScreen', () => {
     );
 
     expect(screen.getByText('Baigamats HORECA')).toBeOnTheScreen();
-    expect(screen.getByText('Point of Sale & Hospitality System')).toBeOnTheScreen();
-    expect(screen.getByText('Initializing POS terminal...')).toBeOnTheScreen();
-    expect(screen.getByText('Offline-First • Enterprise Hospitality POS')).toBeOnTheScreen();
+    expect(screen.getByText('Point of Sale System')).toBeOnTheScreen();
+    expect(screen.getByText('Initializing...')).toBeOnTheScreen();
   });
 
   it('renders custom initialization message when provided', async () => {

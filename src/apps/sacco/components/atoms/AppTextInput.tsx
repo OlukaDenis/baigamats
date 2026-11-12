@@ -37,7 +37,7 @@ export function AppTextInput({
 
   const shouldMask = isPassword ? !passwordVisible : secureTextEntry;
   const borderClass = hasError
-    ? 'border-secondary'
+    ? 'border-error'
     : isFocused
       ? 'border-primary'
       : 'border-border';

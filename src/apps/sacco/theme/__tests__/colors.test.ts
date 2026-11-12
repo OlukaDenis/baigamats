@@ -19,11 +19,11 @@ function contrast(a: string, b: string): number {
 
 describe('hexToRgbChannels', () => {
   it('converts #RRGGBB to space-separated channels', () => {
-    expect(hexToRgbChannels('#1B1340')).toBe('27 19 64');
+    expect(hexToRgbChannels('#13213C')).toBe('19 33 60');
     expect(hexToRgbChannels('#ffffff')).toBe('255 255 255');
   });
 
-  it.each(['#FFF', '1B1340', '#GGGGGG', ''])('rejects invalid input %p', value => {
+  it.each(['#FFF', '13213C', '#GGGGGG', ''])('rejects invalid input %p', value => {
     expect(() => hexToRgbChannels(value)).toThrow('Invalid hex colour');
   });
 });
@@ -31,8 +31,8 @@ describe('hexToRgbChannels', () => {
 describe('toCssVariables', () => {
   it('maps every token to a CSS variable', () => {
     const variables = toCssVariables(palettes.light);
-    expect(variables['--color-primary']).toBe('27 19 64');
-    expect(variables['--color-on-secondary']).toBe('255 255 255');
+    expect(variables['--color-primary']).toBe('19 33 60');
+    expect(variables['--color-on-secondary']).toBe('19 33 60');
     expect(Object.keys(variables)).toHaveLength(Object.keys(palettes.light).length);
   });
 });

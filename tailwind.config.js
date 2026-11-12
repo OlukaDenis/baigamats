@@ -36,6 +36,7 @@ module.exports = {
         'status-occupied': token('status-occupied'),
         'status-reserved': token('status-reserved'),
         'status-dirty': token('status-dirty'),
+        'product-accent': token('product-accent'),
       },
     },
   },

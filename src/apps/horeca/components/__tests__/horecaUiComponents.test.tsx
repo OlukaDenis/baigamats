@@ -248,9 +248,9 @@ describe('HORECA UI Components & Default Light Theme', () => {
     expect(customStyle.height).toBe(62);
   });
 
-  it('uses lighter grey input background tokens in both light and dark themes', async () => {
-    expect(horecaLightColors.inputBackground).toBe('#f3f4f6');
-    expect(horecaDarkColors.inputBackground).toBe('#222b3a');
+  it('uses brand neutral input background tokens in both light and dark themes', async () => {
+    expect(horecaLightColors.inputBackground).toBe('#eef0f4');
+    expect(horecaDarkColors.inputBackground).toBe('#243043');
     expect(toHorecaCssVariables(horecaLightColors)['--color-input']).toBe(
       toRgbChannels(horecaLightColors.inputBackground),
     );
@@ -268,7 +268,7 @@ describe('HORECA UI Components & Default Light Theme', () => {
     expect(searchInput.parent?.props.className).toContain('bg-input');
   });
 
-  it('uses darker green for available tables and maroon for occupied tables', async () => {
+  it('uses brand teal for available tables and terracotta for occupied tables', async () => {
     await render(
       <HorecaThemeProvider>
         <TableCard
@@ -300,7 +300,7 @@ describe('HORECA UI Components & Default Light Theme', () => {
     expect(StyleSheet.flatten(availableCard.props.style).backgroundColor).toBe(
       TABLE_STATUS_TONES.available.background,
     );
-    expect(TABLE_STATUS_TONES.available.background).toBe('#166534');
+    expect(TABLE_STATUS_TONES.available.background).toBe('#135953');
 
     const occupiedCard = screen.getByRole('button', {
       name: 'Table T2, occupied',
@@ -308,7 +308,7 @@ describe('HORECA UI Components & Default Light Theme', () => {
     expect(StyleSheet.flatten(occupiedCard.props.style).backgroundColor).toBe(
       TABLE_STATUS_TONES.occupied.background,
     );
-    expect(TABLE_STATUS_TONES.occupied.background).toBe('#7F1D1D');
+    expect(TABLE_STATUS_TONES.occupied.background).toBe('#742E1F');
   });
 
   it('uses circular backgrounds on HorecaAppBar buttons without profile icon and plain borderless bold chevron on HorecaSubAppBar back button', async () => {
